@@ -1,0 +1,43 @@
+version: '3.2'
+
+volumes:
+  tereus_db:
+  tereus_minio:
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - 5672:5672
+      - 15672:15672
+    restart: always
+
+  postgres:
+    image: postgres:13.2-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      PGDATA: /data/postgres
+      POSTGRES_DB: tereus
+    volumes:
+      - tereus_db:/data
+    ports:
+      - 5432:5432
+    restart: always
+
+  minio:
+    image: minio/minio
+    volumes:
+    - tereus_minio:/data
+    environment:
+      MINIO_ACCESS_KEY: miniokey
+      MINIO_SECRET_KEY: miniosecret
+    command: server /data
+    ports:
+      - 127.0.0.1:9000:9000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    restart: always
