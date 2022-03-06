@@ -35,9 +35,10 @@ services:
     environment:
       MINIO_ACCESS_KEY: miniokey
       MINIO_SECRET_KEY: miniosecret
-    command: server /data
+    command: server --console-address ":9001" /data
     ports:
       - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
     restart: always
