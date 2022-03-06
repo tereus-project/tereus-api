@@ -14,7 +14,10 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-var minioClient *minio.Client
+var (
+	minioClient *minio.Client
+	s           RabbitMQService
+)
 
 func main() {
 	// Echo instance
@@ -34,6 +37,12 @@ func main() {
 		Creds:  credentials.NewStaticV4("miniokey", "miniosecret", ""),
 		Secure: false,
 	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Initialize RabbitMQ
+	s, err = NewRabbitMQService("amqp://admin:admin@localhost:5672/")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -59,6 +68,7 @@ func remix(c echo.Context) error {
 
 	jobID := uuid.New().String()
 
+	// Open file and unzip it
 	file, err := c.FormFile("file")
 	if err != nil {
 		return err
@@ -74,6 +84,7 @@ func remix(c echo.Context) error {
 		log.Fatal(err)
 	}
 
+	// Upload files to minio
 	for _, file := range zipReader.File {
 		if file.FileInfo().IsDir() {
 			continue
@@ -96,6 +107,17 @@ func remix(c echo.Context) error {
 			c.Logger().Error(err)
 			return c.String(http.StatusInternalServerError, "Internal Server Error")
 		}
+	}
+
+	// Publish job to exchange
+	err = s.publishJob(remixJob{
+		ID:             jobID,
+		SourceLanguage: srcLanguage,
+		TargetLanguage: targetLanguage,
+	})
+	if err != nil {
+		c.Logger().Error(err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
 	return c.JSON(http.StatusOK, remixResult{
