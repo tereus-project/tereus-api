@@ -41,6 +41,20 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// Create tereus MinIO bucket
+	err = minioClient.MakeBucket(context.Background(), "tereus", minio.MakeBucketOptions{})
+	if err != nil {
+		// Check to see if we already own this bucket (which happens if you run this twice)
+		exists, bucketExistsErr := minioClient.BucketExists(context.Background(), "tereus")
+		if bucketExistsErr != nil {
+			log.Fatalln(bucketExistsErr)
+		}
+
+		if !exists {
+			log.Fatalln(err)
+		}
+	}
+
 	// Initialize RabbitMQ
 	s, err = NewRabbitMQService("amqp://admin:admin@localhost:5672/")
 	if err != nil {
