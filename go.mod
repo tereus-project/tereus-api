@@ -8,6 +8,8 @@ require (
 	github.com/minio/minio-go/v7 v7.0.23
 )
 
+require github.com/joho/godotenv v1.4.0 // indirect
+
 require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

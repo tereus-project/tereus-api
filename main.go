@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/tereus-project/tereus-api/env"
 )
 
 var (
@@ -20,6 +21,11 @@ var (
 )
 
 func main() {
+	err := env.LoadEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Echo instance
 	e := echo.New()
 
@@ -33,31 +39,30 @@ func main() {
 	e.POST("/remix/:src/to/:target", remix)
 
 	// Initialize minio client object.
-	var err error
-	minioClient, err = minio.New("localhost:9000", &minio.Options{
-		Creds:  credentials.NewStaticV4("miniokey", "miniosecret", ""),
+	minioClient, err = minio.New(env.S3Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(env.S3AccessKey, env.S3SecretKey, ""),
 		Secure: false,
 	})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Create tereus MinIO bucket
-	err = minioClient.MakeBucket(context.Background(), "tereus", minio.MakeBucketOptions{})
+	// Create tereus S3 bucket if it doesn't exist
+	exists, err := minioClient.BucketExists(context.Background(), env.S3Bucket)
 	if err != nil {
-		// Check to see if we already own this bucket (which happens if you run this twice)
-		exists, bucketExistsErr := minioClient.BucketExists(context.Background(), "tereus")
-		if bucketExistsErr != nil {
-			log.Fatalln(bucketExistsErr)
-		}
+		log.Fatalln(err)
+	}
 
-		if !exists {
+	if !exists {
+		err = minioClient.MakeBucket(context.Background(), env.S3Bucket, minio.MakeBucketOptions{})
+		if err != nil {
+			// Check to see if we already own this bucket (which happens if you run this twice)
 			log.Fatalln(err)
 		}
 	}
 
 	// Initialize RabbitMQ
-	s, err = NewRabbitMQService("amqp://admin:admin@localhost:5672/")
+	s, err = NewRabbitMQService(env.RabbitMQEndpoint)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -112,7 +117,7 @@ func remix(c echo.Context) error {
 		log.Println(file.Name)
 		_, err = minioClient.PutObject(
 			context.Background(),
-			"tereus",
+			env.S3Bucket,
 			fmt.Sprintf("remix/%s/%s", jobID, file.Name),
 			f,
 			file.FileInfo().Size(),
