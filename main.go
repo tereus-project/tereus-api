@@ -73,7 +73,7 @@ func main() {
 
 // Handler
 func hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
+	return c.JSON(http.StatusOK, "Hello, World!")
 }
 
 type remixResult struct {
@@ -91,17 +91,17 @@ func remix(c echo.Context) error {
 	// Open file and unzip it
 	file, err := c.FormFile("file")
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, "Missing file")
 	}
 	src, err := file.Open()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, "Failed to open file")
 	}
 	defer src.Close()
 
 	zipReader, err := zip.NewReader(src, int64(file.Size))
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusInternalServerError, "Failed to unzip file")
 	}
 
 	// Upload files to minio
@@ -111,7 +111,7 @@ func remix(c echo.Context) error {
 		}
 		f, err := file.Open()
 		if err != nil {
-			log.Fatal(err)
+			return c.JSON(http.StatusInternalServerError, "Failed to open file")
 		}
 		defer f.Close()
 		log.Println(file.Name)
@@ -125,7 +125,7 @@ func remix(c echo.Context) error {
 		)
 		if err != nil {
 			c.Logger().Error(err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
+			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
 		}
 	}
 
@@ -137,7 +137,7 @@ func remix(c echo.Context) error {
 	})
 	if err != nil {
 		c.Logger().Error(err)
-		return c.String(http.StatusInternalServerError, "Internal Server Error")
+		return c.JSON(http.StatusInternalServerError, "Failed to publish job to RabbitMQ")
 	}
 
 	return c.JSON(http.StatusOK, remixResult{
