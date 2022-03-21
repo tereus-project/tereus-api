@@ -10,14 +10,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/env"
 )
 
 var (
 	minioClient *minio.Client
 	s           RabbitMQService
+	client      *ent.Client
 )
 
 func main() {
@@ -67,6 +71,19 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// Connect to DB
+	client, err = ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to connect to database")
+
+	}
+	defer client.Close()
+
+	// Run the auto migration tool
+	if err := client.Schema.Create(context.Background()); err != nil {
+		logrus.WithError(err).Fatal("failed creating schema resources")
+	}
+
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 }
@@ -86,7 +103,7 @@ func remix(c echo.Context) error {
 	srcLanguage := c.Param("src")
 	targetLanguage := c.Param("target")
 
-	jobID := uuid.New().String()
+	jobID := uuid.New()
 
 	// Open file and unzip it
 	file, err := c.FormFile("file")
@@ -131,7 +148,7 @@ func remix(c echo.Context) error {
 
 	// Publish job to exchange
 	err = s.publishJob(remixJob{
-		ID:             jobID,
+		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
 	})
@@ -140,8 +157,18 @@ func remix(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Failed to publish job to RabbitMQ")
 	}
 
+	_, err = client.Submission.Create().
+		SetID(jobID).
+		SetSourceLanguage(srcLanguage).
+		SetTargetLanguage(targetLanguage).
+		Save(context.Background())
+	if err != nil {
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, "Failed to create submission")
+	}
+
 	return c.JSON(http.StatusOK, remixResult{
-		ID:             jobID,
+		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
 	})
