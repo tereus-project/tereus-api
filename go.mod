@@ -1,6 +1,6 @@
 module github.com/tereus-project/tereus-api
 
-go 1.17
+go 1.18
 
 require (
 	entgo.io/ent v0.10.1
