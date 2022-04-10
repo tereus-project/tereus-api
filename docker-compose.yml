@@ -1,8 +1,14 @@
-version: '3.2'
+version: "3.2"
 
 volumes:
   tereus_db:
   tereus_minio:
+
+networks:
+  tereus_api:
+    name: tereus_api
+  tereus_workers:
+    name: tereus_workers
 
 services:
   rabbitmq:
@@ -10,6 +16,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - tereus_api
+      - tereus_workers
     ports:
       - 5672:5672
       - 15672:15672
@@ -24,6 +33,8 @@ services:
       POSTGRES_DB: tereus
     volumes:
       - tereus_db:/data
+    networks:
+      - tereus_api
     ports:
       - 5432:5432
     restart: always
@@ -31,11 +42,15 @@ services:
   minio:
     image: minio/minio
     volumes:
-    - tereus_minio:/data
+      - tereus_minio:/data
     environment:
+      # MINIO_ROOT_USER: miniokey
+      # MINIO_ROOT_PASSWORD: miniosecret
       MINIO_ACCESS_KEY: miniokey
       MINIO_SECRET_KEY: miniosecret
     command: server --console-address ":9001" /data
+    networks:
+      - tereus_api
     ports:
       - 127.0.0.1:9000:9000
       - 127.0.0.1:9001:9001
