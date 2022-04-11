@@ -6,17 +6,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
-	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/handlers"
 	"github.com/tereus-project/tereus-api/services"
-)
-
-var (
-	s3Service       *services.S3Service
-	rabbitMQService *services.RabbitMQService
-	databaseService *services.DatabaseService
-	client          *ent.Client
 )
 
 func main() {
