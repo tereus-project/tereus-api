@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -158,6 +157,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
 			}
 			defer f.Close()
+
 			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
@@ -166,40 +166,54 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 	case GitRemixType:
-		_, err = git.PlainClone("/tmp/"+jobID.String(), false, &git.CloneOptions{
+		destination, err := os.MkdirTemp("", "tereus")
+		if err != nil {
+			logrus.WithError(err).Error("Failed to create temporary directory")
+			return c.JSON(http.StatusInternalServerError, "Failed to clone git repository")
+		}
+
+		_, err = git.PlainClone(destination, false, &git.CloneOptions{
 			URL:      req.GitRepo,
 			Progress: os.Stdout,
 		})
 		if err != nil {
-			logrus.WithError(err).Error("Failed to clone git repo")
-			return c.JSON(http.StatusInternalServerError, "Failed to clone git repo")
+			logrus.WithError(err).Error("Failed to clone git repository")
+			return c.JSON(http.StatusInternalServerError, "Failed to clone git repository")
 		}
 
-		// List files in git repo
-		files, err := ioutil.ReadDir("/tmp/" + jobID.String())
+		// List files in git repository
+		files, err := os.ReadDir(destination)
 		if err != nil {
-			logrus.WithError(err).Error("Failed to list files in git repo")
-			return c.JSON(http.StatusInternalServerError, "Failed to list files in git repo")
+			logrus.WithError(err).Error("Failed to list files in git repository")
+			return c.JSON(http.StatusInternalServerError, "Failed to list files in git repository")
 		}
+
 		for _, file := range files {
 			if file.IsDir() {
 				continue
 			}
 
-			f, err := os.Open("/tmp/" + jobID.String() + "/" + file.Name())
+			f, err := os.Open(destination + "/" + file.Name())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to open file")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name()))
 			}
 			defer f.Close()
-			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, file.Size())
+
+			info, err := f.Stat()
+			if err != nil {
+				logrus.WithError(err).Error("Failed to stat file")
+				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
+			}
+
+			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
 			}
 		}
 
-		err = os.RemoveAll("/tmp/" + jobID.String())
+		err = os.RemoveAll(destination)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to remove temporary directory")
 		}
