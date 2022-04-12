@@ -198,6 +198,11 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
 			}
 		}
+
+		err = os.RemoveAll("/tmp/" + jobID.String())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to remove temporary directory")
+		}
 	default:
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
