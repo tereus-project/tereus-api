@@ -107,13 +107,6 @@ func TargetLanguage(v string) predicate.Submission {
 	})
 }
 
-// Completed applies equality check predicate on the "completed" field. It's identical to CompletedEQ.
-func Completed(v bool) predicate.Submission {
-	return predicate.Submission(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCompleted), v))
-	})
-}
-
 // GitRepo applies equality check predicate on the "git_repo" field. It's identical to GitRepoEQ.
 func GitRepo(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -395,20 +388,6 @@ func StatusNotIn(vs ...Status) predicate.Submission {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldStatus), v...))
-	})
-}
-
-// CompletedEQ applies the EQ predicate on the "completed" field.
-func CompletedEQ(v bool) predicate.Submission {
-	return predicate.Submission(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCompleted), v))
-	})
-}
-
-// CompletedNEQ applies the NEQ predicate on the "completed" field.
-func CompletedNEQ(v bool) predicate.Submission {
-	return predicate.Submission(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCompleted), v))
 	})
 }
 

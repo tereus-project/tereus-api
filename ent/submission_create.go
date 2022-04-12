@@ -47,20 +47,6 @@ func (sc *SubmissionCreate) SetNillableStatus(s *submission.Status) *SubmissionC
 	return sc
 }
 
-// SetCompleted sets the "completed" field.
-func (sc *SubmissionCreate) SetCompleted(b bool) *SubmissionCreate {
-	sc.mutation.SetCompleted(b)
-	return sc
-}
-
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (sc *SubmissionCreate) SetNillableCompleted(b *bool) *SubmissionCreate {
-	if b != nil {
-		sc.SetCompleted(*b)
-	}
-	return sc
-}
-
 // SetGitRepo sets the "git_repo" field.
 func (sc *SubmissionCreate) SetGitRepo(s string) *SubmissionCreate {
 	sc.mutation.SetGitRepo(s)
@@ -178,10 +164,6 @@ func (sc *SubmissionCreate) defaults() {
 		v := submission.DefaultStatus
 		sc.mutation.SetStatus(v)
 	}
-	if _, ok := sc.mutation.Completed(); !ok {
-		v := submission.DefaultCompleted
-		sc.mutation.SetCompleted(v)
-	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		v := submission.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
@@ -207,9 +189,6 @@ func (sc *SubmissionCreate) check() error {
 		if err := submission.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
 		}
-	}
-	if _, ok := sc.mutation.Completed(); !ok {
-		return &ValidationError{Name: "completed", err: errors.New(`ent: missing required field "Submission.completed"`)}
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Submission.created_at"`)}
@@ -273,14 +252,6 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 			Column: submission.FieldStatus,
 		})
 		_node.Status = value
-	}
-	if value, ok := sc.mutation.Completed(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: submission.FieldCompleted,
-		})
-		_node.Completed = value
 	}
 	if value, ok := sc.mutation.GitRepo(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
