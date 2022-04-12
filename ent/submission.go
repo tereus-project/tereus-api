@@ -23,6 +23,10 @@ type Submission struct {
 	TargetLanguage string `json:"target_language,omitempty"`
 	// Status holds the value of the "status" field.
 	Status submission.Status `json:"status,omitempty"`
+	// Completed holds the value of the "completed" field.
+	Completed bool `json:"completed,omitempty"`
+	// GitRepo holds the value of the "git_repo" field.
+	GitRepo string `json:"git_repo,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 }
@@ -32,7 +36,9 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus:
+		case submission.FieldCompleted:
+			values[i] = new(sql.NullBool)
+		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldGitRepo:
 			values[i] = new(sql.NullString)
 		case submission.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -77,6 +83,18 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				s.Status = submission.Status(value.String)
 			}
+		case submission.FieldCompleted:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field completed", values[i])
+			} else if value.Valid {
+				s.Completed = value.Bool
+			}
+		case submission.FieldGitRepo:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field git_repo", values[i])
+			} else if value.Valid {
+				s.GitRepo = value.String
+			}
 		case submission.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -117,6 +135,10 @@ func (s *Submission) String() string {
 	builder.WriteString(s.TargetLanguage)
 	builder.WriteString(", status=")
 	builder.WriteString(fmt.Sprintf("%v", s.Status))
+	builder.WriteString(", completed=")
+	builder.WriteString(fmt.Sprintf("%v", s.Completed))
+	builder.WriteString(", git_repo=")
+	builder.WriteString(s.GitRepo)
 	builder.WriteString(", created_at=")
 	builder.WriteString(s.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

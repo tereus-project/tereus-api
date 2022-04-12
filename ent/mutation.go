@@ -37,6 +37,8 @@ type SubmissionMutation struct {
 	source_language *string
 	target_language *string
 	status          *submission.Status
+	completed       *bool
+	git_repo        *string
 	created_at      *time.Time
 	clearedFields   map[string]struct{}
 	done            bool
@@ -256,6 +258,91 @@ func (m *SubmissionMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetCompleted sets the "completed" field.
+func (m *SubmissionMutation) SetCompleted(b bool) {
+	m.completed = &b
+}
+
+// Completed returns the value of the "completed" field in the mutation.
+func (m *SubmissionMutation) Completed() (r bool, exists bool) {
+	v := m.completed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompleted returns the old "completed" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldCompleted(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompleted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompleted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompleted: %w", err)
+	}
+	return oldValue.Completed, nil
+}
+
+// ResetCompleted resets all changes to the "completed" field.
+func (m *SubmissionMutation) ResetCompleted() {
+	m.completed = nil
+}
+
+// SetGitRepo sets the "git_repo" field.
+func (m *SubmissionMutation) SetGitRepo(s string) {
+	m.git_repo = &s
+}
+
+// GitRepo returns the value of the "git_repo" field in the mutation.
+func (m *SubmissionMutation) GitRepo() (r string, exists bool) {
+	v := m.git_repo
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitRepo returns the old "git_repo" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldGitRepo(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitRepo is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitRepo requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitRepo: %w", err)
+	}
+	return oldValue.GitRepo, nil
+}
+
+// ClearGitRepo clears the value of the "git_repo" field.
+func (m *SubmissionMutation) ClearGitRepo() {
+	m.git_repo = nil
+	m.clearedFields[submission.FieldGitRepo] = struct{}{}
+}
+
+// GitRepoCleared returns if the "git_repo" field was cleared in this mutation.
+func (m *SubmissionMutation) GitRepoCleared() bool {
+	_, ok := m.clearedFields[submission.FieldGitRepo]
+	return ok
+}
+
+// ResetGitRepo resets all changes to the "git_repo" field.
+func (m *SubmissionMutation) ResetGitRepo() {
+	m.git_repo = nil
+	delete(m.clearedFields, submission.FieldGitRepo)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *SubmissionMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -311,7 +398,7 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
@@ -320,6 +407,12 @@ func (m *SubmissionMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, submission.FieldStatus)
+	}
+	if m.completed != nil {
+		fields = append(fields, submission.FieldCompleted)
+	}
+	if m.git_repo != nil {
+		fields = append(fields, submission.FieldGitRepo)
 	}
 	if m.created_at != nil {
 		fields = append(fields, submission.FieldCreatedAt)
@@ -338,6 +431,10 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.TargetLanguage()
 	case submission.FieldStatus:
 		return m.Status()
+	case submission.FieldCompleted:
+		return m.Completed()
+	case submission.FieldGitRepo:
+		return m.GitRepo()
 	case submission.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -355,6 +452,10 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldTargetLanguage(ctx)
 	case submission.FieldStatus:
 		return m.OldStatus(ctx)
+	case submission.FieldCompleted:
+		return m.OldCompleted(ctx)
+	case submission.FieldGitRepo:
+		return m.OldGitRepo(ctx)
 	case submission.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -386,6 +487,20 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case submission.FieldCompleted:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompleted(v)
+		return nil
+	case submission.FieldGitRepo:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitRepo(v)
 		return nil
 	case submission.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -423,7 +538,11 @@ func (m *SubmissionMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *SubmissionMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(submission.FieldGitRepo) {
+		fields = append(fields, submission.FieldGitRepo)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -436,6 +555,11 @@ func (m *SubmissionMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *SubmissionMutation) ClearField(name string) error {
+	switch name {
+	case submission.FieldGitRepo:
+		m.ClearGitRepo()
+		return nil
+	}
 	return fmt.Errorf("unknown Submission nullable field %s", name)
 }
 
@@ -451,6 +575,12 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case submission.FieldCompleted:
+		m.ResetCompleted()
+		return nil
+	case submission.FieldGitRepo:
+		m.ResetGitRepo()
 		return nil
 	case submission.FieldCreatedAt:
 		m.ResetCreatedAt()

@@ -20,6 +20,8 @@ func (Submission) Fields() []ent.Field {
 		field.String("source_language"),
 		field.String("target_language"),
 		field.Enum("status").Values("pending", "processing", "done", "failed").Default("pending"),
+		field.Bool("completed").Default(false),
+		field.String("git_repo").Optional(),
 		field.Time("created_at").Default(time.Now),
 	}
 }
