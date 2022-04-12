@@ -20,8 +20,6 @@ const (
 	FieldTargetLanguage = "target_language"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldCompleted holds the string denoting the completed field in the database.
-	FieldCompleted = "completed"
 	// FieldGitRepo holds the string denoting the git_repo field in the database.
 	FieldGitRepo = "git_repo"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -36,7 +34,6 @@ var Columns = []string{
 	FieldSourceLanguage,
 	FieldTargetLanguage,
 	FieldStatus,
-	FieldCompleted,
 	FieldGitRepo,
 	FieldCreatedAt,
 }
@@ -52,8 +49,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultCompleted holds the default value on creation for the "completed" field.
-	DefaultCompleted bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.

@@ -54,20 +54,6 @@ func (su *SubmissionUpdate) SetNillableStatus(s *submission.Status) *SubmissionU
 	return su
 }
 
-// SetCompleted sets the "completed" field.
-func (su *SubmissionUpdate) SetCompleted(b bool) *SubmissionUpdate {
-	su.mutation.SetCompleted(b)
-	return su
-}
-
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (su *SubmissionUpdate) SetNillableCompleted(b *bool) *SubmissionUpdate {
-	if b != nil {
-		su.SetCompleted(*b)
-	}
-	return su
-}
-
 // SetGitRepo sets the "git_repo" field.
 func (su *SubmissionUpdate) SetGitRepo(s string) *SubmissionUpdate {
 	su.mutation.SetGitRepo(s)
@@ -216,13 +202,6 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldStatus,
 		})
 	}
-	if value, ok := su.mutation.Completed(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: submission.FieldCompleted,
-		})
-	}
 	if value, ok := su.mutation.GitRepo(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -284,20 +263,6 @@ func (suo *SubmissionUpdateOne) SetStatus(s submission.Status) *SubmissionUpdate
 func (suo *SubmissionUpdateOne) SetNillableStatus(s *submission.Status) *SubmissionUpdateOne {
 	if s != nil {
 		suo.SetStatus(*s)
-	}
-	return suo
-}
-
-// SetCompleted sets the "completed" field.
-func (suo *SubmissionUpdateOne) SetCompleted(b bool) *SubmissionUpdateOne {
-	suo.mutation.SetCompleted(b)
-	return suo
-}
-
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (suo *SubmissionUpdateOne) SetNillableCompleted(b *bool) *SubmissionUpdateOne {
-	if b != nil {
-		suo.SetCompleted(*b)
 	}
 	return suo
 }
@@ -472,13 +437,6 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeEnum,
 			Value:  value,
 			Column: submission.FieldStatus,
-		})
-	}
-	if value, ok := suo.mutation.Completed(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: submission.FieldCompleted,
 		})
 	}
 	if value, ok := suo.mutation.GitRepo(); ok {
