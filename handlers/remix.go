@@ -22,20 +22,33 @@ type RemixHandler struct {
 	RabbitMQService *services.RabbitMQService
 	DatabaseService *services.DatabaseService
 
-	jobsQueue *services.RabbitMQQueue
+	jobsQueues map[string]map[string]*services.RabbitMQQueue
 }
 
 func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService) (*RemixHandler, error) {
-	jobsQueue, err := rabbitMQService.NewQueue("remix_jobs_q", "remix_jobs_ex", "remix_jobs_rk")
-	if err != nil {
-		return nil, err
+	var err error
+
+	jobsQueues := map[string]map[string]*services.RabbitMQQueue{
+		"c": {
+			"go": nil,
+		},
+	}
+
+	for sourceLanguage := range jobsQueues {
+		for targetLanguage := range jobsQueues[sourceLanguage] {
+			jobsQueues[sourceLanguage][targetLanguage], err = rabbitMQService.NewQueue("remix_jobs_q", "remix_jobs_ex", fmt.Sprintf("remix_jobs_%s_to_%s_rk", sourceLanguage, targetLanguage))
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return &RemixHandler{
 		S3Service:       s3Service,
 		RabbitMQService: rabbitMQService,
 		DatabaseService: databaseService,
-		jobsQueue:       jobsQueue,
+
+		jobsQueues: jobsQueues,
 	}, nil
 }
 
@@ -53,8 +66,14 @@ type remixJob struct {
 
 // POST /remix/:src/to/:target
 func (h *RemixHandler) Remix(c echo.Context) error {
-	srcLanguage := c.Param("src")
-	targetLanguage := c.Param("target")
+	srcLanguage := strings.ToLower(c.Param("src"))
+	targetLanguage := strings.ToLower(c.Param("target"))
+
+	if sourceMap, ok := h.jobsQueues[srcLanguage]; !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("source language %s is not supported", srcLanguage))
+	} else if _, ok := sourceMap[targetLanguage]; !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, srcLanguage))
+	}
 
 	jobID := uuid.New()
 
@@ -99,7 +118,7 @@ func (h *RemixHandler) Remix(c echo.Context) error {
 	}
 
 	// Publish job to exchange
-	err = h.jobsQueue.Publish(remixJob{
+	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
