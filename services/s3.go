@@ -55,3 +55,29 @@ func (s *S3Service) PutObject(bucket string, path string, reader io.Reader, size
 		minio.PutObjectOptions{},
 	)
 }
+
+func (s *S3Service) GetObject(bucket string, path string) (io.ReadCloser, error) {
+	return s.client.GetObject(context.Background(), bucket, path, minio.GetObjectOptions{})
+}
+
+func (s *S3Service) GetObjects(bucket string, prefix string) (paths <-chan string, err error) {
+	ch := make(chan string)
+
+	go func() {
+		defer close(ch)
+
+		doneCh := make(chan struct{})
+		defer close(doneCh)
+
+		for object := range s.client.ListObjects(context.Background(), bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
+			if object.Err != nil {
+				log.Println(object.Err)
+				return
+			}
+
+			ch <- object.Key
+		}
+	}()
+
+	return ch, nil
+}

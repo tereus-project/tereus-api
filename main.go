@@ -59,6 +59,7 @@ func main() {
 	}
 
 	e.POST("/remix/:src/to/:target", remixHandler.Remix)
+	e.GET("/remix/:id", remixHandler.DownloadRemixedFiles)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

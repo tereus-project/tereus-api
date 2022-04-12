@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	S3Bucket         string
-	S3AccessKey      string
-	S3SecretKey      string
-	S3Endpoint       string
-	RabbitMQEndpoint string
+	S3Bucket          string
+	S3AccessKey       string
+	S3SecretKey       string
+	S3Endpoint        string
+	RabbitMQEndpoint  string
+	SubmissionsFolder string
 )
 
 func LoadEnv() error {
@@ -44,6 +45,11 @@ func LoadEnv() error {
 	RabbitMQEndpoint = os.Getenv("RABBITMQ_ENDPOINT")
 	if RabbitMQEndpoint == "" {
 		return fmt.Errorf("RABBITMQ_ENDPOINT is not set")
+	}
+
+	SubmissionsFolder = os.Getenv("SUBMISSIONS_FOLDER")
+	if SubmissionsFolder == "" {
+		return fmt.Errorf("SUBMISSIONS_FOLDER is not set")
 	}
 
 	return nil
