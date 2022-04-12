@@ -17,8 +17,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	logrus.SetLevel(logrus.DebugLevel)
+
 	// Echo instance
 	e := echo.New()
+	e.HideBanner = true
 
 	// Middleware
 	e.Use(middleware.Logger())
@@ -26,6 +29,7 @@ func main() {
 	e.Use(middleware.CORS())
 
 	// Initialize S3 service
+	logrus.Debugln("Initializing S3 service")
 	s3Service, err := services.NewS3Service(env.S3Endpoint, env.S3AccessKey, env.S3SecretKey)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize S3 service")
@@ -36,6 +40,7 @@ func main() {
 	}
 
 	// Initialize RabbitMQ service
+	logrus.Debugln("Initializing RabbitMQ service")
 	rabbitMQService, err := services.NewRabbitMQService(env.RabbitMQEndpoint)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
@@ -43,6 +48,7 @@ func main() {
 	defer rabbitMQService.Close()
 
 	// Initialize database service
+	logrus.Debugln("Initializing database service")
 	databaseService, err := services.NewDatabaseService("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize database service")
@@ -51,6 +57,12 @@ func main() {
 
 	if err := databaseService.AutoMigrate(); err != nil {
 		logrus.WithError(err).Fatalln("Failed to migrate database")
+	}
+
+	logrus.Debugln("Starting submission completion listener")
+	err = startSubmissionCompletionListener(rabbitMQService, databaseService)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to start submission completion listener")
 	}
 
 	remixHandler, err := handlers.NewRemixHandler(s3Service, rabbitMQService, databaseService)

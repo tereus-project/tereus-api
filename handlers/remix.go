@@ -99,7 +99,7 @@ func (h *RemixHandler) Remix(c echo.Context) error {
 	}
 
 	// Publish job to exchange
-	err = h.jobsQueue.PublishJob(remixJob{
+	err = h.jobsQueue.Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,

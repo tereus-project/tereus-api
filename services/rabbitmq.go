@@ -13,6 +13,7 @@ type RabbitMQService struct {
 }
 
 type RabbitMQQueue struct {
+	name       string
 	exchange   string
 	routingKey string
 
@@ -80,6 +81,7 @@ func (s *RabbitMQService) NewQueue(name string, exchange string, routingKey stri
 	}
 
 	return &RabbitMQQueue{
+		name:       queue.Name,
 		exchange:   exchange,
 		routingKey: routingKey,
 		channel:    channel,
@@ -90,8 +92,7 @@ func (q *RabbitMQQueue) Close() error {
 	return q.channel.Close()
 }
 
-// Publish a job to the exchange
-func (q *RabbitMQQueue) PublishJob(data interface{}) error {
+func (q *RabbitMQQueue) Publish(data interface{}) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -106,5 +107,17 @@ func (q *RabbitMQQueue) PublishJob(data interface{}) error {
 			ContentType: "application/json",
 			Body:        body,
 		},
+	)
+}
+
+func (q *RabbitMQQueue) Consume() (<-chan amqp.Delivery, error) {
+	return q.channel.Consume(
+		q.name, // queue name
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
 	)
 }
