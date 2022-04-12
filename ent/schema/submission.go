@@ -19,7 +19,7 @@ func (Submission) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("source_language"),
 		field.String("target_language"),
-		field.Bool("completed").Default(false),
+		field.Enum("status").Values("pending", "processing", "done", "failed").Default("pending"),
 		field.Time("created_at").Default(time.Now),
 	}
 }

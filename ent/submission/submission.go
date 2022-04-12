@@ -3,6 +3,7 @@
 package submission
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,8 +18,8 @@ const (
 	FieldSourceLanguage = "source_language"
 	// FieldTargetLanguage holds the string denoting the target_language field in the database.
 	FieldTargetLanguage = "target_language"
-	// FieldCompleted holds the string denoting the completed field in the database.
-	FieldCompleted = "completed"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the submission in the database.
@@ -30,7 +31,7 @@ var Columns = []string{
 	FieldID,
 	FieldSourceLanguage,
 	FieldTargetLanguage,
-	FieldCompleted,
+	FieldStatus,
 	FieldCreatedAt,
 }
 
@@ -45,10 +46,36 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultCompleted holds the default value on creation for the "completed" field.
-	DefaultCompleted bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Status defines the type for the "status" enum field.
+type Status string
+
+// StatusPending is the default value of the Status enum.
+const DefaultStatus = StatusPending
+
+// Status values.
+const (
+	StatusPending    Status = "pending"
+	StatusProcessing Status = "processing"
+	StatusDone       Status = "done"
+	StatusFailed     Status = "failed"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusPending, StatusProcessing, StatusDone, StatusFailed:
+		return nil
+	default:
+		return fmt.Errorf("submission: invalid enum value for status field: %q", s)
+	}
+}

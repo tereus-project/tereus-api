@@ -139,6 +139,10 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
 	}
 
+	if job.Status != "done" {
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
+	}
+
 	objectStoragePath := fmt.Sprintf("%s/%s", env.SubmissionsFolder, job.ID)
 
 	// Get files from S3

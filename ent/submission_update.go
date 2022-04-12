@@ -40,16 +40,16 @@ func (su *SubmissionUpdate) SetTargetLanguage(s string) *SubmissionUpdate {
 	return su
 }
 
-// SetCompleted sets the "completed" field.
-func (su *SubmissionUpdate) SetCompleted(b bool) *SubmissionUpdate {
-	su.mutation.SetCompleted(b)
+// SetStatus sets the "status" field.
+func (su *SubmissionUpdate) SetStatus(s submission.Status) *SubmissionUpdate {
+	su.mutation.SetStatus(s)
 	return su
 }
 
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (su *SubmissionUpdate) SetNillableCompleted(b *bool) *SubmissionUpdate {
-	if b != nil {
-		su.SetCompleted(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableStatus(s *submission.Status) *SubmissionUpdate {
+	if s != nil {
+		su.SetStatus(*s)
 	}
 	return su
 }
@@ -80,12 +80,18 @@ func (su *SubmissionUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(su.hooks) == 0 {
+		if err = su.check(); err != nil {
+			return 0, err
+		}
 		affected, err = su.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*SubmissionMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = su.check(); err != nil {
+				return 0, err
 			}
 			su.mutation = mutation
 			affected, err = su.sqlSave(ctx)
@@ -127,6 +133,16 @@ func (su *SubmissionUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (su *SubmissionUpdate) check() error {
+	if v, ok := su.mutation.Status(); ok {
+		if err := submission.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -159,11 +175,11 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldTargetLanguage,
 		})
 	}
-	if value, ok := su.mutation.Completed(); ok {
+	if value, ok := su.mutation.Status(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeEnum,
 			Value:  value,
-			Column: submission.FieldCompleted,
+			Column: submission.FieldStatus,
 		})
 	}
 	if value, ok := su.mutation.CreatedAt(); ok {
@@ -204,16 +220,16 @@ func (suo *SubmissionUpdateOne) SetTargetLanguage(s string) *SubmissionUpdateOne
 	return suo
 }
 
-// SetCompleted sets the "completed" field.
-func (suo *SubmissionUpdateOne) SetCompleted(b bool) *SubmissionUpdateOne {
-	suo.mutation.SetCompleted(b)
+// SetStatus sets the "status" field.
+func (suo *SubmissionUpdateOne) SetStatus(s submission.Status) *SubmissionUpdateOne {
+	suo.mutation.SetStatus(s)
 	return suo
 }
 
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (suo *SubmissionUpdateOne) SetNillableCompleted(b *bool) *SubmissionUpdateOne {
-	if b != nil {
-		suo.SetCompleted(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableStatus(s *submission.Status) *SubmissionUpdateOne {
+	if s != nil {
+		suo.SetStatus(*s)
 	}
 	return suo
 }
@@ -251,12 +267,18 @@ func (suo *SubmissionUpdateOne) Save(ctx context.Context) (*Submission, error) {
 		node *Submission
 	)
 	if len(suo.hooks) == 0 {
+		if err = suo.check(); err != nil {
+			return nil, err
+		}
 		node, err = suo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*SubmissionMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = suo.check(); err != nil {
+				return nil, err
 			}
 			suo.mutation = mutation
 			node, err = suo.sqlSave(ctx)
@@ -296,6 +318,16 @@ func (suo *SubmissionUpdateOne) ExecX(ctx context.Context) {
 	if err := suo.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (suo *SubmissionUpdateOne) check() error {
+	if v, ok := suo.mutation.Status(); ok {
+		if err := submission.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission, err error) {
@@ -347,11 +379,11 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Column: submission.FieldTargetLanguage,
 		})
 	}
-	if value, ok := suo.mutation.Completed(); ok {
+	if value, ok := suo.mutation.Status(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeEnum,
 			Value:  value,
-			Column: submission.FieldCompleted,
+			Column: submission.FieldStatus,
 		})
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {

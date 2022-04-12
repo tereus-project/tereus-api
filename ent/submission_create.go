@@ -33,16 +33,16 @@ func (sc *SubmissionCreate) SetTargetLanguage(s string) *SubmissionCreate {
 	return sc
 }
 
-// SetCompleted sets the "completed" field.
-func (sc *SubmissionCreate) SetCompleted(b bool) *SubmissionCreate {
-	sc.mutation.SetCompleted(b)
+// SetStatus sets the "status" field.
+func (sc *SubmissionCreate) SetStatus(s submission.Status) *SubmissionCreate {
+	sc.mutation.SetStatus(s)
 	return sc
 }
 
-// SetNillableCompleted sets the "completed" field if the given value is not nil.
-func (sc *SubmissionCreate) SetNillableCompleted(b *bool) *SubmissionCreate {
-	if b != nil {
-		sc.SetCompleted(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableStatus(s *submission.Status) *SubmissionCreate {
+	if s != nil {
+		sc.SetStatus(*s)
 	}
 	return sc
 }
@@ -146,9 +146,9 @@ func (sc *SubmissionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (sc *SubmissionCreate) defaults() {
-	if _, ok := sc.mutation.Completed(); !ok {
-		v := submission.DefaultCompleted
-		sc.mutation.SetCompleted(v)
+	if _, ok := sc.mutation.Status(); !ok {
+		v := submission.DefaultStatus
+		sc.mutation.SetStatus(v)
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		v := submission.DefaultCreatedAt()
@@ -168,8 +168,13 @@ func (sc *SubmissionCreate) check() error {
 	if _, ok := sc.mutation.TargetLanguage(); !ok {
 		return &ValidationError{Name: "target_language", err: errors.New(`ent: missing required field "Submission.target_language"`)}
 	}
-	if _, ok := sc.mutation.Completed(); !ok {
-		return &ValidationError{Name: "completed", err: errors.New(`ent: missing required field "Submission.completed"`)}
+	if _, ok := sc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Submission.status"`)}
+	}
+	if v, ok := sc.mutation.Status(); ok {
+		if err := submission.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
+		}
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Submission.created_at"`)}
@@ -226,13 +231,13 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 		})
 		_node.TargetLanguage = value
 	}
-	if value, ok := sc.mutation.Completed(); ok {
+	if value, ok := sc.mutation.Status(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
+			Type:   field.TypeEnum,
 			Value:  value,
-			Column: submission.FieldCompleted,
+			Column: submission.FieldStatus,
 		})
-		_node.Completed = value
+		_node.Status = value
 	}
 	if value, ok := sc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
