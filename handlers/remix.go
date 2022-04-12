@@ -5,10 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -64,8 +66,32 @@ type remixJob struct {
 	TargetLanguage string `json:"target_language"`
 }
 
-// POST /remix/:src/to/:target
-func (h *RemixHandler) Remix(c echo.Context) error {
+type remixReq struct {
+	GitRepo string `json:"git_repo"`
+}
+
+type RemixType int64
+
+const (
+	UndefinedRemixType RemixType = iota
+	InlineRemixType
+	ZipRemixType
+	GitRemixType
+)
+
+func (h *RemixHandler) RemixInline(c echo.Context) error {
+	return h.Remix(c, InlineRemixType)
+}
+
+func (h *RemixHandler) RemixZip(c echo.Context) error {
+	return h.Remix(c, ZipRemixType)
+}
+
+func (h *RemixHandler) RemixGit(c echo.Context) error {
+	return h.Remix(c, GitRemixType)
+}
+
+func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	srcLanguage := strings.ToLower(c.Param("src"))
 	targetLanguage := strings.ToLower(c.Param("target"))
 
@@ -77,48 +103,103 @@ func (h *RemixHandler) Remix(c echo.Context) error {
 
 	jobID := uuid.New()
 
-	// Open file and unzip it
-	file, err := c.FormFile("file")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Missing file")
-	}
-
-	source, err := file.Open()
-	if err != nil {
-		logrus.WithError(err).Error("Failed to open file")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to open file")
-	}
-	defer source.Close()
-
-	zipReader, err := zip.NewReader(source, int64(file.Size))
-	if err != nil {
-		logrus.WithError(err).Error("Failed to unzip file")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to unzip file")
-	}
-
-	// Upload files to minio
-	for _, file := range zipReader.File {
-		if file.FileInfo().IsDir() {
-			continue
+	switch remixType {
+	case InlineRemixType:
+		sourceCode := c.Param("code")
+		if sourceCode == "" {
+			return c.JSON(http.StatusBadRequest, "Missing source code")
 		}
 
-		f, err := file.Open()
-		if err != nil {
-			logrus.WithError(err).Error("Failed to open file")
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
-		}
-		defer f.Close()
-
-		log.Println(file.Name)
-		_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
+		_, err := h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, "main.c"), strings.NewReader(sourceCode), strings.NewReader(sourceCode).Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
+			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
 		}
+	case ZipRemixType:
+		// Open file and unzip it
+		file, err := c.FormFile("file")
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "Missing file")
+		}
+
+		source, err := file.Open()
+		if err != nil {
+			logrus.WithError(err).Error("Failed to open file")
+			return c.JSON(http.StatusInternalServerError, "Failed to open file")
+		}
+		defer source.Close()
+
+		zipReader, err := zip.NewReader(source, int64(file.Size))
+		if err != nil {
+			logrus.WithError(err).Error("Failed to unzip file")
+			return c.JSON(http.StatusInternalServerError, "Failed to unzip file")
+		}
+
+		// Upload files to minio
+		for _, file := range zipReader.File {
+			if file.FileInfo().IsDir() {
+				continue
+			}
+
+			f, err := file.Open()
+			if err != nil {
+				logrus.WithError(err).Error("Failed to open file")
+				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
+			}
+			defer f.Close()
+			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
+			if err != nil {
+				logrus.WithError(err).Error("Failed to upload file to S3")
+				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
+			}
+		}
+
+	case GitRemixType:
+		req := new(remixReq)
+		err := c.Bind(req)
+		if err != nil {
+			return err
+		}
+
+		_, err = git.PlainClone("/tmp/"+jobID.String(), false, &git.CloneOptions{
+			URL:      req.GitRepo,
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			logrus.WithError(err).Error("Failed to clone git repo")
+			return c.JSON(http.StatusInternalServerError, "Failed to clone git repo")
+		}
+
+		// List files in git repo
+		files, err := ioutil.ReadDir("/tmp/" + jobID.String())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to list files in git repo")
+			return c.JSON(http.StatusInternalServerError, "Failed to list files in git repo")
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+
+			f, err := os.Open("/tmp/" + jobID.String() + "/" + file.Name())
+			if err != nil {
+				logrus.WithError(err).Error("Failed to open file")
+				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name()))
+			}
+			defer f.Close()
+			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, file.Size())
+			if err != nil {
+				logrus.WithError(err).Error("Failed to upload file to S3")
+				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
+			}
+		}
+
+	default:
+		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
 	// Publish job to exchange
-	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
+	err := h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
