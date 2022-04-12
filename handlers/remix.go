@@ -224,7 +224,11 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	}
 
 	if remixType == GitRemixType {
-		sub.Update().SetGitRepo(req.GitRepo).Save(context.Background())
+		_, err := sub.Update().SetGitRepo(req.GitRepo).Save(context.Background())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to save git repo to database")
+			return c.JSON(http.StatusInternalServerError, "Failed to save git repo to database")
+		}
 	}
 
 	return c.JSON(http.StatusOK, remixResult{
