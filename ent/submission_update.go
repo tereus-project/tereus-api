@@ -54,6 +54,40 @@ func (su *SubmissionUpdate) SetNillableStatus(s *submission.Status) *SubmissionU
 	return su
 }
 
+// SetCompleted sets the "completed" field.
+func (su *SubmissionUpdate) SetCompleted(b bool) *SubmissionUpdate {
+	su.mutation.SetCompleted(b)
+	return su
+}
+
+// SetNillableCompleted sets the "completed" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableCompleted(b *bool) *SubmissionUpdate {
+	if b != nil {
+		su.SetCompleted(*b)
+	}
+	return su
+}
+
+// SetGitRepo sets the "git_repo" field.
+func (su *SubmissionUpdate) SetGitRepo(s string) *SubmissionUpdate {
+	su.mutation.SetGitRepo(s)
+	return su
+}
+
+// SetNillableGitRepo sets the "git_repo" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableGitRepo(s *string) *SubmissionUpdate {
+	if s != nil {
+		su.SetGitRepo(*s)
+	}
+	return su
+}
+
+// ClearGitRepo clears the value of the "git_repo" field.
+func (su *SubmissionUpdate) ClearGitRepo() *SubmissionUpdate {
+	su.mutation.ClearGitRepo()
+	return su
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (su *SubmissionUpdate) SetCreatedAt(t time.Time) *SubmissionUpdate {
 	su.mutation.SetCreatedAt(t)
@@ -182,6 +216,26 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldStatus,
 		})
 	}
+	if value, ok := su.mutation.Completed(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldCompleted,
+		})
+	}
+	if value, ok := su.mutation.GitRepo(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldGitRepo,
+		})
+	}
+	if su.mutation.GitRepoCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldGitRepo,
+		})
+	}
 	if value, ok := su.mutation.CreatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -231,6 +285,40 @@ func (suo *SubmissionUpdateOne) SetNillableStatus(s *submission.Status) *Submiss
 	if s != nil {
 		suo.SetStatus(*s)
 	}
+	return suo
+}
+
+// SetCompleted sets the "completed" field.
+func (suo *SubmissionUpdateOne) SetCompleted(b bool) *SubmissionUpdateOne {
+	suo.mutation.SetCompleted(b)
+	return suo
+}
+
+// SetNillableCompleted sets the "completed" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableCompleted(b *bool) *SubmissionUpdateOne {
+	if b != nil {
+		suo.SetCompleted(*b)
+	}
+	return suo
+}
+
+// SetGitRepo sets the "git_repo" field.
+func (suo *SubmissionUpdateOne) SetGitRepo(s string) *SubmissionUpdateOne {
+	suo.mutation.SetGitRepo(s)
+	return suo
+}
+
+// SetNillableGitRepo sets the "git_repo" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableGitRepo(s *string) *SubmissionUpdateOne {
+	if s != nil {
+		suo.SetGitRepo(*s)
+	}
+	return suo
+}
+
+// ClearGitRepo clears the value of the "git_repo" field.
+func (suo *SubmissionUpdateOne) ClearGitRepo() *SubmissionUpdateOne {
+	suo.mutation.ClearGitRepo()
 	return suo
 }
 
@@ -384,6 +472,26 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeEnum,
 			Value:  value,
 			Column: submission.FieldStatus,
+		})
+	}
+	if value, ok := suo.mutation.Completed(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldCompleted,
+		})
+	}
+	if value, ok := suo.mutation.GitRepo(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldGitRepo,
+		})
+	}
+	if suo.mutation.GitRepoCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldGitRepo,
 		})
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {

@@ -166,7 +166,6 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 	case GitRemixType:
-
 		_, err = git.PlainClone("/tmp/"+jobID.String(), false, &git.CloneOptions{
 			URL:      req.GitRepo,
 			Progress: os.Stdout,
@@ -199,7 +198,6 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
 			}
 		}
-
 	default:
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
@@ -215,7 +213,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish job to RabbitMQ")
 	}
 
-	_, err = h.DatabaseService.Submission.Create().
+	sub, err := h.DatabaseService.Submission.Create().
 		SetID(jobID).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
@@ -223,6 +221,10 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	if err != nil {
 		logrus.WithError(err).Error("Failed to save submission to database")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save submission to database")
+	}
+
+	if remixType == GitRemixType {
+		sub.Update().SetGitRepo(req.GitRepo).Save(context.Background())
 	}
 
 	return c.JSON(http.StatusOK, remixResult{
