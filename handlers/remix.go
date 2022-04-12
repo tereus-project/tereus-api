@@ -67,7 +67,7 @@ type remixJob struct {
 }
 
 type remixReq struct {
-	GitRepo string `json:"git_repo"`
+	GitRepo string `json:"git_repo" validate:"required"`
 }
 
 type RemixType int64
@@ -92,6 +92,17 @@ func (h *RemixHandler) RemixGit(c echo.Context) error {
 }
 
 func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
+	req := new(remixReq)
+	err := c.Bind(req)
+	if err != nil {
+		return err
+	}
+
+	err = c.Validate(req)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	srcLanguage := strings.ToLower(c.Param("src"))
 	targetLanguage := strings.ToLower(c.Param("target"))
 
@@ -155,11 +166,6 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 	case GitRemixType:
-		req := new(remixReq)
-		err := c.Bind(req)
-		if err != nil {
-			return err
-		}
 
 		_, err = git.PlainClone("/tmp/"+jobID.String(), false, &git.CloneOptions{
 			URL:      req.GitRepo,
@@ -199,7 +205,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	}
 
 	// Publish job to exchange
-	err := h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
+	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,

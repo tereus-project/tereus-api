@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
@@ -27,6 +28,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
+
+	e.Validator = &services.CustomValidator{Validator: validator.New()}
 
 	// Initialize S3 service
 	logrus.Debugln("Initializing S3 service")
