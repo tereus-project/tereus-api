@@ -70,8 +70,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	e.POST("/remix/:src/to/:target", remixHandler.Remix)
 	e.GET("/remix/:id", remixHandler.DownloadRemixedFiles)
+	e.POST("/remix/inline/:src/to/:target", remixHandler.RemixInline)
+	e.POST("/remix/zip/:src/to/:target", remixHandler.RemixZip)
+	e.POST("/remix/git/:src/to/:target", remixHandler.RemixGit)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
