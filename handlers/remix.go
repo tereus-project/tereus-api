@@ -65,8 +65,9 @@ type remixJob struct {
 	TargetLanguage string `json:"target_language"`
 }
 
-type remixReq struct {
-	GitRepo string `json:"git_repo" validate:"required"`
+type remixBody struct {
+	GitRepo    string `json:"git_repo"`
+	SourceCode string `json:"source_code"`
 }
 
 type RemixType int64
@@ -91,14 +92,13 @@ func (h *RemixHandler) RemixGit(c echo.Context) error {
 }
 
 func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
-	req := new(remixReq)
-	err := c.Bind(req)
-	if err != nil {
+	body := new(remixBody)
+
+	if err := c.Bind(body); err != nil {
 		return err
 	}
 
-	err = c.Validate(req)
-	if err != nil {
+	if err := c.Validate(body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -115,12 +115,12 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 
 	switch remixType {
 	case InlineRemixType:
-		sourceCode := c.Param("code")
-		if sourceCode == "" {
+		if body.SourceCode == "" {
 			return c.JSON(http.StatusBadRequest, "Missing source code")
 		}
 
-		_, err := h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, "main.c"), strings.NewReader(sourceCode), strings.NewReader(sourceCode).Size())
+		reader := strings.NewReader(body.SourceCode)
+		_, err := h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -166,6 +166,10 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 	case GitRemixType:
+		if body.GitRepo == "" {
+			return c.JSON(http.StatusBadRequest, "Missing git repository")
+		}
+
 		destination, err := os.MkdirTemp("", "tereus")
 		if err != nil {
 			logrus.WithError(err).Error("Failed to create temporary directory")
@@ -173,7 +177,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 		_, err = git.PlainClone(destination, false, &git.CloneOptions{
-			URL:      req.GitRepo,
+			URL:      body.GitRepo,
 			Progress: os.Stdout,
 		})
 		if err != nil {
@@ -222,7 +226,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	}
 
 	// Publish job to exchange
-	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
+	err := h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
@@ -243,7 +247,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	}
 
 	if remixType == GitRemixType {
-		_, err := sub.Update().SetGitRepo(req.GitRepo).Save(context.Background())
+		_, err := sub.Update().SetGitRepo(body.GitRepo).Save(context.Background())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to save git repo to database")
 			return c.JSON(http.StatusInternalServerError, "Failed to save git repo to database")
