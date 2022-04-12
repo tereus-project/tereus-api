@@ -17,6 +17,8 @@ const (
 	FieldSourceLanguage = "source_language"
 	// FieldTargetLanguage holds the string denoting the target_language field in the database.
 	FieldTargetLanguage = "target_language"
+	// FieldCompleted holds the string denoting the completed field in the database.
+	FieldCompleted = "completed"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the submission in the database.
@@ -28,6 +30,7 @@ var Columns = []string{
 	FieldID,
 	FieldSourceLanguage,
 	FieldTargetLanguage,
+	FieldCompleted,
 	FieldCreatedAt,
 }
 
@@ -42,6 +45,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultCompleted holds the default value on creation for the "completed" field.
+	DefaultCompleted bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.

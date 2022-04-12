@@ -40,6 +40,20 @@ func (su *SubmissionUpdate) SetTargetLanguage(s string) *SubmissionUpdate {
 	return su
 }
 
+// SetCompleted sets the "completed" field.
+func (su *SubmissionUpdate) SetCompleted(b bool) *SubmissionUpdate {
+	su.mutation.SetCompleted(b)
+	return su
+}
+
+// SetNillableCompleted sets the "completed" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableCompleted(b *bool) *SubmissionUpdate {
+	if b != nil {
+		su.SetCompleted(*b)
+	}
+	return su
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (su *SubmissionUpdate) SetCreatedAt(t time.Time) *SubmissionUpdate {
 	su.mutation.SetCreatedAt(t)
@@ -145,6 +159,13 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldTargetLanguage,
 		})
 	}
+	if value, ok := su.mutation.Completed(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldCompleted,
+		})
+	}
 	if value, ok := su.mutation.CreatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -180,6 +201,20 @@ func (suo *SubmissionUpdateOne) SetSourceLanguage(s string) *SubmissionUpdateOne
 // SetTargetLanguage sets the "target_language" field.
 func (suo *SubmissionUpdateOne) SetTargetLanguage(s string) *SubmissionUpdateOne {
 	suo.mutation.SetTargetLanguage(s)
+	return suo
+}
+
+// SetCompleted sets the "completed" field.
+func (suo *SubmissionUpdateOne) SetCompleted(b bool) *SubmissionUpdateOne {
+	suo.mutation.SetCompleted(b)
+	return suo
+}
+
+// SetNillableCompleted sets the "completed" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableCompleted(b *bool) *SubmissionUpdateOne {
+	if b != nil {
+		suo.SetCompleted(*b)
+	}
 	return suo
 }
 
@@ -310,6 +345,13 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeString,
 			Value:  value,
 			Column: submission.FieldTargetLanguage,
+		})
+	}
+	if value, ok := suo.mutation.Completed(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldCompleted,
 		})
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {

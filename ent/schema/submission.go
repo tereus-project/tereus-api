@@ -16,12 +16,11 @@ type Submission struct {
 // Fields of the Submission.
 func (Submission) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New),
+		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("source_language"),
 		field.String("target_language"),
-		field.Time("created_at").
-			Default(time.Now),
+		field.Bool("completed").Default(false),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 

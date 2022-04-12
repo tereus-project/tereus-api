@@ -36,6 +36,7 @@ type SubmissionMutation struct {
 	id              *uuid.UUID
 	source_language *string
 	target_language *string
+	completed       *bool
 	created_at      *time.Time
 	clearedFields   map[string]struct{}
 	done            bool
@@ -219,6 +220,42 @@ func (m *SubmissionMutation) ResetTargetLanguage() {
 	m.target_language = nil
 }
 
+// SetCompleted sets the "completed" field.
+func (m *SubmissionMutation) SetCompleted(b bool) {
+	m.completed = &b
+}
+
+// Completed returns the value of the "completed" field in the mutation.
+func (m *SubmissionMutation) Completed() (r bool, exists bool) {
+	v := m.completed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompleted returns the old "completed" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldCompleted(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompleted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompleted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompleted: %w", err)
+	}
+	return oldValue.Completed, nil
+}
+
+// ResetCompleted resets all changes to the "completed" field.
+func (m *SubmissionMutation) ResetCompleted() {
+	m.completed = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *SubmissionMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -274,12 +311,15 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
 	if m.target_language != nil {
 		fields = append(fields, submission.FieldTargetLanguage)
+	}
+	if m.completed != nil {
+		fields = append(fields, submission.FieldCompleted)
 	}
 	if m.created_at != nil {
 		fields = append(fields, submission.FieldCreatedAt)
@@ -296,6 +336,8 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.SourceLanguage()
 	case submission.FieldTargetLanguage:
 		return m.TargetLanguage()
+	case submission.FieldCompleted:
+		return m.Completed()
 	case submission.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -311,6 +353,8 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldSourceLanguage(ctx)
 	case submission.FieldTargetLanguage:
 		return m.OldTargetLanguage(ctx)
+	case submission.FieldCompleted:
+		return m.OldCompleted(ctx)
 	case submission.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -335,6 +379,13 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTargetLanguage(v)
+		return nil
+	case submission.FieldCompleted:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompleted(v)
 		return nil
 	case submission.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -397,6 +448,9 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldTargetLanguage:
 		m.ResetTargetLanguage()
+		return nil
+	case submission.FieldCompleted:
+		m.ResetCompleted()
 		return nil
 	case submission.FieldCreatedAt:
 		m.ResetCreatedAt()

@@ -33,6 +33,20 @@ func (sc *SubmissionCreate) SetTargetLanguage(s string) *SubmissionCreate {
 	return sc
 }
 
+// SetCompleted sets the "completed" field.
+func (sc *SubmissionCreate) SetCompleted(b bool) *SubmissionCreate {
+	sc.mutation.SetCompleted(b)
+	return sc
+}
+
+// SetNillableCompleted sets the "completed" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableCompleted(b *bool) *SubmissionCreate {
+	if b != nil {
+		sc.SetCompleted(*b)
+	}
+	return sc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (sc *SubmissionCreate) SetCreatedAt(t time.Time) *SubmissionCreate {
 	sc.mutation.SetCreatedAt(t)
@@ -132,6 +146,10 @@ func (sc *SubmissionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (sc *SubmissionCreate) defaults() {
+	if _, ok := sc.mutation.Completed(); !ok {
+		v := submission.DefaultCompleted
+		sc.mutation.SetCompleted(v)
+	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		v := submission.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
@@ -149,6 +167,9 @@ func (sc *SubmissionCreate) check() error {
 	}
 	if _, ok := sc.mutation.TargetLanguage(); !ok {
 		return &ValidationError{Name: "target_language", err: errors.New(`ent: missing required field "Submission.target_language"`)}
+	}
+	if _, ok := sc.mutation.Completed(); !ok {
+		return &ValidationError{Name: "completed", err: errors.New(`ent: missing required field "Submission.completed"`)}
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Submission.created_at"`)}
@@ -204,6 +225,14 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 			Column: submission.FieldTargetLanguage,
 		})
 		_node.TargetLanguage = value
+	}
+	if value, ok := sc.mutation.Completed(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldCompleted,
+		})
+		_node.Completed = value
 	}
 	if value, ok := sc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

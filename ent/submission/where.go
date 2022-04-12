@@ -107,6 +107,13 @@ func TargetLanguage(v string) predicate.Submission {
 	})
 }
 
+// Completed applies equality check predicate on the "completed" field. It's identical to CompletedEQ.
+func Completed(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCompleted), v))
+	})
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -333,6 +340,20 @@ func TargetLanguageEqualFold(v string) predicate.Submission {
 func TargetLanguageContainsFold(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldTargetLanguage), v))
+	})
+}
+
+// CompletedEQ applies the EQ predicate on the "completed" field.
+func CompletedEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCompleted), v))
+	})
+}
+
+// CompletedNEQ applies the NEQ predicate on the "completed" field.
+func CompletedNEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldCompleted), v))
 	})
 }
 

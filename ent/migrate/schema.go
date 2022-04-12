@@ -13,6 +13,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "source_language", Type: field.TypeString},
 		{Name: "target_language", Type: field.TypeString},
+		{Name: "completed", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// SubmissionsTable holds the schema information for the "submissions" table.
