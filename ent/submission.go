@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/user"
 )
 
 // Submission is the model entity for the Submission schema.
@@ -27,6 +28,33 @@ type Submission struct {
 	GitRepo string `json:"git_repo,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the SubmissionQuery when eager-loading is set.
+	Edges            SubmissionEdges `json:"edges"`
+	user_submissions *uuid.UUID
+}
+
+// SubmissionEdges holds the relations/edges for other nodes in the graph.
+type SubmissionEdges struct {
+	// User holds the value of the user edge.
+	User *User `json:"user,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// UserOrErr returns the User value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e SubmissionEdges) UserOrErr() (*User, error) {
+	if e.loadedTypes[0] {
+		if e.User == nil {
+			// The edge user was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.User, nil
+	}
+	return nil, &NotLoadedError{edge: "user"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -40,6 +68,8 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullTime)
 		case submission.FieldID:
 			values[i] = new(uuid.UUID)
+		case submission.ForeignKeys[0]: // user_submissions
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Submission", columns[i])
 		}
@@ -91,9 +121,21 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				s.CreatedAt = value.Time
 			}
+		case submission.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field user_submissions", values[i])
+			} else if value.Valid {
+				s.user_submissions = new(uuid.UUID)
+				*s.user_submissions = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
+}
+
+// QueryUser queries the "user" edge of the Submission entity.
+func (s *Submission) QueryUser() *UserQuery {
+	return (&SubmissionClient{config: s.config}).QueryUser(s)
 }
 
 // Update returns a builder for updating this Submission.

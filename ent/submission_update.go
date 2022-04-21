@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/predicate"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/user"
 )
 
 // SubmissionUpdate is the builder for updating Submission entities.
@@ -88,9 +90,26 @@ func (su *SubmissionUpdate) SetNillableCreatedAt(t *time.Time) *SubmissionUpdate
 	return su
 }
 
+// SetUserID sets the "user" edge to the User entity by ID.
+func (su *SubmissionUpdate) SetUserID(id uuid.UUID) *SubmissionUpdate {
+	su.mutation.SetUserID(id)
+	return su
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (su *SubmissionUpdate) SetUser(u *User) *SubmissionUpdate {
+	return su.SetUserID(u.ID)
+}
+
 // Mutation returns the SubmissionMutation object of the builder.
 func (su *SubmissionUpdate) Mutation() *SubmissionMutation {
 	return su.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (su *SubmissionUpdate) ClearUser() *SubmissionUpdate {
+	su.mutation.ClearUser()
+	return su
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -160,6 +179,9 @@ func (su *SubmissionUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
 		}
 	}
+	if _, ok := su.mutation.UserID(); su.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Submission.user"`)
+	}
 	return nil
 }
 
@@ -221,6 +243,41 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Value:  value,
 			Column: submission.FieldCreatedAt,
 		})
+	}
+	if su.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   submission.UserTable,
+			Columns: []string{submission.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   submission.UserTable,
+			Columns: []string{submission.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -301,9 +358,26 @@ func (suo *SubmissionUpdateOne) SetNillableCreatedAt(t *time.Time) *SubmissionUp
 	return suo
 }
 
+// SetUserID sets the "user" edge to the User entity by ID.
+func (suo *SubmissionUpdateOne) SetUserID(id uuid.UUID) *SubmissionUpdateOne {
+	suo.mutation.SetUserID(id)
+	return suo
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (suo *SubmissionUpdateOne) SetUser(u *User) *SubmissionUpdateOne {
+	return suo.SetUserID(u.ID)
+}
+
 // Mutation returns the SubmissionMutation object of the builder.
 func (suo *SubmissionUpdateOne) Mutation() *SubmissionMutation {
 	return suo.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (suo *SubmissionUpdateOne) ClearUser() *SubmissionUpdateOne {
+	suo.mutation.ClearUser()
+	return suo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -379,6 +453,9 @@ func (suo *SubmissionUpdateOne) check() error {
 		if err := submission.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Submission.status": %w`, err)}
 		}
+	}
+	if _, ok := suo.mutation.UserID(); suo.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Submission.user"`)
 	}
 	return nil
 }
@@ -458,6 +535,41 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Value:  value,
 			Column: submission.FieldCreatedAt,
 		})
+	}
+	if suo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   submission.UserTable,
+			Columns: []string{submission.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   submission.UserTable,
+			Columns: []string{submission.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Submission{config: suo.config}
 	_spec.Assign = _node.assignValues

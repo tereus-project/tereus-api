@@ -52,8 +52,21 @@ services:
     networks:
       - tereus_api
     ports:
-      - 127.0.0.1:9000:9000
-      - 127.0.0.1:9001:9001
+      - 9000:9000
+      - 9001:9001
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
     restart: always
+
+  api:
+    image: cosmtrek/air
+    networks:
+      - tereus_api
+    ports:
+      - 1323:1323
+    volumes:
+      - ./:/app
+    env_file: .env
+    environment:
+      air_wd: /app
+    tty: true

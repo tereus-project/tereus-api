@@ -8,18 +8,32 @@ import (
 )
 
 var (
-	S3Bucket          string
-	S3AccessKey       string
-	S3SecretKey       string
-	S3Endpoint        string
-	RabbitMQEndpoint  string
-	SubmissionsFolder string
+	DatabaseDriver          string
+	DatabaseEndpoint        string
+	S3Bucket                string
+	S3AccessKey             string
+	S3SecretKey             string
+	S3Endpoint              string
+	RabbitMQEndpoint        string
+	SubmissionsFolder       string
+	GithubOAuthClientId     string
+	GithubOAuthClientSecret string
 )
 
 func LoadEnv() error {
 	err := godotenv.Load()
 	if err != nil {
 		return err
+	}
+
+	DatabaseDriver = os.Getenv("DATABASE_DRIVER")
+	if DatabaseDriver == "" {
+		return fmt.Errorf("DATABASE_DRIVER is not set")
+	}
+
+	DatabaseEndpoint = os.Getenv("DATABASE_ENDPOINT")
+	if DatabaseEndpoint == "" {
+		return fmt.Errorf("DATABASE_ENDPOINT is not set")
 	}
 
 	S3Bucket = os.Getenv("S3_BUCKET")
@@ -50,6 +64,16 @@ func LoadEnv() error {
 	SubmissionsFolder = os.Getenv("SUBMISSIONS_FOLDER")
 	if SubmissionsFolder == "" {
 		return fmt.Errorf("SUBMISSIONS_FOLDER is not set")
+	}
+
+	GithubOAuthClientId = os.Getenv("GITHUB_OAUTH_CLIENT_ID")
+	if GithubOAuthClientId == "" {
+		return fmt.Errorf("GITHUB_OAUTH_CLIENT_ID is not set")
+	}
+
+	GithubOAuthClientSecret = os.Getenv("GITHUB_OAUTH_CLIENT_SECRET")
+	if GithubOAuthClientSecret == "" {
+		return fmt.Errorf("GITHUB_OAUTH_CLIENT_SECRET is not set")
 	}
 
 	return nil

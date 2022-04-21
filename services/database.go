@@ -3,9 +3,11 @@ package services
 import (
 	"context"
 
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/tereus-project/tereus-api/ent"
+	"github.com/tereus-project/tereus-api/env"
 )
 
 type DatabaseService struct {
@@ -13,7 +15,7 @@ type DatabaseService struct {
 }
 
 func NewDatabaseService(driver string, dataSourceName string) (*DatabaseService, error) {
-	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	client, err := ent.Open(env.DatabaseDriver, env.DatabaseEndpoint)
 	if err != nil {
 		return nil, err
 	}

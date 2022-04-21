@@ -22,11 +22,12 @@ type RemixHandler struct {
 	S3Service       *services.S3Service
 	RabbitMQService *services.RabbitMQService
 	DatabaseService *services.DatabaseService
+	TokenService    *services.TokenService
 
 	jobsQueues map[string]map[string]*services.RabbitMQQueue
 }
 
-func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService) (*RemixHandler, error) {
+func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService, tokenService *services.TokenService) (*RemixHandler, error) {
 	var err error
 
 	jobsQueues := map[string]map[string]*services.RabbitMQQueue{
@@ -48,6 +49,7 @@ func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.Ra
 		S3Service:       s3Service,
 		RabbitMQService: rabbitMQService,
 		DatabaseService: databaseService,
+		TokenService:    tokenService,
 
 		jobsQueues: jobsQueues,
 	}, nil
@@ -92,6 +94,11 @@ func (h *RemixHandler) RemixGit(c echo.Context) error {
 }
 
 func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
+	user, err := h.TokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
 	body := new(remixBody)
 
 	if err := c.Bind(body); err != nil {
@@ -226,7 +233,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	}
 
 	// Publish job to exchange
-	err := h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
+	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
@@ -236,22 +243,20 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish job to RabbitMQ")
 	}
 
-	sub, err := h.DatabaseService.Submission.Create().
+	submissionCreation := h.DatabaseService.Submission.Create().
 		SetID(jobID).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
-		Save(context.Background())
+		SetUserID(user.ID)
+
+	if remixType == GitRemixType {
+		submissionCreation.SetGitRepo(body.GitRepo)
+	}
+
+	_, err = submissionCreation.Save(context.Background())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to save submission to database")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save submission to database")
-	}
-
-	if remixType == GitRemixType {
-		_, err := sub.Update().SetGitRepo(body.GitRepo).Save(context.Background())
-		if err != nil {
-			logrus.WithError(err).Error("Failed to save git repo to database")
-			return c.JSON(http.StatusInternalServerError, "Failed to save git repo to database")
-		}
 	}
 
 	return c.JSON(http.StatusOK, remixResult{

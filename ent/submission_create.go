@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/user"
 )
 
 // SubmissionCreate is the builder for creating a Submission entity.
@@ -87,6 +88,17 @@ func (sc *SubmissionCreate) SetNillableID(u *uuid.UUID) *SubmissionCreate {
 		sc.SetID(*u)
 	}
 	return sc
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (sc *SubmissionCreate) SetUserID(id uuid.UUID) *SubmissionCreate {
+	sc.mutation.SetUserID(id)
+	return sc
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (sc *SubmissionCreate) SetUser(u *User) *SubmissionCreate {
+	return sc.SetUserID(u.ID)
 }
 
 // Mutation returns the SubmissionMutation object of the builder.
@@ -193,6 +205,9 @@ func (sc *SubmissionCreate) check() error {
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Submission.created_at"`)}
 	}
+	if _, ok := sc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Submission.user"`)}
+	}
 	return nil
 }
 
@@ -268,6 +283,26 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 			Column: submission.FieldCreatedAt,
 		})
 		_node.CreatedAt = value
+	}
+	if nodes := sc.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   submission.UserTable,
+			Columns: []string{submission.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_submissions = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

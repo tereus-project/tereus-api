@@ -62,13 +62,32 @@ func main() {
 		logrus.WithError(err).Fatalln("Failed to migrate database")
 	}
 
+	// Initialize GitHub service
+	logrus.Debugln("Initializing GitHub service")
+	githubService, err := services.NewGithubService(env.GithubOAuthClientId, env.GithubOAuthClientSecret)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
+	}
+
+	// Initialize token service
+	logrus.Debugln("Initializing token service")
+	tokenService := services.NewTokenService(databaseService)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to initialize token service")
+	}
+
 	logrus.Debugln("Starting submission completion listener")
 	err = startSubmissionCompletionListener(rabbitMQService, databaseService)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to start submission completion listener")
 	}
 
-	remixHandler, err := handlers.NewRemixHandler(s3Service, rabbitMQService, databaseService)
+	remixHandler, err := handlers.NewRemixHandler(s3Service, rabbitMQService, databaseService, tokenService)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authHandler, err := handlers.NewAuthHandler(databaseService, githubService, tokenService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,6 +96,9 @@ func main() {
 	e.POST("/remix/inline/:src/to/:target", remixHandler.RemixInline)
 	e.POST("/remix/zip/:src/to/:target", remixHandler.RemixZip)
 	e.POST("/remix/git/:src/to/:target", remixHandler.RemixGit)
+
+	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
+	e.POST("/auth/login/github", authHandler.GithubLogin)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

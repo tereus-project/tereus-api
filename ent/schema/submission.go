@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -27,5 +28,10 @@ func (Submission) Fields() []ent.Field {
 
 // Edges of the Submission.
 func (Submission) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("user", User.Type).
+			Ref("submissions").
+			Unique().
+			Required(),
+	}
 }
