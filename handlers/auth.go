@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent/user"
 	"github.com/tereus-project/tereus-api/services"
 )
 
@@ -95,15 +97,23 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.GithubService.ClientId))
 	}
 
-	user, err := h.DatabaseService.User.Create().
+	userId, err := h.DatabaseService.User.Create().
 		SetEmail(email).
 		SetGithubAccessToken(githubAuth.AccessToken).
-		Save(context.Background())
+		OnConflict(
+			sql.ConflictColumns(user.FieldEmail),
+			sql.UpdateWhere(
+				sql.NotNull(user.FieldGithubAccessToken),
+			),
+		).
+		UpdateGithubAccessToken().
+		ID(context.Background())
 	if err != nil {
+		logrus.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
 	}
 
-	token, err := h.TokenService.GenerateToken(user.ID)
+	token, err := h.TokenService.GenerateToken(userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
