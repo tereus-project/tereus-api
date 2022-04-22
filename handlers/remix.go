@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -177,15 +180,30 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			return c.JSON(http.StatusBadRequest, "Missing git repository")
 		}
 
+		url, err := url.Parse(body.GitRepo)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "Invalid git repository")
+		}
+
 		destination, err := os.MkdirTemp("", "tereus")
 		if err != nil {
 			logrus.WithError(err).Error("Failed to create temporary directory")
 			return c.JSON(http.StatusInternalServerError, "Failed to clone git repository")
 		}
 
+		var auth transport.AuthMethod
+
+		if user.GithubAccessToken != "" && url.Host == "github.com" {
+			auth = &transportHttp.BasicAuth{
+				Username: "tereus",
+				Password: user.GithubAccessToken,
+			}
+		}
+
 		_, err = git.PlainClone(destination, false, &git.CloneOptions{
 			URL:      body.GitRepo,
 			Progress: os.Stdout,
+			Auth:     auth,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Failed to clone git repository")
