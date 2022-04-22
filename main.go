@@ -92,6 +92,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	userHandler, err := handlers.NewUserHandler(tokenService)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	e.GET("/remix/:id", remixHandler.DownloadRemixedFiles)
 	e.POST("/remix/inline/:src/to/:target", remixHandler.RemixInline)
 	e.POST("/remix/zip/:src/to/:target", remixHandler.RemixZip)
@@ -99,6 +104,8 @@ func main() {
 
 	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)
+
+	e.GET("/users/me", userHandler.GetCurrentUser)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

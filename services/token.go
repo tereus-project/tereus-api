@@ -43,6 +43,10 @@ func (s *TokenService) GetUser(tokenId uuid.UUID) (*ent.User, error) {
 func (s *TokenService) GetUserFromContext(c echo.Context) (*ent.User, error) {
 	authHeader := c.Request().Header.Get("Authorization")
 	if authHeader == "" {
+		authHeader = c.Request().URL.Query().Get("token")
+	}
+
+	if authHeader == "" {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized, "No authorization header provided")
 	}
 
