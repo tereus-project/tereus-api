@@ -58,10 +58,12 @@ func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.Ra
 	}, nil
 }
 
-type remixResult struct {
+type RemixResult struct {
 	ID             string `json:"id"`
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
+	Status         string `json:"status"`
+	CreatedAt      string `json:"created_at"`
 }
 
 type remixJob struct {
@@ -277,7 +279,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save submission to database")
 	}
 
-	return c.JSON(http.StatusOK, remixResult{
+	return c.JSON(http.StatusOK, RemixResult{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
