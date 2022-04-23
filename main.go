@@ -92,7 +92,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userHandler, err := handlers.NewUserHandler(tokenService)
+	userHandler, err := handlers.NewUserHandler(tokenService, databaseService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,6 +106,7 @@ func main() {
 	e.POST("/auth/login/github", authHandler.GithubLogin)
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
+	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
