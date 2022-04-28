@@ -54,7 +54,7 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 
 	submissions, err := h.DatabaseService.Submission.Query().
 		Where(submission.HasUserWith(user.ID(tereusUser.ID))).
-		Order(ent.Asc(submission.FieldCreatedAt)).
+		Order(ent.Desc(submission.FieldCreatedAt)).
 		All(context.Background())
 	if err != nil {
 		return err
