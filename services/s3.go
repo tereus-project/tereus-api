@@ -60,22 +60,22 @@ func (s *S3Service) GetObject(bucket string, path string) (io.ReadCloser, error)
 	return s.client.GetObject(context.Background(), bucket, path, minio.GetObjectOptions{})
 }
 
-func (s *S3Service) GetObjects(bucket string, prefix string) (paths <-chan string, err error) {
-	ch := make(chan string)
+type GetObjectsResult struct {
+	Err  error
+	Path string
+}
+
+func (s *S3Service) GetObjects(bucket string, prefix string) (paths <-chan *GetObjectsResult, err error) {
+	ch := make(chan *GetObjectsResult)
 
 	go func() {
 		defer close(ch)
 
-		doneCh := make(chan struct{})
-		defer close(doneCh)
-
 		for object := range s.client.ListObjects(context.Background(), bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
-			if object.Err != nil {
-				log.Println(object.Err)
-				return
+			ch <- &GetObjectsResult{
+				Err:  object.Err,
+				Path: object.Key,
 			}
-
-			ch <- object.Key
 		}
 	}()
 
