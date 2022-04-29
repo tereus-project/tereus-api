@@ -10,12 +10,14 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-type submissionCompletionMessage struct {
-	ID string `json:"id"`
+type submissionStatusMessage struct {
+	ID     string            `json:"id"`
+	Status submission.Status `json:"status"`
+	Reason string            `json:"reason"`
 }
 
-func startSubmissionCompletionListener(rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService) error {
-	queue, err := rabbitMQService.NewQueue("submission_completion_q", "submission_completion_ex", "#")
+func startSubmissionStatusListener(rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService) error {
+	queue, err := rabbitMQService.NewQueue("submission_status_q", "submission_status_ex", "#")
 	if err != nil {
 		return err
 	}
@@ -27,14 +29,14 @@ func startSubmissionCompletionListener(rabbitMQService *services.RabbitMQService
 
 	go func() {
 		for delivery := range deliveries {
-			logrus.Info("Received submission completion message")
+			logrus.Info("Received submission status message")
 
-			var message submissionCompletionMessage
+			var message submissionStatusMessage
 			if err := json.Unmarshal(delivery.Body, &message); err != nil {
-				logrus.WithError(err).Error("Failed to unmarshal submission completion message")
+				logrus.WithError(err).Error("Failed to unmarshal submission status message")
 
 				if err := delivery.Nack(false, true); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission completion message")
+					logrus.WithError(err).Error("Failed to nack submission status message")
 				}
 
 				continue
@@ -45,7 +47,7 @@ func startSubmissionCompletionListener(rabbitMQService *services.RabbitMQService
 				logrus.WithError(err).Error("Failed to parse submission ID")
 
 				if err := delivery.Nack(false, false); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission completion message")
+					logrus.WithError(err).Error("Failed to nack submission status message")
 				}
 
 				continue
@@ -53,20 +55,21 @@ func startSubmissionCompletionListener(rabbitMQService *services.RabbitMQService
 
 			err = databaseService.Submission.
 				UpdateOneID(id).
-				SetStatus(submission.StatusDone).
+				SetStatus(message.Status).
+				SetReason(message.Reason).
 				Exec(context.Background())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to update submission status")
 
 				if err := delivery.Nack(false, true); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission completion message")
+					logrus.WithError(err).Error("Failed to nack submission status message")
 				}
 
 				continue
 			}
 
 			if err := delivery.Ack(false); err != nil {
-				logrus.WithError(err).Error("Failed to acknowledge submission completion message")
+				logrus.WithError(err).Error("Failed to acknowledge submission status message")
 			}
 		}
 	}()

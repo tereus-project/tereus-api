@@ -56,6 +56,26 @@ func (su *SubmissionUpdate) SetNillableStatus(s *submission.Status) *SubmissionU
 	return su
 }
 
+// SetReason sets the "reason" field.
+func (su *SubmissionUpdate) SetReason(s string) *SubmissionUpdate {
+	su.mutation.SetReason(s)
+	return su
+}
+
+// SetNillableReason sets the "reason" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableReason(s *string) *SubmissionUpdate {
+	if s != nil {
+		su.SetReason(*s)
+	}
+	return su
+}
+
+// ClearReason clears the value of the "reason" field.
+func (su *SubmissionUpdate) ClearReason() *SubmissionUpdate {
+	su.mutation.ClearReason()
+	return su
+}
+
 // SetGitRepo sets the "git_repo" field.
 func (su *SubmissionUpdate) SetGitRepo(s string) *SubmissionUpdate {
 	su.mutation.SetGitRepo(s)
@@ -224,6 +244,19 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldStatus,
 		})
 	}
+	if value, ok := su.mutation.Reason(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldReason,
+		})
+	}
+	if su.mutation.ReasonCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldReason,
+		})
+	}
 	if value, ok := su.mutation.GitRepo(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -321,6 +354,26 @@ func (suo *SubmissionUpdateOne) SetNillableStatus(s *submission.Status) *Submiss
 	if s != nil {
 		suo.SetStatus(*s)
 	}
+	return suo
+}
+
+// SetReason sets the "reason" field.
+func (suo *SubmissionUpdateOne) SetReason(s string) *SubmissionUpdateOne {
+	suo.mutation.SetReason(s)
+	return suo
+}
+
+// SetNillableReason sets the "reason" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableReason(s *string) *SubmissionUpdateOne {
+	if s != nil {
+		suo.SetReason(*s)
+	}
+	return suo
+}
+
+// ClearReason clears the value of the "reason" field.
+func (suo *SubmissionUpdateOne) ClearReason() *SubmissionUpdateOne {
+	suo.mutation.ClearReason()
 	return suo
 }
 
@@ -514,6 +567,19 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeEnum,
 			Value:  value,
 			Column: submission.FieldStatus,
+		})
+	}
+	if value, ok := suo.mutation.Reason(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldReason,
+		})
+	}
+	if suo.mutation.ReasonCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldReason,
 		})
 	}
 	if value, ok := suo.mutation.GitRepo(); ok {

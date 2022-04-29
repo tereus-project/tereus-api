@@ -19,7 +19,7 @@ func init() {
 	submissionFields := schema.Submission{}.Fields()
 	_ = submissionFields
 	// submissionDescCreatedAt is the schema descriptor for created_at field.
-	submissionDescCreatedAt := submissionFields[5].Descriptor()
+	submissionDescCreatedAt := submissionFields[6].Descriptor()
 	// submission.DefaultCreatedAt holds the default value on creation for the created_at field.
 	submission.DefaultCreatedAt = submissionDescCreatedAt.Default.(func() time.Time)
 	// submissionDescID is the schema descriptor for id field.

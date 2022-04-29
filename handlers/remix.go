@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -63,6 +64,7 @@ type RemixResult struct {
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
 	Status         string `json:"status"`
+	Reason         string `json:"reason"`
 	CreatedAt      string `json:"created_at"`
 }
 
@@ -273,16 +275,19 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		submissionCreation.SetGitRepo(body.GitRepo)
 	}
 
-	_, err = submissionCreation.Save(context.Background())
+	s, err := submissionCreation.Save(context.Background())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to save submission to database")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save submission to database")
 	}
 
 	return c.JSON(http.StatusOK, RemixResult{
-		ID:             jobID.String(),
-		SourceLanguage: srcLanguage,
-		TargetLanguage: targetLanguage,
+		ID:             s.ID.String(),
+		SourceLanguage: s.SourceLanguage,
+		TargetLanguage: s.TargetLanguage,
+		Status:         s.Status.String(),
+		Reason:         s.Reason,
+		CreatedAt:      s.CreatedAt.Format(time.RFC3339),
 	})
 }
 

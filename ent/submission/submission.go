@@ -20,6 +20,8 @@ const (
 	FieldTargetLanguage = "target_language"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldReason holds the string denoting the reason field in the database.
+	FieldReason = "reason"
 	// FieldGitRepo holds the string denoting the git_repo field in the database.
 	FieldGitRepo = "git_repo"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -43,6 +45,7 @@ var Columns = []string{
 	FieldSourceLanguage,
 	FieldTargetLanguage,
 	FieldStatus,
+	FieldReason,
 	FieldGitRepo,
 	FieldCreatedAt,
 }

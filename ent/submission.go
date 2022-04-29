@@ -24,6 +24,8 @@ type Submission struct {
 	TargetLanguage string `json:"target_language,omitempty"`
 	// Status holds the value of the "status" field.
 	Status submission.Status `json:"status,omitempty"`
+	// Reason holds the value of the "reason" field.
+	Reason string `json:"reason,omitempty"`
 	// GitRepo holds the value of the "git_repo" field.
 	GitRepo string `json:"git_repo,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -62,7 +64,7 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldGitRepo:
+		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo:
 			values[i] = new(sql.NullString)
 		case submission.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -108,6 +110,12 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				s.Status = submission.Status(value.String)
+			}
+		case submission.FieldReason:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field reason", values[i])
+			} else if value.Valid {
+				s.Reason = value.String
 			}
 		case submission.FieldGitRepo:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -167,6 +175,8 @@ func (s *Submission) String() string {
 	builder.WriteString(s.TargetLanguage)
 	builder.WriteString(", status=")
 	builder.WriteString(fmt.Sprintf("%v", s.Status))
+	builder.WriteString(", reason=")
+	builder.WriteString(s.Reason)
 	builder.WriteString(", git_repo=")
 	builder.WriteString(s.GitRepo)
 	builder.WriteString(", created_at=")

@@ -14,6 +14,7 @@ var (
 		{Name: "source_language", Type: field.TypeString},
 		{Name: "target_language", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "processing", "done", "failed"}, Default: "pending"},
+		{Name: "reason", Type: field.TypeString, Nullable: true},
 		{Name: "git_repo", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "user_submissions", Type: field.TypeUUID},
@@ -26,7 +27,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "submissions_users_submissions",
-				Columns:    []*schema.Column{SubmissionsColumns[6]},
+				Columns:    []*schema.Column{SubmissionsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

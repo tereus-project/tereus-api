@@ -41,6 +41,7 @@ type SubmissionMutation struct {
 	source_language *string
 	target_language *string
 	status          *submission.Status
+	reason          *string
 	git_repo        *string
 	created_at      *time.Time
 	clearedFields   map[string]struct{}
@@ -263,6 +264,55 @@ func (m *SubmissionMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetReason sets the "reason" field.
+func (m *SubmissionMutation) SetReason(s string) {
+	m.reason = &s
+}
+
+// Reason returns the value of the "reason" field in the mutation.
+func (m *SubmissionMutation) Reason() (r string, exists bool) {
+	v := m.reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReason returns the old "reason" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReason: %w", err)
+	}
+	return oldValue.Reason, nil
+}
+
+// ClearReason clears the value of the "reason" field.
+func (m *SubmissionMutation) ClearReason() {
+	m.reason = nil
+	m.clearedFields[submission.FieldReason] = struct{}{}
+}
+
+// ReasonCleared returns if the "reason" field was cleared in this mutation.
+func (m *SubmissionMutation) ReasonCleared() bool {
+	_, ok := m.clearedFields[submission.FieldReason]
+	return ok
+}
+
+// ResetReason resets all changes to the "reason" field.
+func (m *SubmissionMutation) ResetReason() {
+	m.reason = nil
+	delete(m.clearedFields, submission.FieldReason)
+}
+
 // SetGitRepo sets the "git_repo" field.
 func (m *SubmissionMutation) SetGitRepo(s string) {
 	m.git_repo = &s
@@ -406,7 +456,7 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
@@ -415,6 +465,9 @@ func (m *SubmissionMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, submission.FieldStatus)
+	}
+	if m.reason != nil {
+		fields = append(fields, submission.FieldReason)
 	}
 	if m.git_repo != nil {
 		fields = append(fields, submission.FieldGitRepo)
@@ -436,6 +489,8 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.TargetLanguage()
 	case submission.FieldStatus:
 		return m.Status()
+	case submission.FieldReason:
+		return m.Reason()
 	case submission.FieldGitRepo:
 		return m.GitRepo()
 	case submission.FieldCreatedAt:
@@ -455,6 +510,8 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldTargetLanguage(ctx)
 	case submission.FieldStatus:
 		return m.OldStatus(ctx)
+	case submission.FieldReason:
+		return m.OldReason(ctx)
 	case submission.FieldGitRepo:
 		return m.OldGitRepo(ctx)
 	case submission.FieldCreatedAt:
@@ -488,6 +545,13 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case submission.FieldReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReason(v)
 		return nil
 	case submission.FieldGitRepo:
 		v, ok := value.(string)
@@ -533,6 +597,9 @@ func (m *SubmissionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SubmissionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(submission.FieldReason) {
+		fields = append(fields, submission.FieldReason)
+	}
 	if m.FieldCleared(submission.FieldGitRepo) {
 		fields = append(fields, submission.FieldGitRepo)
 	}
@@ -550,6 +617,9 @@ func (m *SubmissionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SubmissionMutation) ClearField(name string) error {
 	switch name {
+	case submission.FieldReason:
+		m.ClearReason()
+		return nil
 	case submission.FieldGitRepo:
 		m.ClearGitRepo()
 		return nil
@@ -569,6 +639,9 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case submission.FieldReason:
+		m.ResetReason()
 		return nil
 	case submission.FieldGitRepo:
 		m.ResetGitRepo()

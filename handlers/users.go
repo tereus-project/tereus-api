@@ -67,10 +67,11 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 	for i, s := range submissions {
 		response.Submissions[i] = RemixResult{
 			ID:             s.ID.String(),
-			CreatedAt:      s.CreatedAt.Format(time.RFC3339),
 			SourceLanguage: s.SourceLanguage,
 			TargetLanguage: s.TargetLanguage,
 			Status:         s.Status.String(),
+			Reason:         s.Reason,
+			CreatedAt:      s.CreatedAt.Format(time.RFC3339),
 		}
 	}
 

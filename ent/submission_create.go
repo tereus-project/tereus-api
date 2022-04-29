@@ -51,6 +51,20 @@ func (sc *SubmissionCreate) SetNillableStatus(s *submission.Status) *SubmissionC
 	return sc
 }
 
+// SetReason sets the "reason" field.
+func (sc *SubmissionCreate) SetReason(s string) *SubmissionCreate {
+	sc.mutation.SetReason(s)
+	return sc
+}
+
+// SetNillableReason sets the "reason" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableReason(s *string) *SubmissionCreate {
+	if s != nil {
+		sc.SetReason(*s)
+	}
+	return sc
+}
+
 // SetGitRepo sets the "git_repo" field.
 func (sc *SubmissionCreate) SetGitRepo(s string) *SubmissionCreate {
 	sc.mutation.SetGitRepo(s)
@@ -272,6 +286,14 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 		})
 		_node.Status = value
 	}
+	if value, ok := sc.mutation.Reason(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldReason,
+		})
+		_node.Reason = value
+	}
 	if value, ok := sc.mutation.GitRepo(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -398,6 +420,24 @@ func (u *SubmissionUpsert) UpdateStatus() *SubmissionUpsert {
 	return u
 }
 
+// SetReason sets the "reason" field.
+func (u *SubmissionUpsert) SetReason(v string) *SubmissionUpsert {
+	u.Set(submission.FieldReason, v)
+	return u
+}
+
+// UpdateReason sets the "reason" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateReason() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldReason)
+	return u
+}
+
+// ClearReason clears the value of the "reason" field.
+func (u *SubmissionUpsert) ClearReason() *SubmissionUpsert {
+	u.SetNull(submission.FieldReason)
+	return u
+}
+
 // SetGitRepo sets the "git_repo" field.
 func (u *SubmissionUpsert) SetGitRepo(v string) *SubmissionUpsert {
 	u.Set(submission.FieldGitRepo, v)
@@ -517,6 +557,27 @@ func (u *SubmissionUpsertOne) SetStatus(v submission.Status) *SubmissionUpsertOn
 func (u *SubmissionUpsertOne) UpdateStatus() *SubmissionUpsertOne {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetReason sets the "reason" field.
+func (u *SubmissionUpsertOne) SetReason(v string) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetReason(v)
+	})
+}
+
+// UpdateReason sets the "reason" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateReason() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateReason()
+	})
+}
+
+// ClearReason clears the value of the "reason" field.
+func (u *SubmissionUpsertOne) ClearReason() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearReason()
 	})
 }
 
@@ -810,6 +871,27 @@ func (u *SubmissionUpsertBulk) SetStatus(v submission.Status) *SubmissionUpsertB
 func (u *SubmissionUpsertBulk) UpdateStatus() *SubmissionUpsertBulk {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetReason sets the "reason" field.
+func (u *SubmissionUpsertBulk) SetReason(v string) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetReason(v)
+	})
+}
+
+// UpdateReason sets the "reason" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateReason() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateReason()
+	})
+}
+
+// ClearReason clears the value of the "reason" field.
+func (u *SubmissionUpsertBulk) ClearReason() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearReason()
 	})
 }
 

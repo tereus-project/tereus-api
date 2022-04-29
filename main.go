@@ -77,7 +77,7 @@ func main() {
 	}
 
 	logrus.Debugln("Starting submission completion listener")
-	err = startSubmissionCompletionListener(rabbitMQService, databaseService)
+	err = startSubmissionStatusListener(rabbitMQService, databaseService)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to start submission completion listener")
 	}
