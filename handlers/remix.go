@@ -360,3 +360,37 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 
 	return nil
 }
+
+// GET /remix/:id/main
+func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
+	}
+
+	// Get job from database
+	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+	}
+
+	if job.Status != "done" {
+		return echo.NewHTTPError(http.StatusNoContent, "This remixing job is not done yet")
+	}
+
+	objectStoragePath := fmt.Sprintf("%s/%s/maindsa.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
+
+	// Get files from S3
+	object, err := h.S3Service.GetObject(env.S3Bucket, objectStoragePath)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get files from S3")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
+	}
+	defer object.Close()
+
+	if _, err := object.Stat(); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job has no main file")
+	}
+
+	return c.Stream(http.StatusOK, "text/plain", object)
+}

@@ -56,7 +56,7 @@ func (s *S3Service) PutObject(bucket string, path string, reader io.Reader, size
 	)
 }
 
-func (s *S3Service) GetObject(bucket string, path string) (io.ReadCloser, error) {
+func (s *S3Service) GetObject(bucket string, path string) (*minio.Object, error) {
 	return s.client.GetObject(context.Background(), bucket, path, minio.GetObjectOptions{})
 }
 

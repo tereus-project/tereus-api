@@ -97,6 +97,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	e.GET("/remix/:id/main", remixHandler.DownloadRemixedMain)
 	e.GET("/remix/:id", remixHandler.DownloadRemixedFiles)
 	e.POST("/remix/inline/:src/to/:target", remixHandler.RemixInline)
 	e.POST("/remix/zip/:src/to/:target", remixHandler.RemixZip)
