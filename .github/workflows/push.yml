@@ -35,7 +35,7 @@ jobs:
           version: latest
 
   deploy:
-    name: Deploy app
+    name: Deploy app to fly
     needs: [build, lint]
     runs-on: ubuntu-latest
     steps:
