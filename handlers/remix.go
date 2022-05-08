@@ -375,7 +375,7 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 	}
 
 	if job.Status != "done" {
-		return echo.NewHTTPError(http.StatusNoContent, "This remixing job is not done yet")
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
 	}
 
 	objectStoragePath := fmt.Sprintf("%s/%s/maindsa.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
@@ -389,7 +389,7 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 	defer object.Close()
 
 	if _, err := object.Stat(); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job has no main file")
+		return echo.NewHTTPError(http.StatusNoContent)
 	}
 
 	return c.Stream(http.StatusOK, "text/plain", object)
