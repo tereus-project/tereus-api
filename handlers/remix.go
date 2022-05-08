@@ -378,7 +378,7 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
 	}
 
-	objectStoragePath := fmt.Sprintf("%s/%s/maindsa.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
+	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
 
 	// Get files from S3
 	object, err := h.S3Service.GetObject(env.S3Bucket, objectStoragePath)
