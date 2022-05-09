@@ -374,8 +374,14 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
 	}
 
-	if job.Status != "done" {
+	if job.Status == submission.StatusPending {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
+	}
+
+	if job.Status == submission.StatusFailed {
+		return echo.NewHTTPError(http.StatusOK, map[string][]string{
+			"errors": {job.Reason},
+		})
 	}
 
 	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
