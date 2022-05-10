@@ -380,7 +380,7 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		})
 	}
 
-	if job.Status != submission.StatusPending {
+	if job.Status != submission.StatusDone {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
 	}
 
