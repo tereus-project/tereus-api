@@ -54,7 +54,11 @@ func startSubmissionStatusListener(rabbitMQService *services.RabbitMQService, da
 			}
 
 			err = databaseService.Submission.
-				UpdateOneID(id).
+				Update().
+				Where(
+					submission.ID(id),
+					submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
+				).
 				SetStatus(message.Status).
 				SetReason(message.Reason).
 				Exec(context.Background())
