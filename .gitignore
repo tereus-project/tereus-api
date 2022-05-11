@@ -17,3 +17,5 @@
 # Environment configuration
 .env*
 !.env.example
+
+tmp/

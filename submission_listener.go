@@ -16,40 +16,27 @@ type submissionStatusMessage struct {
 	Reason string            `json:"reason"`
 }
 
-func startSubmissionStatusListener(rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService) error {
-	queue, err := rabbitMQService.NewQueue("submission_status_q", "submission_status_ex", "#")
-	if err != nil {
-		return err
-	}
-
-	deliveries, err := queue.Consume()
-	if err != nil {
-		return err
-	}
-
+func startSubmissionStatusListener(k *services.KafkaService, databaseService *services.DatabaseService) error {
 	go func() {
-		for delivery := range deliveries {
+		for {
+			msg, err := k.SubmissionStatusConsumer.ReadMessage(-1)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to read message")
+				continue
+			}
+
 			logrus.Info("Received submission status message")
 
 			var message submissionStatusMessage
-			if err := json.Unmarshal(delivery.Body, &message); err != nil {
+			err = json.Unmarshal(msg.Value, &message)
+			if err != nil {
 				logrus.WithError(err).Error("Failed to unmarshal submission status message")
-
-				if err := delivery.Nack(false, true); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission status message")
-				}
-
 				continue
 			}
 
 			id, err := uuid.Parse(message.ID)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to parse submission ID")
-
-				if err := delivery.Nack(false, false); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission status message")
-				}
-
 				continue
 			}
 
@@ -64,16 +51,7 @@ func startSubmissionStatusListener(rabbitMQService *services.RabbitMQService, da
 				Exec(context.Background())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to update submission status")
-
-				if err := delivery.Nack(false, true); err != nil {
-					logrus.WithError(err).Error("Failed to nack submission status message")
-				}
-
 				continue
-			}
-
-			if err := delivery.Ack(false); err != nil {
-				logrus.WithError(err).Error("Failed to acknowledge submission status message")
 			}
 		}
 	}()

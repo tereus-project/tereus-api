@@ -24,38 +24,25 @@ import (
 
 type RemixHandler struct {
 	S3Service       *services.S3Service
-	RabbitMQService *services.RabbitMQService
+	KafkaService    *services.KafkaService
 	DatabaseService *services.DatabaseService
 	TokenService    *services.TokenService
 
-	jobsQueues map[string]map[string]*services.RabbitMQQueue
+	supportedLanguages map[string]map[string]int
 }
 
-func NewRemixHandler(s3Service *services.S3Service, rabbitMQService *services.RabbitMQService, databaseService *services.DatabaseService, tokenService *services.TokenService) (*RemixHandler, error) {
-	var err error
-
-	jobsQueues := map[string]map[string]*services.RabbitMQQueue{
-		"c": {
-			"go": nil,
-		},
-	}
-
-	for sourceLanguage := range jobsQueues {
-		for targetLanguage := range jobsQueues[sourceLanguage] {
-			jobsQueues[sourceLanguage][targetLanguage], err = rabbitMQService.NewQueue("remix_jobs_q", "remix_jobs_ex", fmt.Sprintf("remix_jobs_%s_to_%s_rk", sourceLanguage, targetLanguage))
-			if err != nil {
-				return nil, err
-			}
-		}
+func NewRemixHandler(s3Service *services.S3Service, k *services.KafkaService, databaseService *services.DatabaseService, tokenService *services.TokenService) (*RemixHandler, error) {
+	supportedLanguages := make(map[string]map[string]int)
+	supportedLanguages["c"] = map[string]int{
+		"go": 1,
 	}
 
 	return &RemixHandler{
-		S3Service:       s3Service,
-		RabbitMQService: rabbitMQService,
-		DatabaseService: databaseService,
-		TokenService:    tokenService,
-
-		jobsQueues: jobsQueues,
+		S3Service:          s3Service,
+		KafkaService:       k,
+		DatabaseService:    databaseService,
+		TokenService:       tokenService,
+		supportedLanguages: supportedLanguages,
 	}, nil
 }
 
@@ -68,7 +55,7 @@ type RemixResult struct {
 	CreatedAt      string `json:"created_at"`
 }
 
-type remixJob struct {
+type RemixJob struct {
 	ID             string `json:"id"`
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
@@ -119,7 +106,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	srcLanguage := strings.ToLower(c.Param("src"))
 	targetLanguage := strings.ToLower(c.Param("target"))
 
-	if sourceMap, ok := h.jobsQueues[srcLanguage]; !ok {
+	if sourceMap, ok := h.supportedLanguages[srcLanguage]; !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("source language %s is not supported", srcLanguage))
 	} else if _, ok := sourceMap[targetLanguage]; !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, srcLanguage))
@@ -254,15 +241,14 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
-	// Publish job to exchange
-	err = h.jobsQueues[srcLanguage][targetLanguage].Publish(remixJob{
+	h.KafkaService.PublishSubmission(services.RemixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
 	})
 	if err != nil {
-		logrus.WithError(err).Error("Failed to publish job to RabbitMQ")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish job to RabbitMQ")
+		logrus.WithError(err).Error("Failed to publish job to Kafka")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish job to Kafka")
 	}
 
 	submissionCreation := h.DatabaseService.Submission.Create().
