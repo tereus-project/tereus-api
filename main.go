@@ -42,13 +42,15 @@ func main() {
 		logrus.WithError(err).Fatalln("Failed to create bucket")
 	}
 
-	// Initialize RabbitMQ service
-	logrus.Debugln("Initializing RabbitMQ service")
-	rabbitMQService, err := services.NewRabbitMQService(env.RabbitMQEndpoint)
+	// Initialize Kafka service
+	logrus.Debugln("Initializing Kafka service")
+	kafkaService, err := services.NewKafkaService(env.KafkaEndpoint)
 	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
+		logrus.WithError(err).Fatalln("Failed to initialize Kafka service")
 	}
-	defer rabbitMQService.Close()
+	defer kafkaService.SubmissionStatusConsumer.Close()
+	defer kafkaService.Producer.Close()
+	defer kafkaService.Admin.Close()
 
 	// Initialize database service
 	logrus.Debugln("Initializing database service")
@@ -77,12 +79,12 @@ func main() {
 	}
 
 	logrus.Debugln("Starting submission completion listener")
-	err = startSubmissionStatusListener(rabbitMQService, databaseService)
+	err = startSubmissionStatusListener(kafkaService, databaseService)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to start submission completion listener")
 	}
 
-	remixHandler, err := handlers.NewRemixHandler(s3Service, rabbitMQService, databaseService, tokenService)
+	remixHandler, err := handlers.NewRemixHandler(s3Service, kafkaService, databaseService, tokenService)
 	if err != nil {
 		log.Fatal(err)
 	}
