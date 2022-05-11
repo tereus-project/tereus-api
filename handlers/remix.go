@@ -241,7 +241,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
-	h.KafkaService.PublishSubmission(services.RemixJob{
+	err = h.KafkaService.PublishSubmission(services.RemixJob{
 		ID:             jobID.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
@@ -320,7 +320,6 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 			logrus.WithError(err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file from S3")
 		}
-		defer reader.Close()
 
 		objectRelativePath := strings.TrimPrefix(object.Path, objectStoragePath)
 		zippedFilePath := fmt.Sprintf("%s/%s", job.ID, objectRelativePath)
@@ -336,6 +335,7 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 			logrus.WithError(err).Error("Failed to copy file to zip")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to copy file to zip")
 		}
+		reader.Close()
 	}
 
 	err = zipFile.Close()
