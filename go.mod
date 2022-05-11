@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	entgo.io/ent v0.10.1
+	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/go-github/v43 v43.0.0
@@ -25,7 +26,6 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/confluentinc/confluent-kafka-go v1.8.2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
