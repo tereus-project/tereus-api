@@ -48,9 +48,7 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize Kafka service")
 	}
-	defer kafkaService.SubmissionStatusConsumer.Close()
-	defer kafkaService.Producer.Close()
-	defer kafkaService.Admin.Close()
+	defer kafkaService.CloseAllWriters()
 
 	// Initialize database service
 	logrus.Debugln("Initializing database service")

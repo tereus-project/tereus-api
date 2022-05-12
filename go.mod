@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	entgo.io/ent v0.10.1
-	github.com/confluentinc/confluent-kafka-go v1.8.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/go-github/v43 v43.0.0
@@ -15,6 +14,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/minio/minio-go/v7 v7.0.24
 	github.com/rabbitmq/amqp091-go v1.3.4
+	github.com/segmentio/kafka-go v0.4.31
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )
@@ -42,7 +42,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/klauspost/compress v1.13.5 // indirect
+	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -54,6 +54,7 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

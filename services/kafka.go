@@ -4,64 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/segmentio/kafka-go"
+	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent/submission"
 )
 
 type KafkaService struct {
-	SubmissionStatusConsumer *kafka.Consumer
-	Producer                 *kafka.Producer
-	Admin                    *kafka.AdminClient
-	Topics                   map[string]kafka.TopicPartition
+	endpoint        string
+	consumerGroupID string
+	writers         map[string]*kafka.Writer
 }
 
 func NewKafkaService(endpoint string) (*KafkaService, error) {
-	config := kafka.ConfigMap{
-		"bootstrap.servers": endpoint,
-		"group.id":          "api",
-		"auto.offset.reset": "earliest",
-	}
-
-	submissionStatusConsumer, err := kafka.NewConsumer(&config)
-	if err != nil {
-		return nil, err
-	}
-	admin, err := kafka.NewAdminClient(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	err = submissionStatusConsumer.SubscribeTopics([]string{"submission_status"}, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": endpoint,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Delivery report handler for produced messages
-	go func() {
-		for e := range producer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					fmt.Printf("Delivery failed: %v\n", ev.TopicPartition)
-				} else {
-					fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
-				}
-			}
-		}
-	}()
-
 	return &KafkaService{
-		SubmissionStatusConsumer: submissionStatusConsumer,
-		Producer:                 producer,
-		Admin:                    admin,
-		Topics:                   make(map[string]kafka.TopicPartition),
+		endpoint:        endpoint,
+		consumerGroupID: "api",
+		writers:         make(map[string]*kafka.Writer),
 	}, nil
 }
 
@@ -78,15 +38,17 @@ func (k *KafkaService) PublishSubmission(remixJob RemixJob) error {
 	}
 
 	topicName := fmt.Sprintf("remix_jobs_%s_to_%s", remixJob.SourceLanguage, remixJob.TargetLanguage)
-	topic, err := k.getTopic(topicName)
+	writer, err := k.getWriterForTopic(topicName)
 	if err != nil {
 		return err
 	}
 
-	err = k.Producer.Produce(&kafka.Message{
-		TopicPartition: topic,
-		Value:          msgBytes,
-	}, nil)
+	err = writer.WriteMessages(context.Background(),
+		kafka.Message{
+			Key:   []byte(remixJob.ID),
+			Value: msgBytes,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -94,27 +56,67 @@ func (k *KafkaService) PublishSubmission(remixJob RemixJob) error {
 	return nil
 }
 
-func (k *KafkaService) getTopic(name string) (kafka.TopicPartition, error) {
-	topic, ok := k.Topics[name]
+func (k *KafkaService) getWriterForTopic(topicName string) (*kafka.Writer, error) {
+	w, ok := k.writers[topicName]
 	if !ok {
-		// Create topic
-		_, err := k.Admin.CreateTopics(context.Background(), []kafka.TopicSpecification{
-			{
-				Topic:         name,
-				NumPartitions: 1,
-				Config:        map[string]string{},
-			},
-		})
-		if err != nil {
-			return kafka.TopicPartition{}, err
+		w := &kafka.Writer{
+			Addr:     kafka.TCP(k.endpoint),
+			Topic:    topicName,
+			Balancer: &kafka.LeastBytes{},
 		}
+		k.writers[topicName] = w
 
-		// Save it and return it
-		topic = kafka.TopicPartition{Topic: &name, Partition: kafka.PartitionAny}
-		k.Topics[name] = topic
-
-		return topic, nil
+		return w, nil
 	}
 
-	return topic, nil
+	return w, nil
+}
+
+type SubmissionStatusMessage struct {
+	ID     string            `json:"id"`
+	Status submission.Status `json:"status"`
+	Reason string            `json:"reason"`
+}
+
+func (k *KafkaService) ConsumeSubmissionStatus(ctx context.Context) <-chan SubmissionStatusMessage {
+
+	ch := make(chan SubmissionStatusMessage)
+
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     []string{k.endpoint},
+		GroupID:     k.consumerGroupID,
+		Topic:       "submission_status",
+		MaxWait:     1 * time.Second,
+		StartOffset: kafka.LastOffset,
+	})
+
+	go func() {
+		defer r.Close()
+
+		for {
+			msg, err := r.ReadMessage(ctx)
+			if err != nil {
+				logrus.WithError(err).Error("Error reading message")
+			}
+
+			var status SubmissionStatusMessage
+			err = json.Unmarshal(msg.Value, &status)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to unmarshal submission status message")
+				continue
+			}
+
+			ch <- status
+		}
+	}()
+
+	return ch
+}
+
+func (k *KafkaService) CloseAllWriters() error {
+	for _, w := range k.writers {
+		w.Close()
+	}
+
+	return nil
 }
