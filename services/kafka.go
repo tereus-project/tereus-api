@@ -113,10 +113,11 @@ func (k *KafkaService) ConsumeSubmissionStatus(ctx context.Context) <-chan Submi
 	return ch
 }
 
-func (k *KafkaService) CloseAllWriters() error {
+func (k *KafkaService) CloseAllWriters() {
 	for _, w := range k.writers {
-		w.Close()
+		err := w.Close()
+		if err != nil {
+			logrus.WithError(err).Error("Failed to close kafka writer")
+		}
 	}
-
-	return nil
 }
