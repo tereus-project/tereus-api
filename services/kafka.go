@@ -60,9 +60,10 @@ func (k *KafkaService) getWriterForTopic(topicName string) (*kafka.Writer, error
 	w, ok := k.writers[topicName]
 	if !ok {
 		w := &kafka.Writer{
-			Addr:     kafka.TCP(k.endpoint),
-			Topic:    topicName,
-			Balancer: &kafka.LeastBytes{},
+			Addr:                   kafka.TCP(k.endpoint),
+			Topic:                  topicName,
+			Balancer:               &kafka.LeastBytes{},
+			AllowAutoTopicCreation: true,
 		}
 		k.writers[topicName] = w
 
@@ -92,6 +93,7 @@ func (k *KafkaService) ConsumeSubmissionStatus(ctx context.Context) <-chan Submi
 
 	go func() {
 		defer r.Close()
+		defer close(ch)
 
 		for {
 			msg, err := r.ReadMessage(ctx)
