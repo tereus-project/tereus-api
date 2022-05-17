@@ -18,6 +18,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	config := env.Get()
+
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Echo instance
@@ -33,18 +35,18 @@ func main() {
 
 	// Initialize S3 service
 	logrus.Debugln("Initializing S3 service")
-	s3Service, err := services.NewS3Service(env.S3Endpoint, env.S3AccessKey, env.S3SecretKey)
+	s3Service, err := services.NewS3Service(config.S3Endpoint, config.S3AccessKey, config.S3SecretKey, config.S3Bucket)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize S3 service")
 	}
 
-	if err := s3Service.MakeBucketIfNotExists(env.S3Bucket); err != nil {
+	if err := s3Service.MakeBucketIfNotExists(config.S3Bucket); err != nil {
 		logrus.WithError(err).Fatalln("Failed to create bucket")
 	}
 
 	// Initialize Kafka service
 	logrus.Debugln("Initializing Kafka service")
-	kafkaService, err := services.NewKafkaService(env.KafkaEndpoint)
+	kafkaService, err := services.NewKafkaService(config.KafkaEndpoint)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize Kafka service")
 	}
@@ -52,7 +54,7 @@ func main() {
 
 	// Initialize database service
 	logrus.Debugln("Initializing database service")
-	databaseService, err := services.NewDatabaseService("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	databaseService, err := services.NewDatabaseService(config.DatabaseDriver, config.DatabaseEndpoint)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize database service")
 	}
@@ -64,7 +66,7 @@ func main() {
 
 	// Initialize GitHub service
 	logrus.Debugln("Initializing GitHub service")
-	githubService, err := services.NewGithubService(env.GithubOAuthClientId, env.GithubOAuthClientSecret)
+	githubService, err := services.NewGithubService(config.GithubOAuthClientId, config.GithubOAuthClientSecret)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
 	}

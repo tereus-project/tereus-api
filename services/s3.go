@@ -7,14 +7,15 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/tereus-project/tereus-api/env"
 )
 
 type S3Service struct {
+	bucket string
+
 	client *minio.Client
 }
 
-func NewS3Service(endpoint string, accessKey string, secretKey string) (*S3Service, error) {
+func NewS3Service(endpoint string, accessKey string, secretKey string, bucket string) (*S3Service, error) {
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: false,
@@ -24,6 +25,7 @@ func NewS3Service(endpoint string, accessKey string, secretKey string) (*S3Servi
 	}
 
 	return &S3Service{
+		bucket: bucket,
 		client: client,
 	}, nil
 }
@@ -45,10 +47,10 @@ func (s *S3Service) MakeBucketIfNotExists(name string) error {
 	return nil
 }
 
-func (s *S3Service) PutObject(bucket string, path string, reader io.Reader, size int64) (info minio.UploadInfo, err error) {
+func (s *S3Service) PutObject(path string, reader io.Reader, size int64) (info minio.UploadInfo, err error) {
 	return s.client.PutObject(
 		context.Background(),
-		env.S3Bucket,
+		s.bucket,
 		path,
 		reader,
 		size,
@@ -56,8 +58,8 @@ func (s *S3Service) PutObject(bucket string, path string, reader io.Reader, size
 	)
 }
 
-func (s *S3Service) GetObject(bucket string, path string) (*minio.Object, error) {
-	return s.client.GetObject(context.Background(), bucket, path, minio.GetObjectOptions{})
+func (s *S3Service) GetObject(path string) (*minio.Object, error) {
+	return s.client.GetObject(context.Background(), s.bucket, path, minio.GetObjectOptions{})
 }
 
 type GetObjectsResult struct {
@@ -65,13 +67,13 @@ type GetObjectsResult struct {
 	Path string
 }
 
-func (s *S3Service) GetObjects(bucket string, prefix string) (paths <-chan *GetObjectsResult, err error) {
+func (s *S3Service) GetObjects(prefix string) (paths <-chan *GetObjectsResult, err error) {
 	ch := make(chan *GetObjectsResult)
 
 	go func() {
 		defer close(ch)
 
-		for object := range s.client.ListObjects(context.Background(), bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
+		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
 			ch <- &GetObjectsResult{
 				Err:  object.Err,
 				Path: object.Key,

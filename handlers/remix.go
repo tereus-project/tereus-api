@@ -121,7 +121,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 		reader := strings.NewReader(body.SourceCode)
-		_, err := h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, "main.c"), reader, reader.Size())
+		_, err := h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -159,7 +159,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			}
 			defer f.Close()
 
-			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
+			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
@@ -226,7 +226,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
-			_, err = h.S3Service.PutObject(env.S3Bucket, fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, info.Size())
+			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
@@ -294,10 +294,11 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
 	}
 
-	objectStoragePath := fmt.Sprintf("%s/%s", env.SubmissionsFolder, job.ID)
+	config := env.Get()
+	objectStoragePath := fmt.Sprintf("%s/%s", config.SubmissionsFolder, job.ID)
 
 	// Get files from S3
-	paths, err := h.S3Service.GetObjects(env.S3Bucket, objectStoragePath)
+	paths, err := h.S3Service.GetObjects(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
@@ -315,7 +316,7 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
 		}
 
-		reader, err := h.S3Service.GetObject(env.S3Bucket, object.Path)
+		reader, err := h.S3Service.GetObject(object.Path)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file from S3")
@@ -370,10 +371,11 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
 	}
 
-	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", env.SubmissionsFolder, job.ID, job.TargetLanguage)
+	config := env.Get()
+	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, job.ID, job.TargetLanguage)
 
 	// Get files from S3
-	object, err := h.S3Service.GetObject(env.S3Bucket, objectStoragePath)
+	object, err := h.S3Service.GetObject(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")

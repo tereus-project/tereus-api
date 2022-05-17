@@ -7,7 +7,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/tereus-project/tereus-api/ent"
-	"github.com/tereus-project/tereus-api/env"
 )
 
 type DatabaseService struct {
@@ -15,7 +14,7 @@ type DatabaseService struct {
 }
 
 func NewDatabaseService(driver string, dataSourceName string) (*DatabaseService, error) {
-	client, err := ent.Open(env.DatabaseDriver, env.DatabaseEndpoint)
+	client, err := ent.Open(driver, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
