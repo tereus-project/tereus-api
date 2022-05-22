@@ -7,6 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/tereus-project/tereus-api/ent"
+	"github.com/tereus-project/tereus-api/ent/migrate"
 )
 
 type DatabaseService struct {
@@ -29,5 +30,8 @@ func (s *DatabaseService) Close() error {
 }
 
 func (s *DatabaseService) AutoMigrate() error {
-	return s.Client.Schema.Create(context.Background())
+	return s.Client.Debug().Schema.Create(context.Background(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	)
 }
