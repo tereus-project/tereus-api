@@ -30,5 +30,6 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("tokens", Token.Type),
 		edge.To("submissions", Submission.Type),
+		edge.To("subscription", Subscription.Type).Unique(),
 	}
 }

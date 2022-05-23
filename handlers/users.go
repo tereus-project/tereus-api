@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/ent/submission"
 	"github.com/tereus-project/tereus-api/ent/user"
@@ -13,32 +14,47 @@ import (
 )
 
 type UserHandler struct {
-	TokenService    *services.TokenService
-	DatabaseService *services.DatabaseService
+	databaseService     *services.DatabaseService
+	tokenService        *services.TokenService
+	subscriptionService *services.SubscriptionService
 }
 
-func NewUserHandler(tokenService *services.TokenService, databaseService *services.DatabaseService) (*UserHandler, error) {
+func NewUserHandler(databaseService *services.DatabaseService, tokenService *services.TokenService, subscriptionService *services.SubscriptionService) (*UserHandler, error) {
 	return &UserHandler{
-		TokenService:    tokenService,
-		DatabaseService: databaseService,
+		databaseService:     databaseService,
+		tokenService:        tokenService,
+		subscriptionService: subscriptionService,
 	}, nil
 }
 
 type getCurrentUserResult struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
+	Tier  string `json:"tier"`
 }
 
-// /users/me
+// GET /users/me
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
-	user, err := h.TokenService.GetUserFromContext(c)
+	loggedUser, err := h.tokenService.GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
 
+	subscription, err := h.subscriptionService.GetCurrentUserSubscription(loggedUser.ID)
+	if err != nil && err.(*ent.NotFoundError) == nil {
+		logrus.WithError(err).Error("Failed to get current user subscription")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	tier := "free"
+	if subscription != nil {
+		tier = subscription.Tier
+	}
+
 	return c.JSON(http.StatusOK, getCurrentUserResult{
-		ID:    user.ID.String(),
-		Email: user.Email,
+		ID:    loggedUser.ID.String(),
+		Email: loggedUser.Email,
+		Tier:  tier,
 	})
 }
 
@@ -46,13 +62,14 @@ type submissionsHistory struct {
 	Submissions []RemixResult `json:"submissions"`
 }
 
+// GET /users/me/submissions
 func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
-	tereusUser, err := h.TokenService.GetUserFromContext(c)
+	tereusUser, err := h.tokenService.GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
 
-	submissions, err := h.DatabaseService.Submission.Query().
+	submissions, err := h.databaseService.Submission.Query().
 		Where(submission.HasUserWith(user.ID(tereusUser.ID))).
 		Order(ent.Desc(submission.FieldCreatedAt)).
 		All(context.Background())

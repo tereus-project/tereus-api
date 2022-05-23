@@ -9,6 +9,9 @@ import (
 // Submission is the predicate function for submission builders.
 type Submission func(*sql.Selector)
 
+// Subscription is the predicate function for subscription builders.
+type Subscription func(*sql.Selector)
+
 // Token is the predicate function for token builders.
 type Token func(*sql.Selector)
 

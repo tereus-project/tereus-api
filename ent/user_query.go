@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/predicate"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
@@ -29,8 +30,9 @@ type UserQuery struct {
 	fields     []string
 	predicates []predicate.User
 	// eager-loading edges.
-	withTokens      *TokenQuery
-	withSubmissions *SubmissionQuery
+	withTokens       *TokenQuery
+	withSubmissions  *SubmissionQuery
+	withSubscription *SubscriptionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -104,6 +106,28 @@ func (uq *UserQuery) QuerySubmissions() *SubmissionQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(submission.Table, submission.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.SubmissionsTable, user.SubmissionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubscription chains the current query on the "subscription" edge.
+func (uq *UserQuery) QuerySubscription() *SubscriptionQuery {
+	query := &SubscriptionQuery{config: uq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.SubscriptionTable, user.SubscriptionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -287,13 +311,14 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:          uq.config,
-		limit:           uq.limit,
-		offset:          uq.offset,
-		order:           append([]OrderFunc{}, uq.order...),
-		predicates:      append([]predicate.User{}, uq.predicates...),
-		withTokens:      uq.withTokens.Clone(),
-		withSubmissions: uq.withSubmissions.Clone(),
+		config:           uq.config,
+		limit:            uq.limit,
+		offset:           uq.offset,
+		order:            append([]OrderFunc{}, uq.order...),
+		predicates:       append([]predicate.User{}, uq.predicates...),
+		withTokens:       uq.withTokens.Clone(),
+		withSubmissions:  uq.withSubmissions.Clone(),
+		withSubscription: uq.withSubscription.Clone(),
 		// clone intermediate query.
 		sql:    uq.sql.Clone(),
 		path:   uq.path,
@@ -320,6 +345,17 @@ func (uq *UserQuery) WithSubmissions(opts ...func(*SubmissionQuery)) *UserQuery 
 		opt(query)
 	}
 	uq.withSubmissions = query
+	return uq
+}
+
+// WithSubscription tells the query-builder to eager-load the nodes that are connected to
+// the "subscription" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithSubscription(opts ...func(*SubscriptionQuery)) *UserQuery {
+	query := &SubscriptionQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withSubscription = query
 	return uq
 }
 
@@ -388,9 +424,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			uq.withTokens != nil,
 			uq.withSubmissions != nil,
+			uq.withSubscription != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -468,6 +505,34 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "user_submissions" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Submissions = append(node.Edges.Submissions, n)
+		}
+	}
+
+	if query := uq.withSubscription; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[uuid.UUID]*User)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Subscription(func(s *sql.Selector) {
+			s.Where(sql.InValues(user.SubscriptionColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.user_subscription
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "user_subscription" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_subscription" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Subscription = n
 		}
 	}
 

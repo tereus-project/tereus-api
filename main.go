@@ -78,6 +78,20 @@ func main() {
 		logrus.WithError(err).Fatalln("Failed to initialize token service")
 	}
 
+	// Initialize Stripe service
+	logrus.Debugln("Initializing stripe service")
+	stripeService := services.NewStripeService(config.StripeSecretKey)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to initialize stripe service")
+	}
+
+	// Initialize subscription service
+	logrus.Debugln("Initializing subscription service")
+	subscriptionService := services.NewSubscriptionService(databaseService, stripeService)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to initialize subscription service")
+	}
+
 	logrus.Debugln("Starting submission completion listener")
 	err = startSubmissionStatusListener(kafkaService, databaseService)
 	if err != nil {
@@ -94,7 +108,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userHandler, err := handlers.NewUserHandler(tokenService, databaseService)
+	userHandler, err := handlers.NewUserHandler(databaseService, tokenService, subscriptionService)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	subscriptionHandler, err := handlers.NewSubscriptionHandler(databaseService, tokenService, subscriptionService)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stripeWebhooksHandler, err := handlers.NewStripeWebhooksHandler(databaseService, subscriptionService, stripeService, config.StripeWebhookSecret)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,6 +134,11 @@ func main() {
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
+
+	e.POST("/subscription/checkout", subscriptionHandler.CreateCheckoutSession)
+	e.POST("/subscription/portal", subscriptionHandler.CreatePortalSession)
+
+	e.POST("/stripe-webhooks", stripeWebhooksHandler.HandleWebhooks)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

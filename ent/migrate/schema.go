@@ -33,6 +33,30 @@ var (
 			},
 		},
 	}
+	// SubscriptionsColumns holds the columns for the "subscriptions" table.
+	SubscriptionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "stripe_customer_id", Type: field.TypeString},
+		{Name: "stripe_subscription_id", Type: field.TypeString},
+		{Name: "tier", Type: field.TypeString},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "user_subscription", Type: field.TypeUUID, Unique: true},
+	}
+	// SubscriptionsTable holds the schema information for the "subscriptions" table.
+	SubscriptionsTable = &schema.Table{
+		Name:       "subscriptions",
+		Columns:    SubscriptionsColumns,
+		PrimaryKey: []*schema.Column{SubscriptionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "subscriptions_users_subscription",
+				Columns:    []*schema.Column{SubscriptionsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// TokensColumns holds the columns for the "tokens" table.
 	TokensColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -71,6 +95,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		SubmissionsTable,
+		SubscriptionsTable,
 		TokensTable,
 		UsersTable,
 	}
@@ -78,5 +103,6 @@ var (
 
 func init() {
 	SubmissionsTable.ForeignKeys[0].RefTable = UsersTable
+	SubscriptionsTable.ForeignKeys[0].RefTable = UsersTable
 	TokensTable.ForeignKeys[0].RefTable = UsersTable
 }

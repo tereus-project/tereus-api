@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/schema"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
@@ -26,6 +27,16 @@ func init() {
 	submissionDescID := submissionFields[0].Descriptor()
 	// submission.DefaultID holds the default value on creation for the id field.
 	submission.DefaultID = submissionDescID.Default.(func() uuid.UUID)
+	subscriptionFields := schema.Subscription{}.Fields()
+	_ = subscriptionFields
+	// subscriptionDescCreatedAt is the schema descriptor for created_at field.
+	subscriptionDescCreatedAt := subscriptionFields[5].Descriptor()
+	// subscription.DefaultCreatedAt holds the default value on creation for the created_at field.
+	subscription.DefaultCreatedAt = subscriptionDescCreatedAt.Default.(func() time.Time)
+	// subscriptionDescID is the schema descriptor for id field.
+	subscriptionDescID := subscriptionFields[0].Descriptor()
+	// subscription.DefaultID holds the default value on creation for the id field.
+	subscription.DefaultID = subscriptionDescID.Default.(func() uuid.UUID)
 	tokenFields := schema.Token{}.Fields()
 	_ = tokenFields
 	// tokenDescIsActive is the schema descriptor for is_active field.

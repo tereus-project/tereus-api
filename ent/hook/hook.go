@@ -22,6 +22,19 @@ func (f SubmissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return f(ctx, mv)
 }
 
+// The SubscriptionFunc type is an adapter to allow the use of ordinary
+// function as Subscription mutator.
+type SubscriptionFunc func(context.Context, *ent.SubscriptionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.SubscriptionMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SubscriptionMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The TokenFunc type is an adapter to allow the use of ordinary
 // function as Token mutator.
 type TokenFunc func(context.Context, *ent.TokenMutation) (ent.Value, error)

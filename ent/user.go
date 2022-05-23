@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
 
@@ -36,9 +37,11 @@ type UserEdges struct {
 	Tokens []*Token `json:"tokens,omitempty"`
 	// Submissions holds the value of the submissions edge.
 	Submissions []*Submission `json:"submissions,omitempty"`
+	// Subscription holds the value of the subscription edge.
+	Subscription *Subscription `json:"subscription,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // TokensOrErr returns the Tokens value or an error if the edge
@@ -57,6 +60,20 @@ func (e UserEdges) SubmissionsOrErr() ([]*Submission, error) {
 		return e.Submissions, nil
 	}
 	return nil, &NotLoadedError{edge: "submissions"}
+}
+
+// SubscriptionOrErr returns the Subscription value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) SubscriptionOrErr() (*Subscription, error) {
+	if e.loadedTypes[2] {
+		if e.Subscription == nil {
+			// The edge subscription was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: subscription.Label}
+		}
+		return e.Subscription, nil
+	}
+	return nil, &NotLoadedError{edge: "subscription"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -128,6 +145,11 @@ func (u *User) QueryTokens() *TokenQuery {
 // QuerySubmissions queries the "submissions" edge of the User entity.
 func (u *User) QuerySubmissions() *SubmissionQuery {
 	return (&UserClient{config: u.config}).QuerySubmissions(u)
+}
+
+// QuerySubscription queries the "subscription" edge of the User entity.
+func (u *User) QuerySubscription() *SubscriptionQuery {
+	return (&UserClient{config: u.config}).QuerySubscription(u)
 }
 
 // Update returns a builder for updating this User.

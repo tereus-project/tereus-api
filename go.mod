@@ -59,6 +59,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/stripe/stripe-go/v72 v72.108.0
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect

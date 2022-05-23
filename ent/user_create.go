@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
@@ -116,6 +117,25 @@ func (uc *UserCreate) AddSubmissions(s ...*Submission) *UserCreate {
 		ids[i] = s[i].ID
 	}
 	return uc.AddSubmissionIDs(ids...)
+}
+
+// SetSubscriptionID sets the "subscription" edge to the Subscription entity by ID.
+func (uc *UserCreate) SetSubscriptionID(id uuid.UUID) *UserCreate {
+	uc.mutation.SetSubscriptionID(id)
+	return uc
+}
+
+// SetNillableSubscriptionID sets the "subscription" edge to the Subscription entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableSubscriptionID(id *uuid.UUID) *UserCreate {
+	if id != nil {
+		uc = uc.SetSubscriptionID(*id)
+	}
+	return uc
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (uc *UserCreate) SetSubscription(s *Subscription) *UserCreate {
+	return uc.SetSubscriptionID(s.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -306,6 +326,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: submission.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SubscriptionTable,
+			Columns: []string{user.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: subscription.FieldID,
 				},
 			},
 		}

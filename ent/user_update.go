@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tereus-project/tereus-api/ent/predicate"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
@@ -121,6 +122,25 @@ func (uu *UserUpdate) AddSubmissions(s ...*Submission) *UserUpdate {
 	return uu.AddSubmissionIDs(ids...)
 }
 
+// SetSubscriptionID sets the "subscription" edge to the Subscription entity by ID.
+func (uu *UserUpdate) SetSubscriptionID(id uuid.UUID) *UserUpdate {
+	uu.mutation.SetSubscriptionID(id)
+	return uu
+}
+
+// SetNillableSubscriptionID sets the "subscription" edge to the Subscription entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableSubscriptionID(id *uuid.UUID) *UserUpdate {
+	if id != nil {
+		uu = uu.SetSubscriptionID(*id)
+	}
+	return uu
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (uu *UserUpdate) SetSubscription(s *Subscription) *UserUpdate {
+	return uu.SetSubscriptionID(s.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -166,6 +186,12 @@ func (uu *UserUpdate) RemoveSubmissions(s ...*Submission) *UserUpdate {
 		ids[i] = s[i].ID
 	}
 	return uu.RemoveSubmissionIDs(ids...)
+}
+
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (uu *UserUpdate) ClearSubscription() *UserUpdate {
+	uu.mutation.ClearSubscription()
+	return uu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -388,6 +414,41 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SubscriptionTable,
+			Columns: []string{user.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: subscription.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SubscriptionTable,
+			Columns: []string{user.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: subscription.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -497,6 +558,25 @@ func (uuo *UserUpdateOne) AddSubmissions(s ...*Submission) *UserUpdateOne {
 	return uuo.AddSubmissionIDs(ids...)
 }
 
+// SetSubscriptionID sets the "subscription" edge to the Subscription entity by ID.
+func (uuo *UserUpdateOne) SetSubscriptionID(id uuid.UUID) *UserUpdateOne {
+	uuo.mutation.SetSubscriptionID(id)
+	return uuo
+}
+
+// SetNillableSubscriptionID sets the "subscription" edge to the Subscription entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableSubscriptionID(id *uuid.UUID) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetSubscriptionID(*id)
+	}
+	return uuo
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (uuo *UserUpdateOne) SetSubscription(s *Subscription) *UserUpdateOne {
+	return uuo.SetSubscriptionID(s.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -542,6 +622,12 @@ func (uuo *UserUpdateOne) RemoveSubmissions(s ...*Submission) *UserUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return uuo.RemoveSubmissionIDs(ids...)
+}
+
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (uuo *UserUpdateOne) ClearSubscription() *UserUpdateOne {
+	uuo.mutation.ClearSubscription()
+	return uuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -780,6 +866,41 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: submission.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SubscriptionTable,
+			Columns: []string{user.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: subscription.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SubscriptionTable,
+			Columns: []string{user.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: subscription.FieldID,
 				},
 			},
 		}

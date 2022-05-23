@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 )
@@ -31,9 +32,10 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		submission.Table: submission.ValidColumn,
-		token.Table:      token.ValidColumn,
-		user.Table:       user.ValidColumn,
+		submission.Table:   submission.ValidColumn,
+		subscription.Table: subscription.ValidColumn,
+		token.Table:        token.ValidColumn,
+		user.Table:         user.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

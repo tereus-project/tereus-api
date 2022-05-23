@@ -55,12 +55,6 @@ type RemixResult struct {
 	CreatedAt      string `json:"created_at"`
 }
 
-type RemixJob struct {
-	ID             string `json:"id"`
-	SourceLanguage string `json:"source_language"`
-	TargetLanguage string `json:"target_language"`
-}
-
 type remixBody struct {
 	GitRepo    string `json:"git_repo"`
 	SourceCode string `json:"source_code"`

@@ -25,6 +25,8 @@ const (
 	EdgeTokens = "tokens"
 	// EdgeSubmissions holds the string denoting the submissions edge name in mutations.
 	EdgeSubmissions = "submissions"
+	// EdgeSubscription holds the string denoting the subscription edge name in mutations.
+	EdgeSubscription = "subscription"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// TokensTable is the table that holds the tokens relation/edge.
@@ -41,6 +43,13 @@ const (
 	SubmissionsInverseTable = "submissions"
 	// SubmissionsColumn is the table column denoting the submissions relation/edge.
 	SubmissionsColumn = "user_submissions"
+	// SubscriptionTable is the table that holds the subscription relation/edge.
+	SubscriptionTable = "subscriptions"
+	// SubscriptionInverseTable is the table name for the Subscription entity.
+	// It exists in this package in order to avoid circular dependency with the "subscription" package.
+	SubscriptionInverseTable = "subscriptions"
+	// SubscriptionColumn is the table column denoting the subscription relation/edge.
+	SubscriptionColumn = "user_subscription"
 )
 
 // Columns holds all SQL columns for user fields.

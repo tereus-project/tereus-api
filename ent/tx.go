@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Submission is the client for interacting with the Submission builders.
 	Submission *SubmissionClient
+	// Subscription is the client for interacting with the Subscription builders.
+	Subscription *SubscriptionClient
 	// Token is the client for interacting with the Token builders.
 	Token *TokenClient
 	// User is the client for interacting with the User builders.
@@ -154,6 +156,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Submission = NewSubmissionClient(tx.config)
+	tx.Subscription = NewSubscriptionClient(tx.config)
 	tx.Token = NewTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

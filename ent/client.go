@@ -11,6 +11,7 @@ import (
 	"github.com/tereus-project/tereus-api/ent/migrate"
 
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/token"
 	"github.com/tereus-project/tereus-api/ent/user"
 
@@ -26,6 +27,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Submission is the client for interacting with the Submission builders.
 	Submission *SubmissionClient
+	// Subscription is the client for interacting with the Subscription builders.
+	Subscription *SubscriptionClient
 	// Token is the client for interacting with the Token builders.
 	Token *TokenClient
 	// User is the client for interacting with the User builders.
@@ -44,6 +47,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Submission = NewSubmissionClient(c.config)
+	c.Subscription = NewSubscriptionClient(c.config)
 	c.Token = NewTokenClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -77,11 +81,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Submission: NewSubmissionClient(cfg),
-		Token:      NewTokenClient(cfg),
-		User:       NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Submission:   NewSubmissionClient(cfg),
+		Subscription: NewSubscriptionClient(cfg),
+		Token:        NewTokenClient(cfg),
+		User:         NewUserClient(cfg),
 	}, nil
 }
 
@@ -99,11 +104,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Submission: NewSubmissionClient(cfg),
-		Token:      NewTokenClient(cfg),
-		User:       NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Submission:   NewSubmissionClient(cfg),
+		Subscription: NewSubscriptionClient(cfg),
+		Token:        NewTokenClient(cfg),
+		User:         NewUserClient(cfg),
 	}, nil
 }
 
@@ -134,6 +140,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Submission.Use(hooks...)
+	c.Subscription.Use(hooks...)
 	c.Token.Use(hooks...)
 	c.User.Use(hooks...)
 }
@@ -242,6 +249,112 @@ func (c *SubmissionClient) QueryUser(s *Submission) *UserQuery {
 // Hooks returns the client hooks.
 func (c *SubmissionClient) Hooks() []Hook {
 	return c.hooks.Submission
+}
+
+// SubscriptionClient is a client for the Subscription schema.
+type SubscriptionClient struct {
+	config
+}
+
+// NewSubscriptionClient returns a client for the Subscription from the given config.
+func NewSubscriptionClient(c config) *SubscriptionClient {
+	return &SubscriptionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `subscription.Hooks(f(g(h())))`.
+func (c *SubscriptionClient) Use(hooks ...Hook) {
+	c.hooks.Subscription = append(c.hooks.Subscription, hooks...)
+}
+
+// Create returns a create builder for Subscription.
+func (c *SubscriptionClient) Create() *SubscriptionCreate {
+	mutation := newSubscriptionMutation(c.config, OpCreate)
+	return &SubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Subscription entities.
+func (c *SubscriptionClient) CreateBulk(builders ...*SubscriptionCreate) *SubscriptionCreateBulk {
+	return &SubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Subscription.
+func (c *SubscriptionClient) Update() *SubscriptionUpdate {
+	mutation := newSubscriptionMutation(c.config, OpUpdate)
+	return &SubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SubscriptionClient) UpdateOne(s *Subscription) *SubscriptionUpdateOne {
+	mutation := newSubscriptionMutation(c.config, OpUpdateOne, withSubscription(s))
+	return &SubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SubscriptionClient) UpdateOneID(id uuid.UUID) *SubscriptionUpdateOne {
+	mutation := newSubscriptionMutation(c.config, OpUpdateOne, withSubscriptionID(id))
+	return &SubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Subscription.
+func (c *SubscriptionClient) Delete() *SubscriptionDelete {
+	mutation := newSubscriptionMutation(c.config, OpDelete)
+	return &SubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *SubscriptionClient) DeleteOne(s *Subscription) *SubscriptionDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *SubscriptionClient) DeleteOneID(id uuid.UUID) *SubscriptionDeleteOne {
+	builder := c.Delete().Where(subscription.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SubscriptionDeleteOne{builder}
+}
+
+// Query returns a query builder for Subscription.
+func (c *SubscriptionClient) Query() *SubscriptionQuery {
+	return &SubscriptionQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Subscription entity by its id.
+func (c *SubscriptionClient) Get(ctx context.Context, id uuid.UUID) (*Subscription, error) {
+	return c.Query().Where(subscription.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SubscriptionClient) GetX(ctx context.Context, id uuid.UUID) *Subscription {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Subscription.
+func (c *SubscriptionClient) QueryUser(s *Subscription) *UserQuery {
+	query := &UserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscription.Table, subscription.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, subscription.UserTable, subscription.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SubscriptionClient) Hooks() []Hook {
+	return c.hooks.Subscription
 }
 
 // TokenClient is a client for the Token schema.
@@ -460,6 +573,22 @@ func (c *UserClient) QuerySubmissions(u *User) *SubmissionQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(submission.Table, submission.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.SubmissionsTable, user.SubmissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySubscription queries the subscription edge of a User.
+func (c *UserClient) QuerySubscription(u *User) *SubscriptionQuery {
+	query := &SubscriptionQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.SubscriptionTable, user.SubscriptionColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
