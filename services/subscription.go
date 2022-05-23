@@ -107,7 +107,6 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 	// Retrieve Stripe data from the local saved sbscription details
 	if lastUserSubscription != nil {
 		customerParams := &stripe.CustomerParams{}
-		customerParams.AddExpand("subscriptions")
 
 		stripeCustomer, err = customer.Get(lastUserSubscription.StripeCustomerID, customerParams)
 		if err != nil {
