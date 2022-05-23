@@ -138,9 +138,10 @@ func (s *SubscriptionService) CreateCheckoutSession(lastUserSubscription *ent.Su
 				Price: stripe.String(tierPrices.MeteredPriceId),
 			},
 		},
-		SuccessURL: stripe.String(config.SuccessURL),
-		CancelURL:  stripe.String(config.CancelURL),
-		Customer:   stripe.String(stripeCustomer.ID),
+		SuccessURL:          stripe.String(config.SuccessURL),
+		CancelURL:           stripe.String(config.CancelURL),
+		Customer:            stripe.String(stripeCustomer.ID),
+		AllowPromotionCodes: stripe.Bool(true),
 	}
 
 	return session.New(checkoutParams)
