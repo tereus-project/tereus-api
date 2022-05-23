@@ -81,3 +81,12 @@ func (c *GithubClient) GetUser() (*github.User, error) {
 	user, _, err := c.client.Users.Get(context.Background(), "")
 	return user, err
 }
+
+func (c *GithubClient) GetEmails() []*github.UserEmail {
+	emails, _, err := c.client.Users.ListEmails(context.Background(), &github.ListOptions{})
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	return emails
+}

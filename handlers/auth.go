@@ -94,7 +94,18 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 
 	email := githubUser.GetEmail()
 	if email == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.GithubService.ClientId))
+		emails := githubClient.GetEmails()
+
+		if len(emails) == 0 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.GithubService.ClientId))
+		}
+
+		for _, e := range emails {
+			if e.GetPrimary() {
+				email = e.GetEmail()
+				break
+			}
+		}
 	}
 
 	userId, err := h.DatabaseService.User.Create().
