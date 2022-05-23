@@ -12,11 +12,6 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-type tierPrices struct {
-	BasePriceId    string
-	MeteredPriceId string
-}
-
 type SubscriptionHandler struct {
 	databaseService     *services.DatabaseService
 	tokenService        *services.TokenService
