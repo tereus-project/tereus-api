@@ -107,16 +107,17 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 	// Retrieve Stripe data from the local saved sbscription details
 	if lastUserSubscription != nil {
 		customerParams := &stripe.CustomerParams{}
+		customerParams.AddExpand("subscriptions")
 
 		stripeCustomer, err = customer.Get(lastUserSubscription.StripeCustomerID, customerParams)
 		if err != nil {
-			return nil, lastUserSubscription, err
+			return nil, nil, err
 		}
 
 		if lastUserSubscription.StripeSubscriptionID != "" {
 			stripeSubscription, err = sub.Get(lastUserSubscription.StripeSubscriptionID, nil)
 			if err != nil {
-				return nil, lastUserSubscription, err
+				return nil, nil, err
 			}
 		}
 	}
@@ -148,7 +149,7 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 			var err error
 			stripeCustomer, err = customer.New(customerParams)
 			if err != nil {
-				return nil, lastUserSubscription, err
+				return nil, nil, err
 			}
 		}
 	}
@@ -190,12 +191,12 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 		UpdateNewValues().
 		ID(context.Background())
 	if err != nil {
-		return stripeCustomer, nil, err
+		return nil, nil, err
 	}
 
 	lastUserSubscription, err = s.databaseService.Subscription.Get(context.Background(), subscriptionId)
 	if err != nil {
-		return stripeCustomer, lastUserSubscription, err
+		return nil, nil, err
 	}
 
 	return stripeCustomer, lastUserSubscription, nil
