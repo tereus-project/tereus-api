@@ -37,9 +37,10 @@ var (
 	SubscriptionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "stripe_customer_id", Type: field.TypeString},
-		{Name: "stripe_subscription_id", Type: field.TypeString},
-		{Name: "tier", Type: field.TypeString},
-		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "stripe_subscription_id", Type: field.TypeString, Nullable: true},
+		{Name: "tier", Type: field.TypeEnum, Enums: []string{"free", "pro", "enterprise"}, Default: "free"},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "cancelled", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "user_subscription", Type: field.TypeUUID, Unique: true},
 	}
@@ -51,7 +52,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "subscriptions_users_subscription",
-				Columns:    []*schema.Column{SubscriptionsColumns[6]},
+				Columns:    []*schema.Column{SubscriptionsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

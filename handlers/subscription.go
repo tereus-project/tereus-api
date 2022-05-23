@@ -58,10 +58,10 @@ func (h *SubscriptionHandler) CreateCheckoutSession(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	if !h.subscriptionService.HasTier(body.Tier) {
+	if !h.subscriptionService.HasTier(body.Tier) && body.Tier != "free" {
 		return echo.NewHTTPError(
 			http.StatusBadRequest,
-			fmt.Sprintf("Invalid tier '%s', must be one of %s", body.Tier, strings.Join(h.subscriptionService.GetTiers(), ", ")),
+			fmt.Sprintf("Invalid tier '%s', must be one of free, %s", body.Tier, strings.Join(h.subscriptionService.GetTiers(), ", ")),
 		)
 	}
 
@@ -71,25 +71,57 @@ func (h *SubscriptionHandler) CreateCheckoutSession(c echo.Context) error {
 		return err
 	}
 
-	if lastUserSubscription != nil && lastUserSubscription.ExpiresAt.After(time.Now()) {
-		if lastUserSubscription.Tier == body.Tier {
+	stripeCustomer, lastUserSubscription, err := h.subscriptionService.GetOrCreateCustomer(user, lastUserSubscription)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get or create customer")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get or create customer")
+	}
+
+	if lastUserSubscription != nil && lastUserSubscription.ExpiresAt.After(time.Now()) && lastUserSubscription.StripeSubscriptionID != "" {
+		if lastUserSubscription.Tier.String() == body.Tier && !lastUserSubscription.Cancelled {
 			return echo.NewHTTPError(http.StatusBadRequest, "You already are subscribed to this tier")
 		}
 
-		stripeSubscription, err := h.subscriptionService.UpdateStripeSubscription(lastUserSubscription.StripeSubscriptionID, body.Tier)
-		if err != nil {
-			logrus.WithError(err).Error("Failed to update subscription")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update subscription")
-		}
+		if body.Tier == "free" {
+			if !lastUserSubscription.Cancelled {
+				err := h.subscriptionService.CancelStripeSubscription(lastUserSubscription.StripeSubscriptionID)
+				if err != nil {
+					logrus.WithError(err).Error("Failed to downgrade subscription")
+					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")
+				}
 
-		h.subscriptionService.UpdateSubscription(stripeSubscription)
+				err = h.subscriptionService.CancelSubscription(user.ID, lastUserSubscription.ExpiresAt)
+				if err != nil {
+					logrus.WithError(err).Error("Failed to downgrade subscription")
+					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")
+				}
+			}
+		} else {
+			stripeSubscription, err := h.subscriptionService.UpdateStripeSubscription(lastUserSubscription.StripeSubscriptionID, body.Tier)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to upgrade subscription")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to upgrade subscription")
+			}
+
+			err = h.subscriptionService.UpdateSubscription(stripeSubscription)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to upgrade subscription")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to upgrade subscription")
+			}
+		}
 
 		return c.JSON(http.StatusOK, checkoutResponse{
 			RedirectURL: "",
 		})
 	}
 
-	checkoutSession, err := h.subscriptionService.CreateCheckoutSession(lastUserSubscription, &services.CheckoutSessionConfig{
+	if body.Tier == "free" {
+		return c.JSON(http.StatusOK, checkoutResponse{
+			RedirectURL: "",
+		})
+	}
+
+	checkoutSession, err := h.subscriptionService.CreateCheckoutSession(stripeCustomer, &services.CheckoutSessionConfig{
 		User:       user,
 		Tier:       body.Tier,
 		SuccessURL: body.SuccessURL,

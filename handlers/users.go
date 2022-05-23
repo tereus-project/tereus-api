@@ -27,10 +27,16 @@ func NewUserHandler(databaseService *services.DatabaseService, tokenService *ser
 	}, nil
 }
 
+type getCurrentUserResultSubscription struct {
+	Tier      string `json:"tier"`
+	ExpiresAt string `json:"expires_at"`
+	Cancelled bool   `json:"cancelled"`
+}
+
 type getCurrentUserResult struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	Tier  string `json:"tier"`
+	ID           string                            `json:"id"`
+	Email        string                            `json:"email"`
+	Subscription *getCurrentUserResultSubscription `json:"subscription"`
 }
 
 // GET /users/me
@@ -46,15 +52,19 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	tier := "free"
+	var subscriptionResult *getCurrentUserResultSubscription
 	if subscription != nil {
-		tier = subscription.Tier
+		subscriptionResult = &getCurrentUserResultSubscription{
+			Tier:      subscription.Tier.String(),
+			ExpiresAt: subscription.ExpiresAt.Format(time.RFC3339),
+			Cancelled: subscription.Cancelled,
+		}
 	}
 
 	return c.JSON(http.StatusOK, getCurrentUserResult{
-		ID:    loggedUser.ID.String(),
-		Email: loggedUser.Email,
-		Tier:  tier,
+		ID:           loggedUser.ID.String(),
+		Email:        loggedUser.Email,
+		Subscription: subscriptionResult,
 	})
 }
 

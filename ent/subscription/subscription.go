@@ -3,6 +3,7 @@
 package subscription
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,6 +22,8 @@ const (
 	FieldTier = "tier"
 	// FieldExpiresAt holds the string denoting the expires_at field in the database.
 	FieldExpiresAt = "expires_at"
+	// FieldCancelled holds the string denoting the cancelled field in the database.
+	FieldCancelled = "cancelled"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -43,6 +46,7 @@ var Columns = []string{
 	FieldStripeSubscriptionID,
 	FieldTier,
 	FieldExpiresAt,
+	FieldCancelled,
 	FieldCreatedAt,
 }
 
@@ -68,8 +72,37 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultCancelled holds the default value on creation for the "cancelled" field.
+	DefaultCancelled bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Tier defines the type for the "tier" enum field.
+type Tier string
+
+// TierFree is the default value of the Tier enum.
+const DefaultTier = TierFree
+
+// Tier values.
+const (
+	TierFree       Tier = "free"
+	TierPro        Tier = "pro"
+	TierEnterprise Tier = "enterprise"
+)
+
+func (t Tier) String() string {
+	return string(t)
+}
+
+// TierValidator is a validator for the "tier" field enum values. It is called by the builders before save.
+func TierValidator(t Tier) error {
+	switch t {
+	case TierFree, TierPro, TierEnterprise:
+		return nil
+	default:
+		return fmt.Errorf("subscription: invalid enum value for tier field: %q", t)
+	}
+}

@@ -23,9 +23,11 @@ type Subscription struct {
 	// StripeSubscriptionID holds the value of the "stripe_subscription_id" field.
 	StripeSubscriptionID string `json:"stripe_subscription_id,omitempty"`
 	// Tier holds the value of the "tier" field.
-	Tier string `json:"tier,omitempty"`
+	Tier subscription.Tier `json:"tier,omitempty"`
 	// ExpiresAt holds the value of the "expires_at" field.
 	ExpiresAt time.Time `json:"expires_at,omitempty"`
+	// Cancelled holds the value of the "cancelled" field.
+	Cancelled bool `json:"cancelled,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -62,6 +64,8 @@ func (*Subscription) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case subscription.FieldCancelled:
+			values[i] = new(sql.NullBool)
 		case subscription.FieldStripeCustomerID, subscription.FieldStripeSubscriptionID, subscription.FieldTier:
 			values[i] = new(sql.NullString)
 		case subscription.FieldExpiresAt, subscription.FieldCreatedAt:
@@ -107,13 +111,19 @@ func (s *Subscription) assignValues(columns []string, values []interface{}) erro
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field tier", values[i])
 			} else if value.Valid {
-				s.Tier = value.String
+				s.Tier = subscription.Tier(value.String)
 			}
 		case subscription.FieldExpiresAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field expires_at", values[i])
 			} else if value.Valid {
 				s.ExpiresAt = value.Time
+			}
+		case subscription.FieldCancelled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field cancelled", values[i])
+			} else if value.Valid {
+				s.Cancelled = value.Bool
 			}
 		case subscription.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -166,9 +176,11 @@ func (s *Subscription) String() string {
 	builder.WriteString(", stripe_subscription_id=")
 	builder.WriteString(s.StripeSubscriptionID)
 	builder.WriteString(", tier=")
-	builder.WriteString(s.Tier)
+	builder.WriteString(fmt.Sprintf("%v", s.Tier))
 	builder.WriteString(", expires_at=")
 	builder.WriteString(s.ExpiresAt.Format(time.ANSIC))
+	builder.WriteString(", cancelled=")
+	builder.WriteString(fmt.Sprintf("%v", s.Cancelled))
 	builder.WriteString(", created_at=")
 	builder.WriteString(s.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

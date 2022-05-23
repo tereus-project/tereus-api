@@ -42,15 +42,65 @@ func (su *SubscriptionUpdate) SetStripeSubscriptionID(s string) *SubscriptionUpd
 	return su
 }
 
+// SetNillableStripeSubscriptionID sets the "stripe_subscription_id" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableStripeSubscriptionID(s *string) *SubscriptionUpdate {
+	if s != nil {
+		su.SetStripeSubscriptionID(*s)
+	}
+	return su
+}
+
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (su *SubscriptionUpdate) ClearStripeSubscriptionID() *SubscriptionUpdate {
+	su.mutation.ClearStripeSubscriptionID()
+	return su
+}
+
 // SetTier sets the "tier" field.
-func (su *SubscriptionUpdate) SetTier(s string) *SubscriptionUpdate {
+func (su *SubscriptionUpdate) SetTier(s subscription.Tier) *SubscriptionUpdate {
 	su.mutation.SetTier(s)
+	return su
+}
+
+// SetNillableTier sets the "tier" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableTier(s *subscription.Tier) *SubscriptionUpdate {
+	if s != nil {
+		su.SetTier(*s)
+	}
 	return su
 }
 
 // SetExpiresAt sets the "expires_at" field.
 func (su *SubscriptionUpdate) SetExpiresAt(t time.Time) *SubscriptionUpdate {
 	su.mutation.SetExpiresAt(t)
+	return su
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableExpiresAt(t *time.Time) *SubscriptionUpdate {
+	if t != nil {
+		su.SetExpiresAt(*t)
+	}
+	return su
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (su *SubscriptionUpdate) ClearExpiresAt() *SubscriptionUpdate {
+	su.mutation.ClearExpiresAt()
+	return su
+}
+
+// SetCancelled sets the "cancelled" field.
+func (su *SubscriptionUpdate) SetCancelled(b bool) *SubscriptionUpdate {
+	su.mutation.SetCancelled(b)
+	return su
+}
+
+// SetNillableCancelled sets the "cancelled" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableCancelled(b *bool) *SubscriptionUpdate {
+	if b != nil {
+		su.SetCancelled(*b)
+	}
 	return su
 }
 
@@ -152,6 +202,11 @@ func (su *SubscriptionUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (su *SubscriptionUpdate) check() error {
+	if v, ok := su.mutation.Tier(); ok {
+		if err := subscription.TierValidator(v); err != nil {
+			return &ValidationError{Name: "tier", err: fmt.Errorf(`ent: validator failed for field "Subscription.tier": %w`, err)}
+		}
+	}
 	if _, ok := su.mutation.UserID(); su.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Subscription.user"`)
 	}
@@ -190,9 +245,15 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: subscription.FieldStripeSubscriptionID,
 		})
 	}
+	if su.mutation.StripeSubscriptionIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: subscription.FieldStripeSubscriptionID,
+		})
+	}
 	if value, ok := su.mutation.Tier(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
+			Type:   field.TypeEnum,
 			Value:  value,
 			Column: subscription.FieldTier,
 		})
@@ -202,6 +263,19 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: subscription.FieldExpiresAt,
+		})
+	}
+	if su.mutation.ExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: subscription.FieldExpiresAt,
+		})
+	}
+	if value, ok := su.mutation.Cancelled(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: subscription.FieldCancelled,
 		})
 	}
 	if value, ok := su.mutation.CreatedAt(); ok {
@@ -277,15 +351,65 @@ func (suo *SubscriptionUpdateOne) SetStripeSubscriptionID(s string) *Subscriptio
 	return suo
 }
 
+// SetNillableStripeSubscriptionID sets the "stripe_subscription_id" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableStripeSubscriptionID(s *string) *SubscriptionUpdateOne {
+	if s != nil {
+		suo.SetStripeSubscriptionID(*s)
+	}
+	return suo
+}
+
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (suo *SubscriptionUpdateOne) ClearStripeSubscriptionID() *SubscriptionUpdateOne {
+	suo.mutation.ClearStripeSubscriptionID()
+	return suo
+}
+
 // SetTier sets the "tier" field.
-func (suo *SubscriptionUpdateOne) SetTier(s string) *SubscriptionUpdateOne {
+func (suo *SubscriptionUpdateOne) SetTier(s subscription.Tier) *SubscriptionUpdateOne {
 	suo.mutation.SetTier(s)
+	return suo
+}
+
+// SetNillableTier sets the "tier" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableTier(s *subscription.Tier) *SubscriptionUpdateOne {
+	if s != nil {
+		suo.SetTier(*s)
+	}
 	return suo
 }
 
 // SetExpiresAt sets the "expires_at" field.
 func (suo *SubscriptionUpdateOne) SetExpiresAt(t time.Time) *SubscriptionUpdateOne {
 	suo.mutation.SetExpiresAt(t)
+	return suo
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableExpiresAt(t *time.Time) *SubscriptionUpdateOne {
+	if t != nil {
+		suo.SetExpiresAt(*t)
+	}
+	return suo
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (suo *SubscriptionUpdateOne) ClearExpiresAt() *SubscriptionUpdateOne {
+	suo.mutation.ClearExpiresAt()
+	return suo
+}
+
+// SetCancelled sets the "cancelled" field.
+func (suo *SubscriptionUpdateOne) SetCancelled(b bool) *SubscriptionUpdateOne {
+	suo.mutation.SetCancelled(b)
+	return suo
+}
+
+// SetNillableCancelled sets the "cancelled" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableCancelled(b *bool) *SubscriptionUpdateOne {
+	if b != nil {
+		suo.SetCancelled(*b)
+	}
 	return suo
 }
 
@@ -394,6 +518,11 @@ func (suo *SubscriptionUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (suo *SubscriptionUpdateOne) check() error {
+	if v, ok := suo.mutation.Tier(); ok {
+		if err := subscription.TierValidator(v); err != nil {
+			return &ValidationError{Name: "tier", err: fmt.Errorf(`ent: validator failed for field "Subscription.tier": %w`, err)}
+		}
+	}
 	if _, ok := suo.mutation.UserID(); suo.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Subscription.user"`)
 	}
@@ -449,9 +578,15 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 			Column: subscription.FieldStripeSubscriptionID,
 		})
 	}
+	if suo.mutation.StripeSubscriptionIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: subscription.FieldStripeSubscriptionID,
+		})
+	}
 	if value, ok := suo.mutation.Tier(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
+			Type:   field.TypeEnum,
 			Value:  value,
 			Column: subscription.FieldTier,
 		})
@@ -461,6 +596,19 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: subscription.FieldExpiresAt,
+		})
+	}
+	if suo.mutation.ExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: subscription.FieldExpiresAt,
+		})
+	}
+	if value, ok := suo.mutation.Cancelled(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: subscription.FieldCancelled,
 		})
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {

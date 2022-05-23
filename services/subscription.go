@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -98,18 +99,107 @@ func (s *SubscriptionService) GetLastUserSubscription(userID uuid.UUID) (*ent.Su
 		Only(context.Background())
 }
 
-func (s *SubscriptionService) getOrCreateCustomer(user *ent.User, lastUserSubscription *ent.Subscription) (*stripe.Customer, error) {
+func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, lastUserSubscription *ent.Subscription) (*stripe.Customer, *ent.Subscription, error) {
+	var err error
+	var stripeCustomer *stripe.Customer
+	var stripeSubscription *stripe.Subscription
+
+	// Retrieve Stripe data from the local saved sbscription details
 	if lastUserSubscription != nil {
-		return customer.Get(lastUserSubscription.StripeCustomerID, nil)
+		customerParams := &stripe.CustomerParams{}
+		customerParams.AddExpand("subscriptions")
+
+		stripeCustomer, err = customer.Get(lastUserSubscription.StripeCustomerID, customerParams)
+		if err != nil {
+			return nil, lastUserSubscription, err
+		}
+
+		if lastUserSubscription.StripeSubscriptionID != "" {
+			stripeSubscription, err = sub.Get(lastUserSubscription.StripeSubscriptionID, nil)
+			if err != nil {
+				return nil, lastUserSubscription, err
+			}
+		}
 	}
 
-	customerParams := &stripe.CustomerParams{
-		Email: stripe.String(user.Email),
+	if stripeCustomer != nil && stripeSubscription != nil {
+		return stripeCustomer, lastUserSubscription, nil
 	}
 
-	customerParams.AddMetadata("user_id", user.ID.String())
+	// If there is no local saved customer, then we need try to retrieve the
+	// existing customer from Stripe. If there is no customer in Stripe, then
+	// we need to create a new customer.
+	if stripeCustomer == nil {
+		searchParams := &stripe.CustomerSearchParams{
+			SearchParams: stripe.SearchParams{
+				Query: fmt.Sprintf("metadata['user_id']:'%s'", subscribingUser.ID.String()),
+			},
+		}
+		searchParams.AddExpand("subscriptions")
+		customerSearchIter := customer.Search(searchParams)
 
-	return customer.New(customerParams)
+		if customerSearchIter.Next() {
+			stripeCustomer = customerSearchIter.Customer()
+		} else {
+			customerParams := &stripe.CustomerParams{
+				Email: stripe.String(subscribingUser.Email),
+			}
+			customerParams.AddMetadata("user_id", subscribingUser.ID.String())
+
+			var err error
+			stripeCustomer, err = customer.New(customerParams)
+			if err != nil {
+				return nil, lastUserSubscription, err
+			}
+		}
+	}
+
+	tier := "free"
+
+	// If there is no local saved subscription but the customer has one,
+	// then we need try to retrieve the existing subscription from Stripe.
+	if stripeSubscription == nil && stripeCustomer.Subscriptions != nil {
+		for _, stripeCustomerSubscription := range stripeCustomer.Subscriptions.Data {
+			maybeTier := s.GetTierFromPriceId(stripeCustomerSubscription.Items.Data[0].Price.ID)
+			if maybeTier == "" {
+				continue
+			}
+
+			stripeSubscription = stripeCustomerSubscription
+			tier = maybeTier
+			break
+		}
+	}
+
+	subscriptionCreate := s.databaseService.Subscription.Create().
+		SetStripeCustomerID(stripeCustomer.ID).
+		SetUser(subscribingUser)
+
+	// Only save subscription details if there is an unsaved Stripe subscription
+	if stripeSubscription != nil && stripeCustomer.Subscriptions != nil {
+		subscriptionCreate.
+			SetStripeSubscriptionID(stripeSubscription.ID).
+			SetExpiresAt(time.Unix(stripeSubscription.CurrentPeriodEnd, 0)).
+			SetCancelled(stripeSubscription.CancelAtPeriodEnd).
+			SetTier(subscription.Tier(tier))
+	}
+
+	subscriptionId, err := subscriptionCreate.
+		OnConflict(
+			sql.ConflictColumns("user_subscription"),
+		).
+		UpdateNewValues().
+		ID(context.Background())
+	if err != nil {
+		return stripeCustomer, nil, err
+	}
+
+	lastUserSubscription, err = s.databaseService.Subscription.Get(context.Background(), subscriptionId)
+	if err != nil {
+		return stripeCustomer, lastUserSubscription, err
+	}
+
+	return stripeCustomer, lastUserSubscription, nil
 }
 
 type CheckoutSessionConfig struct {
@@ -119,13 +209,8 @@ type CheckoutSessionConfig struct {
 	CancelURL  string
 }
 
-func (s *SubscriptionService) CreateCheckoutSession(lastUserSubscription *ent.Subscription, config *CheckoutSessionConfig) (*stripe.CheckoutSession, error) {
+func (s *SubscriptionService) CreateCheckoutSession(stripeCustomer *stripe.Customer, config *CheckoutSessionConfig) (*stripe.CheckoutSession, error) {
 	tierPrices := s.stripeTierPriceIds[config.Tier]
-
-	stripeCustomer, err := s.getOrCreateCustomer(config.User, lastUserSubscription)
-	if err != nil {
-		return nil, err
-	}
 
 	checkoutParams := &stripe.CheckoutSessionParams{
 		Mode: stripe.String(string(stripe.CheckoutSessionModeSubscription)),
@@ -193,12 +278,12 @@ func (s *SubscriptionService) UpdateSubscription(stripeSubscription *stripe.Subs
 		return err
 	}
 
-	id, err := uuid.Parse(stripeCustomer.Metadata["user_id"])
+	userId, err := uuid.Parse(stripeCustomer.Metadata["user_id"])
 	if err != nil {
 		return err
 	}
 
-	subscribingUser, err := s.databaseService.User.Get(context.Background(), id)
+	subscribingUser, err := s.databaseService.User.Get(context.Background(), userId)
 	if err != nil {
 		return err
 	}
@@ -206,8 +291,9 @@ func (s *SubscriptionService) UpdateSubscription(stripeSubscription *stripe.Subs
 	_, err = s.databaseService.Subscription.Create().
 		SetStripeCustomerID(stripeCustomer.ID).
 		SetStripeSubscriptionID(stripeSubscription.ID).
-		SetTier(s.GetTierFromPriceId(stripeSubscription.Items.Data[0].Price.ID)).
+		SetTier(subscription.Tier(s.GetTierFromPriceId(stripeSubscription.Items.Data[0].Price.ID))).
 		SetExpiresAt(time.Unix(stripeSubscription.CurrentPeriodEnd, 0)).
+		SetCancelled(stripeSubscription.CancelAtPeriodEnd).
 		SetUser(subscribingUser).
 		OnConflict(
 			sql.ConflictColumns("user_subscription"),
@@ -221,30 +307,44 @@ func (s *SubscriptionService) UpdateSubscription(stripeSubscription *stripe.Subs
 	return nil
 }
 
-func (s *SubscriptionService) ExpireSubscriptionFromInvoice(invoice *stripe.Invoice) error {
-	stripeCustomer, err := customer.Get(invoice.Customer.ID, nil)
+func (s *SubscriptionService) CancelStripeSubscription(stripeSubscriptionId string) error {
+	stripeSubscription, err := sub.Get(stripeSubscriptionId, nil)
 	if err != nil {
 		return err
 	}
 
-	id, err := uuid.Parse(stripeCustomer.Metadata["user_id"])
-	if err != nil {
-		return err
-	}
+	_, err = sub.Update(stripeSubscription.ID, &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(true),
+	})
 
-	subscribedUser, err := s.databaseService.User.Get(context.Background(), id)
-	if err != nil {
-		return err
-	}
+	return err
+}
 
-	_, err = s.databaseService.Subscription.Update().
-		SetExpiresAt(time.Now()).
+func (s *SubscriptionService) CancelSubscription(userId uuid.UUID, expiresAt time.Time) error {
+	_, err := s.databaseService.Subscription.Update().
+		SetExpiresAt(expiresAt).
+		SetCancelled(true).
 		Where(
 			subscription.HasUserWith(
-				user.ID(subscribedUser.ID),
+				user.ID(userId),
 			),
 		).
 		Save(context.Background())
 
-	return nil
+	return err
+}
+
+func (s *SubscriptionService) CancelSubscriptionFromStripeCustomerId(stripeCustomerId string, expiresAt time.Time) error {
+	subscribingUser, err := s.databaseService.User.Query().
+		Where(
+			user.HasSubscriptionWith(
+				subscription.StripeCustomerID(stripeCustomerId),
+			),
+		).
+		Only(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return s.CancelSubscription(subscribingUser.ID, expiresAt)
 }

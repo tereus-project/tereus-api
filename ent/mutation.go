@@ -739,8 +739,9 @@ type SubscriptionMutation struct {
 	id                     *uuid.UUID
 	stripe_customer_id     *string
 	stripe_subscription_id *string
-	tier                   *string
+	tier                   *subscription.Tier
 	expires_at             *time.Time
+	cancelled              *bool
 	created_at             *time.Time
 	clearedFields          map[string]struct{}
 	user                   *uuid.UUID
@@ -921,18 +922,31 @@ func (m *SubscriptionMutation) OldStripeSubscriptionID(ctx context.Context) (v s
 	return oldValue.StripeSubscriptionID, nil
 }
 
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (m *SubscriptionMutation) ClearStripeSubscriptionID() {
+	m.stripe_subscription_id = nil
+	m.clearedFields[subscription.FieldStripeSubscriptionID] = struct{}{}
+}
+
+// StripeSubscriptionIDCleared returns if the "stripe_subscription_id" field was cleared in this mutation.
+func (m *SubscriptionMutation) StripeSubscriptionIDCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldStripeSubscriptionID]
+	return ok
+}
+
 // ResetStripeSubscriptionID resets all changes to the "stripe_subscription_id" field.
 func (m *SubscriptionMutation) ResetStripeSubscriptionID() {
 	m.stripe_subscription_id = nil
+	delete(m.clearedFields, subscription.FieldStripeSubscriptionID)
 }
 
 // SetTier sets the "tier" field.
-func (m *SubscriptionMutation) SetTier(s string) {
+func (m *SubscriptionMutation) SetTier(s subscription.Tier) {
 	m.tier = &s
 }
 
 // Tier returns the value of the "tier" field in the mutation.
-func (m *SubscriptionMutation) Tier() (r string, exists bool) {
+func (m *SubscriptionMutation) Tier() (r subscription.Tier, exists bool) {
 	v := m.tier
 	if v == nil {
 		return
@@ -943,7 +957,7 @@ func (m *SubscriptionMutation) Tier() (r string, exists bool) {
 // OldTier returns the old "tier" field's value of the Subscription entity.
 // If the Subscription object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SubscriptionMutation) OldTier(ctx context.Context) (v string, err error) {
+func (m *SubscriptionMutation) OldTier(ctx context.Context) (v subscription.Tier, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTier is only allowed on UpdateOne operations")
 	}
@@ -993,9 +1007,58 @@ func (m *SubscriptionMutation) OldExpiresAt(ctx context.Context) (v time.Time, e
 	return oldValue.ExpiresAt, nil
 }
 
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (m *SubscriptionMutation) ClearExpiresAt() {
+	m.expires_at = nil
+	m.clearedFields[subscription.FieldExpiresAt] = struct{}{}
+}
+
+// ExpiresAtCleared returns if the "expires_at" field was cleared in this mutation.
+func (m *SubscriptionMutation) ExpiresAtCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldExpiresAt]
+	return ok
+}
+
 // ResetExpiresAt resets all changes to the "expires_at" field.
 func (m *SubscriptionMutation) ResetExpiresAt() {
 	m.expires_at = nil
+	delete(m.clearedFields, subscription.FieldExpiresAt)
+}
+
+// SetCancelled sets the "cancelled" field.
+func (m *SubscriptionMutation) SetCancelled(b bool) {
+	m.cancelled = &b
+}
+
+// Cancelled returns the value of the "cancelled" field in the mutation.
+func (m *SubscriptionMutation) Cancelled() (r bool, exists bool) {
+	v := m.cancelled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCancelled returns the old "cancelled" field's value of the Subscription entity.
+// If the Subscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubscriptionMutation) OldCancelled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCancelled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCancelled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCancelled: %w", err)
+	}
+	return oldValue.Cancelled, nil
+}
+
+// ResetCancelled resets all changes to the "cancelled" field.
+func (m *SubscriptionMutation) ResetCancelled() {
+	m.cancelled = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1092,7 +1155,7 @@ func (m *SubscriptionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubscriptionMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.stripe_customer_id != nil {
 		fields = append(fields, subscription.FieldStripeCustomerID)
 	}
@@ -1104,6 +1167,9 @@ func (m *SubscriptionMutation) Fields() []string {
 	}
 	if m.expires_at != nil {
 		fields = append(fields, subscription.FieldExpiresAt)
+	}
+	if m.cancelled != nil {
+		fields = append(fields, subscription.FieldCancelled)
 	}
 	if m.created_at != nil {
 		fields = append(fields, subscription.FieldCreatedAt)
@@ -1124,6 +1190,8 @@ func (m *SubscriptionMutation) Field(name string) (ent.Value, bool) {
 		return m.Tier()
 	case subscription.FieldExpiresAt:
 		return m.ExpiresAt()
+	case subscription.FieldCancelled:
+		return m.Cancelled()
 	case subscription.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -1143,6 +1211,8 @@ func (m *SubscriptionMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldTier(ctx)
 	case subscription.FieldExpiresAt:
 		return m.OldExpiresAt(ctx)
+	case subscription.FieldCancelled:
+		return m.OldCancelled(ctx)
 	case subscription.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -1169,7 +1239,7 @@ func (m *SubscriptionMutation) SetField(name string, value ent.Value) error {
 		m.SetStripeSubscriptionID(v)
 		return nil
 	case subscription.FieldTier:
-		v, ok := value.(string)
+		v, ok := value.(subscription.Tier)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1181,6 +1251,13 @@ func (m *SubscriptionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetExpiresAt(v)
+		return nil
+	case subscription.FieldCancelled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCancelled(v)
 		return nil
 	case subscription.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1218,7 +1295,14 @@ func (m *SubscriptionMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *SubscriptionMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(subscription.FieldStripeSubscriptionID) {
+		fields = append(fields, subscription.FieldStripeSubscriptionID)
+	}
+	if m.FieldCleared(subscription.FieldExpiresAt) {
+		fields = append(fields, subscription.FieldExpiresAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1231,6 +1315,14 @@ func (m *SubscriptionMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *SubscriptionMutation) ClearField(name string) error {
+	switch name {
+	case subscription.FieldStripeSubscriptionID:
+		m.ClearStripeSubscriptionID()
+		return nil
+	case subscription.FieldExpiresAt:
+		m.ClearExpiresAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Subscription nullable field %s", name)
 }
 
@@ -1249,6 +1341,9 @@ func (m *SubscriptionMutation) ResetField(name string) error {
 		return nil
 	case subscription.FieldExpiresAt:
 		m.ResetExpiresAt()
+		return nil
+	case subscription.FieldCancelled:
+		m.ResetCancelled()
 		return nil
 	case subscription.FieldCreatedAt:
 		m.ResetCreatedAt()

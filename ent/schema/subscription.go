@@ -19,9 +19,10 @@ func (Subscription) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("stripe_customer_id"),
-		field.String("stripe_subscription_id"),
-		field.String("tier"),
-		field.Time("expires_at"),
+		field.String("stripe_subscription_id").Optional(),
+		field.Enum("tier").Values("free", "pro", "enterprise").Default("free"),
+		field.Time("expires_at").Optional(),
+		field.Bool("cancelled").Default(false),
 		field.Time("created_at").Default(time.Now),
 	}
 }

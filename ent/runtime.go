@@ -29,8 +29,12 @@ func init() {
 	submission.DefaultID = submissionDescID.Default.(func() uuid.UUID)
 	subscriptionFields := schema.Subscription{}.Fields()
 	_ = subscriptionFields
+	// subscriptionDescCancelled is the schema descriptor for cancelled field.
+	subscriptionDescCancelled := subscriptionFields[5].Descriptor()
+	// subscription.DefaultCancelled holds the default value on creation for the cancelled field.
+	subscription.DefaultCancelled = subscriptionDescCancelled.Default.(bool)
 	// subscriptionDescCreatedAt is the schema descriptor for created_at field.
-	subscriptionDescCreatedAt := subscriptionFields[5].Descriptor()
+	subscriptionDescCreatedAt := subscriptionFields[6].Descriptor()
 	// subscription.DefaultCreatedAt holds the default value on creation for the created_at field.
 	subscription.DefaultCreatedAt = subscriptionDescCreatedAt.Default.(func() time.Time)
 	// subscriptionDescID is the schema descriptor for id field.

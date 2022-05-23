@@ -108,17 +108,17 @@ func StripeSubscriptionID(v string) predicate.Subscription {
 	})
 }
 
-// Tier applies equality check predicate on the "tier" field. It's identical to TierEQ.
-func Tier(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldTier), v))
-	})
-}
-
 // ExpiresAt applies equality check predicate on the "expires_at" field. It's identical to ExpiresAtEQ.
 func ExpiresAt(v time.Time) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldExpiresAt), v))
+	})
+}
+
+// Cancelled applies equality check predicate on the "cancelled" field. It's identical to CancelledEQ.
+func Cancelled(v bool) predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCancelled), v))
 	})
 }
 
@@ -337,6 +337,20 @@ func StripeSubscriptionIDHasSuffix(v string) predicate.Subscription {
 	})
 }
 
+// StripeSubscriptionIDIsNil applies the IsNil predicate on the "stripe_subscription_id" field.
+func StripeSubscriptionIDIsNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldStripeSubscriptionID)))
+	})
+}
+
+// StripeSubscriptionIDNotNil applies the NotNil predicate on the "stripe_subscription_id" field.
+func StripeSubscriptionIDNotNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldStripeSubscriptionID)))
+	})
+}
+
 // StripeSubscriptionIDEqualFold applies the EqualFold predicate on the "stripe_subscription_id" field.
 func StripeSubscriptionIDEqualFold(v string) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
@@ -352,21 +366,21 @@ func StripeSubscriptionIDContainsFold(v string) predicate.Subscription {
 }
 
 // TierEQ applies the EQ predicate on the "tier" field.
-func TierEQ(v string) predicate.Subscription {
+func TierEQ(v Tier) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldTier), v))
 	})
 }
 
 // TierNEQ applies the NEQ predicate on the "tier" field.
-func TierNEQ(v string) predicate.Subscription {
+func TierNEQ(v Tier) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldTier), v))
 	})
 }
 
 // TierIn applies the In predicate on the "tier" field.
-func TierIn(vs ...string) predicate.Subscription {
+func TierIn(vs ...Tier) predicate.Subscription {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -383,7 +397,7 @@ func TierIn(vs ...string) predicate.Subscription {
 }
 
 // TierNotIn applies the NotIn predicate on the "tier" field.
-func TierNotIn(vs ...string) predicate.Subscription {
+func TierNotIn(vs ...Tier) predicate.Subscription {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -396,69 +410,6 @@ func TierNotIn(vs ...string) predicate.Subscription {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldTier), v...))
-	})
-}
-
-// TierGT applies the GT predicate on the "tier" field.
-func TierGT(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldTier), v))
-	})
-}
-
-// TierGTE applies the GTE predicate on the "tier" field.
-func TierGTE(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldTier), v))
-	})
-}
-
-// TierLT applies the LT predicate on the "tier" field.
-func TierLT(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldTier), v))
-	})
-}
-
-// TierLTE applies the LTE predicate on the "tier" field.
-func TierLTE(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldTier), v))
-	})
-}
-
-// TierContains applies the Contains predicate on the "tier" field.
-func TierContains(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldTier), v))
-	})
-}
-
-// TierHasPrefix applies the HasPrefix predicate on the "tier" field.
-func TierHasPrefix(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldTier), v))
-	})
-}
-
-// TierHasSuffix applies the HasSuffix predicate on the "tier" field.
-func TierHasSuffix(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldTier), v))
-	})
-}
-
-// TierEqualFold applies the EqualFold predicate on the "tier" field.
-func TierEqualFold(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldTier), v))
-	})
-}
-
-// TierContainsFold applies the ContainsFold predicate on the "tier" field.
-func TierContainsFold(v string) predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldTier), v))
 	})
 }
 
@@ -535,6 +486,34 @@ func ExpiresAtLT(v time.Time) predicate.Subscription {
 func ExpiresAtLTE(v time.Time) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldExpiresAt), v))
+	})
+}
+
+// ExpiresAtIsNil applies the IsNil predicate on the "expires_at" field.
+func ExpiresAtIsNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldExpiresAt)))
+	})
+}
+
+// ExpiresAtNotNil applies the NotNil predicate on the "expires_at" field.
+func ExpiresAtNotNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldExpiresAt)))
+	})
+}
+
+// CancelledEQ applies the EQ predicate on the "cancelled" field.
+func CancelledEQ(v bool) predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCancelled), v))
+	})
+}
+
+// CancelledNEQ applies the NEQ predicate on the "cancelled" field.
+func CancelledNEQ(v bool) predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldCancelled), v))
 	})
 }
 

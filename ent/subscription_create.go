@@ -37,15 +37,53 @@ func (sc *SubscriptionCreate) SetStripeSubscriptionID(s string) *SubscriptionCre
 	return sc
 }
 
+// SetNillableStripeSubscriptionID sets the "stripe_subscription_id" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableStripeSubscriptionID(s *string) *SubscriptionCreate {
+	if s != nil {
+		sc.SetStripeSubscriptionID(*s)
+	}
+	return sc
+}
+
 // SetTier sets the "tier" field.
-func (sc *SubscriptionCreate) SetTier(s string) *SubscriptionCreate {
+func (sc *SubscriptionCreate) SetTier(s subscription.Tier) *SubscriptionCreate {
 	sc.mutation.SetTier(s)
+	return sc
+}
+
+// SetNillableTier sets the "tier" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableTier(s *subscription.Tier) *SubscriptionCreate {
+	if s != nil {
+		sc.SetTier(*s)
+	}
 	return sc
 }
 
 // SetExpiresAt sets the "expires_at" field.
 func (sc *SubscriptionCreate) SetExpiresAt(t time.Time) *SubscriptionCreate {
 	sc.mutation.SetExpiresAt(t)
+	return sc
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableExpiresAt(t *time.Time) *SubscriptionCreate {
+	if t != nil {
+		sc.SetExpiresAt(*t)
+	}
+	return sc
+}
+
+// SetCancelled sets the "cancelled" field.
+func (sc *SubscriptionCreate) SetCancelled(b bool) *SubscriptionCreate {
+	sc.mutation.SetCancelled(b)
+	return sc
+}
+
+// SetNillableCancelled sets the "cancelled" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableCancelled(b *bool) *SubscriptionCreate {
+	if b != nil {
+		sc.SetCancelled(*b)
+	}
 	return sc
 }
 
@@ -159,6 +197,14 @@ func (sc *SubscriptionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (sc *SubscriptionCreate) defaults() {
+	if _, ok := sc.mutation.Tier(); !ok {
+		v := subscription.DefaultTier
+		sc.mutation.SetTier(v)
+	}
+	if _, ok := sc.mutation.Cancelled(); !ok {
+		v := subscription.DefaultCancelled
+		sc.mutation.SetCancelled(v)
+	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		v := subscription.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
@@ -174,14 +220,16 @@ func (sc *SubscriptionCreate) check() error {
 	if _, ok := sc.mutation.StripeCustomerID(); !ok {
 		return &ValidationError{Name: "stripe_customer_id", err: errors.New(`ent: missing required field "Subscription.stripe_customer_id"`)}
 	}
-	if _, ok := sc.mutation.StripeSubscriptionID(); !ok {
-		return &ValidationError{Name: "stripe_subscription_id", err: errors.New(`ent: missing required field "Subscription.stripe_subscription_id"`)}
-	}
 	if _, ok := sc.mutation.Tier(); !ok {
 		return &ValidationError{Name: "tier", err: errors.New(`ent: missing required field "Subscription.tier"`)}
 	}
-	if _, ok := sc.mutation.ExpiresAt(); !ok {
-		return &ValidationError{Name: "expires_at", err: errors.New(`ent: missing required field "Subscription.expires_at"`)}
+	if v, ok := sc.mutation.Tier(); ok {
+		if err := subscription.TierValidator(v); err != nil {
+			return &ValidationError{Name: "tier", err: fmt.Errorf(`ent: validator failed for field "Subscription.tier": %w`, err)}
+		}
+	}
+	if _, ok := sc.mutation.Cancelled(); !ok {
+		return &ValidationError{Name: "cancelled", err: errors.New(`ent: missing required field "Subscription.cancelled"`)}
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Subscription.created_at"`)}
@@ -244,7 +292,7 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 	}
 	if value, ok := sc.mutation.Tier(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
+			Type:   field.TypeEnum,
 			Value:  value,
 			Column: subscription.FieldTier,
 		})
@@ -257,6 +305,14 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 			Column: subscription.FieldExpiresAt,
 		})
 		_node.ExpiresAt = value
+	}
+	if value, ok := sc.mutation.Cancelled(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: subscription.FieldCancelled,
+		})
+		_node.Cancelled = value
 	}
 	if value, ok := sc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -364,8 +420,14 @@ func (u *SubscriptionUpsert) UpdateStripeSubscriptionID() *SubscriptionUpsert {
 	return u
 }
 
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (u *SubscriptionUpsert) ClearStripeSubscriptionID() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldStripeSubscriptionID)
+	return u
+}
+
 // SetTier sets the "tier" field.
-func (u *SubscriptionUpsert) SetTier(v string) *SubscriptionUpsert {
+func (u *SubscriptionUpsert) SetTier(v subscription.Tier) *SubscriptionUpsert {
 	u.Set(subscription.FieldTier, v)
 	return u
 }
@@ -385,6 +447,24 @@ func (u *SubscriptionUpsert) SetExpiresAt(v time.Time) *SubscriptionUpsert {
 // UpdateExpiresAt sets the "expires_at" field to the value that was provided on create.
 func (u *SubscriptionUpsert) UpdateExpiresAt() *SubscriptionUpsert {
 	u.SetExcluded(subscription.FieldExpiresAt)
+	return u
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SubscriptionUpsert) ClearExpiresAt() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldExpiresAt)
+	return u
+}
+
+// SetCancelled sets the "cancelled" field.
+func (u *SubscriptionUpsert) SetCancelled(v bool) *SubscriptionUpsert {
+	u.Set(subscription.FieldCancelled, v)
+	return u
+}
+
+// UpdateCancelled sets the "cancelled" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateCancelled() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldCancelled)
 	return u
 }
 
@@ -478,8 +558,15 @@ func (u *SubscriptionUpsertOne) UpdateStripeSubscriptionID() *SubscriptionUpsert
 	})
 }
 
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (u *SubscriptionUpsertOne) ClearStripeSubscriptionID() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStripeSubscriptionID()
+	})
+}
+
 // SetTier sets the "tier" field.
-func (u *SubscriptionUpsertOne) SetTier(v string) *SubscriptionUpsertOne {
+func (u *SubscriptionUpsertOne) SetTier(v subscription.Tier) *SubscriptionUpsertOne {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.SetTier(v)
 	})
@@ -503,6 +590,27 @@ func (u *SubscriptionUpsertOne) SetExpiresAt(v time.Time) *SubscriptionUpsertOne
 func (u *SubscriptionUpsertOne) UpdateExpiresAt() *SubscriptionUpsertOne {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateExpiresAt()
+	})
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SubscriptionUpsertOne) ClearExpiresAt() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearExpiresAt()
+	})
+}
+
+// SetCancelled sets the "cancelled" field.
+func (u *SubscriptionUpsertOne) SetCancelled(v bool) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetCancelled(v)
+	})
+}
+
+// UpdateCancelled sets the "cancelled" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateCancelled() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateCancelled()
 	})
 }
 
@@ -764,8 +872,15 @@ func (u *SubscriptionUpsertBulk) UpdateStripeSubscriptionID() *SubscriptionUpser
 	})
 }
 
+// ClearStripeSubscriptionID clears the value of the "stripe_subscription_id" field.
+func (u *SubscriptionUpsertBulk) ClearStripeSubscriptionID() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStripeSubscriptionID()
+	})
+}
+
 // SetTier sets the "tier" field.
-func (u *SubscriptionUpsertBulk) SetTier(v string) *SubscriptionUpsertBulk {
+func (u *SubscriptionUpsertBulk) SetTier(v subscription.Tier) *SubscriptionUpsertBulk {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.SetTier(v)
 	})
@@ -789,6 +904,27 @@ func (u *SubscriptionUpsertBulk) SetExpiresAt(v time.Time) *SubscriptionUpsertBu
 func (u *SubscriptionUpsertBulk) UpdateExpiresAt() *SubscriptionUpsertBulk {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateExpiresAt()
+	})
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SubscriptionUpsertBulk) ClearExpiresAt() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearExpiresAt()
+	})
+}
+
+// SetCancelled sets the "cancelled" field.
+func (u *SubscriptionUpsertBulk) SetCancelled(v bool) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetCancelled(v)
+	})
+}
+
+// UpdateCancelled sets the "cancelled" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateCancelled() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateCancelled()
 	})
 }
 

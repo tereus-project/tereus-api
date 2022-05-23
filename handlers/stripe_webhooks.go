@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -52,6 +53,26 @@ func (h *StripeWebhooksHandler) HandleWebhooks(c echo.Context) error {
 			logrus.WithError(err).Error("Failed to create subscription from invoice")
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+	case "customer.subscription.updated":
+		var subscription stripe.Subscription
+		err := json.Unmarshal(event.Data.Raw, &subscription)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		if subscription.CancelAtPeriodEnd {
+			err = h.subscriptionService.CancelSubscriptionFromStripeCustomerId(subscription.Customer.ID, time.Unix(subscription.CancelAt, 0))
+			if err != nil {
+				logrus.WithError(err).Error("Failed to cancel subscription")
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			}
+		} else if subscription.Status == "active" {
+			err = h.subscriptionService.UpdateSubscription(&subscription)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to update subscription")
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			}
+		}
 	case "customer.subscription.deleted":
 		var invoice stripe.Invoice
 		err := json.Unmarshal(event.Data.Raw, &invoice)
@@ -59,7 +80,7 @@ func (h *StripeWebhooksHandler) HandleWebhooks(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-		err = h.subscriptionService.ExpireSubscriptionFromInvoice(&invoice)
+		err = h.subscriptionService.CancelSubscriptionFromStripeCustomerId(invoice.Customer.ID, time.Unix(invoice.PeriodEnd, 0))
 		if err != nil {
 			logrus.WithError(err).Error("Failed to expire subscription from invoice")
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
