@@ -83,3 +83,21 @@ func (s *S3Service) GetObjects(prefix string) (paths <-chan *GetObjectsResult, e
 
 	return ch, nil
 }
+
+func (s *S3Service) DeleteSubmission(id string) error {
+	for _, path := range []string{"remix/", "remix-results/"} {
+		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true}) {
+			err := s.client.RemoveObject(context.Background(), s.bucket, object.Key, minio.RemoveObjectOptions{})
+			if err != nil {
+				return err
+			}
+		}
+
+		err := s.client.RemoveObject(context.Background(), s.bucket, path+id, minio.RemoveObjectOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

@@ -13,7 +13,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "source_language", Type: field.TypeString},
 		{Name: "target_language", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "processing", "done", "failed"}, Default: "pending"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "processing", "done", "failed", "deleted"}, Default: "pending"},
 		{Name: "reason", Type: field.TypeString, Nullable: true},
 		{Name: "git_repo", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},

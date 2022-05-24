@@ -120,7 +120,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userHandler, err := handlers.NewUserHandler(databaseService, tokenService, subscriptionService)
+	userHandler, err := handlers.NewUserHandler(databaseService, tokenService, subscriptionService, s3Service)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,6 +146,7 @@ func main() {
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
+	e.DELETE("/submissions/:id", userHandler.DeleteSubmission)
 
 	e.POST("/subscription/checkout", subscriptionHandler.CreateCheckoutSession)
 	e.POST("/subscription/portal", subscriptionHandler.CreatePortalSession)
