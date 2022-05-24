@@ -21,6 +21,14 @@ require (
 )
 
 require (
+	github.com/getsentry/sentry-go v0.13.0 // indirect
+	github.com/onrik/logrus v0.9.0 // indirect
+	github.com/tereus-project/tereus-go-std v0.0.0-20220524132507-eb792bc3b2e6
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+)
+
+require (
 	ariga.io/atlas v0.3.7-0.20220303204946-787354f533c3 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Microsoft/go-winio v0.4.16 // indirect
@@ -64,10 +72,10 @@ require (
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

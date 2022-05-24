@@ -10,6 +10,7 @@ import (
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/handlers"
 	"github.com/tereus-project/tereus-api/services"
+	"github.com/tereus-project/tereus-go-std/logging"
 )
 
 func main() {
@@ -20,7 +21,18 @@ func main() {
 
 	config := env.Get()
 
-	logrus.SetLevel(logrus.DebugLevel)
+	sentryHook, err := logging.SetupLog(logging.LogConfig{
+		Format:       config.LogFormat,
+		LogLevel:     config.LogLevel,
+		ShowFilename: true,
+		ReportCaller: true,
+		SentryDSN:    config.SentryDSN,
+	})
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to set log configuration")
+	}
+	defer sentryHook.Flush()
+	defer logging.RecoverAndLogPanic()
 
 	// Echo instance
 	e := echo.New()
