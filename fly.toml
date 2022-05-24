@@ -6,6 +6,7 @@ processes = []
 
 [env]
   DATABASE_DRIVER = "postgres"
+  ENV = "prod"
   LOG_LEVEL = "debug"
   S3_BUCKET = "tereus-remix"
   S3_ENDPOINT = "s3.fr-par.scw.cloud"
