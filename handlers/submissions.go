@@ -58,7 +58,7 @@ func (h *SubmissionsHandler) DeleteSubmission(c echo.Context) error {
 	}
 
 	// Already deleted, skip S3/DB deletion
-	if sub.Status == submission.StatusDeleted {
+	if sub.Status == submission.StatusCleaned {
 		return c.NoContent(http.StatusNoContent)
 	}
 
@@ -75,7 +75,7 @@ func (h *SubmissionsHandler) DeleteSubmission(c echo.Context) error {
 		Where(
 			submission.ID(sub.ID),
 		).
-		SetStatus(submission.StatusDeleted).
+		SetStatus(submission.StatusCleaned).
 		Exec(context.Background())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to set submission as deleted")
