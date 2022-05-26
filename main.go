@@ -104,11 +104,11 @@ func main() {
 		logrus.WithError(err).Fatalln("Failed to initialize subscription service")
 	}
 
-	logrus.Debugln("Starting submission completion listener")
-	err = startSubmissionStatusListener(kafkaService, databaseService)
-	if err != nil {
-		logrus.WithError(err).Fatal("Failed to start submission completion listener")
-	}
+	logrus.Debugln("Starting submission status consumer worker")
+	startSubmissionStatusConsumerWorker(kafkaService, databaseService)
+
+	logrus.Debugln("Starting subscription data usage reporting worker")
+	startSubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
 
 	remixHandler, err := handlers.NewRemixHandler(s3Service, kafkaService, databaseService, tokenService)
 	if err != nil {

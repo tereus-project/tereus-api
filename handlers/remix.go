@@ -291,20 +291,14 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	config := env.Get()
 	objectStoragePath := fmt.Sprintf("%s/%s", config.SubmissionsFolder, job.ID)
 
-	// Get files from S3
-	paths, err := h.S3Service.GetObjects(objectStoragePath)
-	if err != nil {
-		logrus.WithError(err).Error("Failed to get files from S3")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
-	}
-
 	c.Response().Header().Set("Content-Type", "application/zip")
 	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", job.ID))
 
 	// Create zip file
 	zipFile := zip.NewWriter(c.Response().Writer)
 
-	for object := range paths {
+	objects := h.S3Service.GetObjects(objectStoragePath)
+	for object := range objects {
 		if object.Err != nil {
 			logrus.WithError(object.Err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")

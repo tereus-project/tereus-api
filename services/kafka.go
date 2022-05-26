@@ -80,7 +80,6 @@ type SubmissionStatusMessage struct {
 }
 
 func (k *KafkaService) ConsumeSubmissionStatus(ctx context.Context) <-chan SubmissionStatusMessage {
-
 	ch := make(chan SubmissionStatusMessage)
 
 	r := kafka.NewReader(kafka.ReaderConfig{

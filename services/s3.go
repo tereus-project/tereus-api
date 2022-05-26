@@ -65,28 +65,34 @@ func (s *S3Service) GetObject(path string) (*minio.Object, error) {
 type GetObjectsResult struct {
 	Err  error
 	Path string
+	Size int64
 }
 
-func (s *S3Service) GetObjects(prefix string) (paths <-chan *GetObjectsResult, err error) {
+func (s *S3Service) GetObjects(prefix string) <-chan *GetObjectsResult {
 	ch := make(chan *GetObjectsResult)
 
 	go func() {
 		defer close(ch)
 
-		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
+		objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true})
+
+		for object := range objects {
 			ch <- &GetObjectsResult{
 				Err:  object.Err,
 				Path: object.Key,
+				Size: object.Size,
 			}
 		}
 	}()
 
-	return ch, nil
+	return ch
 }
 
 func (s *S3Service) DeleteSubmission(id string) error {
 	for _, path := range []string{"remix/", "remix-results/"} {
-		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true}) {
+		objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true})
+
+		for object := range objects {
 			err := s.client.RemoveObject(context.Background(), s.bucket, object.Key, minio.RemoveObjectOptions{})
 			if err != nil {
 				return err
@@ -100,4 +106,14 @@ func (s *S3Service) DeleteSubmission(id string) error {
 	}
 
 	return nil
+}
+
+func (s *S3Service) SizeofObjects(prefix string) int64 {
+	size := int64(0)
+
+	for object := range s.GetObjects(prefix) {
+		size += object.Size
+	}
+
+	return size
 }

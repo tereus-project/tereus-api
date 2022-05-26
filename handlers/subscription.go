@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -72,7 +71,7 @@ func (h *SubscriptionHandler) CreateCheckoutSession(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get or create customer")
 	}
 
-	if lastUserSubscription != nil && lastUserSubscription.ExpiresAt.After(time.Now()) && lastUserSubscription.StripeSubscriptionID != "" {
+	if h.subscriptionService.IsActive(lastUserSubscription) {
 		if lastUserSubscription.Tier.String() == body.Tier && !lastUserSubscription.Cancelled {
 			return echo.NewHTTPError(http.StatusBadRequest, "You already are subscribed to this tier")
 		}
@@ -85,7 +84,7 @@ func (h *SubscriptionHandler) CreateCheckoutSession(c echo.Context) error {
 					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")
 				}
 
-				err = h.subscriptionService.CancelSubscription(user.ID, lastUserSubscription.ExpiresAt)
+				err = h.subscriptionService.CancelUserSubscription(user.ID, lastUserSubscription.ExpiresAt)
 				if err != nil {
 					logrus.WithError(err).Error("Failed to downgrade subscription")
 					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")

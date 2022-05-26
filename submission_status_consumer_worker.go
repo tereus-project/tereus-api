@@ -9,7 +9,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func startSubmissionStatusListener(k *services.KafkaService, databaseService *services.DatabaseService) error {
+func startSubmissionStatusConsumerWorker(k *services.KafkaService, databaseService *services.DatabaseService) {
 	go func() {
 		ch := k.ConsumeSubmissionStatus(context.Background())
 
@@ -39,6 +39,4 @@ func startSubmissionStatusListener(k *services.KafkaService, databaseService *se
 			}
 		}
 	}()
-
-	return nil
 }

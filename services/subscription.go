@@ -119,6 +119,10 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 			if err != nil {
 				return nil, nil, err
 			}
+
+			if stripeSubscription.Status == "canceled" || stripeSubscription.Status == "unpaid" {
+				stripeSubscription = nil
+			}
 		}
 	}
 
@@ -320,7 +324,7 @@ func (s *SubscriptionService) CancelStripeSubscription(stripeSubscriptionId stri
 	return err
 }
 
-func (s *SubscriptionService) CancelSubscription(userId uuid.UUID, expiresAt time.Time) error {
+func (s *SubscriptionService) CancelUserSubscription(userId uuid.UUID, expiresAt time.Time) error {
 	_, err := s.databaseService.Subscription.Update().
 		SetExpiresAt(expiresAt).
 		SetCancelled(true).
@@ -346,5 +350,21 @@ func (s *SubscriptionService) CancelSubscriptionFromStripeCustomerId(stripeCusto
 		return err
 	}
 
-	return s.CancelSubscription(subscribingUser.ID, expiresAt)
+	return s.CancelUserSubscription(subscribingUser.ID, expiresAt)
+}
+
+func (s *SubscriptionService) IsActive(subscription *ent.Subscription) bool {
+	return subscription != nil && subscription.StripeSubscriptionID != "" && subscription.ExpiresAt.After(time.Now())
+}
+
+func (s *SubscriptionService) GetActiveSubscriptions(offset int, limit int) ([]*ent.Subscription, error) {
+	return s.databaseService.Subscription.Query().
+		Where(
+			subscription.TierNEQ(subscription.TierFree),
+			subscription.ExpiresAtGTE(time.Now()),
+			subscription.StripeSubscriptionIDNotNil(),
+		).
+		Offset(offset).
+		Limit(limit).
+		All(context.Background())
 }
