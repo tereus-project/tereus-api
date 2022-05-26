@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/ent/submission"
 	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/env"
@@ -380,11 +381,22 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNoContent)
 	}
 
+	var cleanSubmission bool
 	sub, err := user.QuerySubscription().First(context.Background())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get subscription")
+		if ent.IsNotFound(err) {
+			// Free tier
+			cleanSubmission = true
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get subscription")
+		}
+	} else {
+		if sub.Tier == subscription.TierFree {
+			cleanSubmission = true
+		}
 	}
-	if sub.Tier == subscription.TierFree {
+
+	if cleanSubmission {
 		go func() {
 			err := h.S3Service.ScheduleForDeletion(job.ID.String())
 			if err != nil {
