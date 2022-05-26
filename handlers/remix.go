@@ -381,6 +381,9 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 	}
 
 	sub, err := user.QuerySubscription().First(context.Background())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get subscription")
+	}
 	if sub.Tier == subscription.TierFree {
 		go func() {
 			err := h.S3Service.ScheduleForDeletion(job.ID.String())
