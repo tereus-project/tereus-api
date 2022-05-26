@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -33,26 +34,48 @@ func (s *TokenService) GenerateToken(userId uuid.UUID) (uuid.UUID, error) {
 	return token.ID, nil
 }
 
+func (s *TokenService) ValidateToken(tokenId uuid.UUID) (bool, error) {
+	return s.databaseService.Token.Query().
+		Where(
+			token.ID(tokenId),
+			token.IsActive(true),
+		).
+		Exist(context.Background())
+}
+
 func (s *TokenService) GetUser(tokenId uuid.UUID) (*ent.User, error) {
 	return s.databaseService.Token.Query().
-		Where(token.ID(tokenId)).
+		Where(
+			token.ID(tokenId),
+			token.IsActive(true),
+		).
 		QueryUser().
 		Only(context.Background())
 }
 
-func (s *TokenService) GetUserFromContext(c echo.Context) (*ent.User, error) {
+func (s *TokenService) GetTokenFromContext(c echo.Context) (uuid.UUID, error) {
 	authHeader := c.Request().Header.Get("Authorization")
 	if authHeader == "" {
 		authHeader = c.Request().URL.Query().Get("token")
 	}
 
 	if authHeader == "" {
-		return nil, echo.NewHTTPError(http.StatusUnauthorized, "No authorization header provided")
+		return uuid.UUID{}, fmt.Errorf("No authorization header provided")
 	}
 
 	token, err := uuid.Parse(strings.TrimPrefix(authHeader, "Bearer "))
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+		return uuid.UUID{}, fmt.Errorf("Invalid token: %s", err.Error())
+	}
+
+	return token, nil
+}
+
+// Return a *echo.HTTPError if failing
+func (s *TokenService) GetUserFromContext(c echo.Context) (*ent.User, error) {
+	token, err := s.GetTokenFromContext(c)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 	}
 
 	user, err := s.GetUser(token)
@@ -61,4 +84,19 @@ func (s *TokenService) GetUserFromContext(c echo.Context) (*ent.User, error) {
 	}
 
 	return user, nil
+}
+
+// Return a *echo.HTTPError if failing
+func (s *TokenService) VaidateTokenFromContext(c echo.Context) (bool, error) {
+	token, err := s.GetTokenFromContext(c)
+	if err != nil {
+		return false, echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+	}
+
+	valid, err := s.ValidateToken(token)
+	if err != nil {
+		return false, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed check token validity: %s", err.Error()))
+	}
+
+	return valid, nil
 }

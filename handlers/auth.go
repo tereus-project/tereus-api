@@ -13,16 +13,16 @@ import (
 )
 
 type AuthHandler struct {
-	DatabaseService *services.DatabaseService
-	GithubService   *services.GithubService
-	TokenService    *services.TokenService
+	databaseService *services.DatabaseService
+	githubService   *services.GithubService
+	tokenService    *services.TokenService
 }
 
 func NewAuthHandler(databaseService *services.DatabaseService, githubService *services.GithubService, tokenService *services.TokenService) (*AuthHandler, error) {
 	return &AuthHandler{
-		DatabaseService: databaseService,
-		GithubService:   githubService,
-		TokenService:    tokenService,
+		databaseService: databaseService,
+		githubService:   githubService,
+		tokenService:    tokenService,
 	}, nil
 }
 
@@ -46,7 +46,7 @@ func (h *AuthHandler) ClassicSignup(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.DatabaseService.User.Create().
+	user, err := h.databaseService.User.Create().
 		SetEmail(body.Email).
 		SetPassword(body.Password).
 		Save(context.Background())
@@ -54,7 +54,7 @@ func (h *AuthHandler) ClassicSignup(c echo.Context) error {
 		return err
 	}
 
-	token, err := h.TokenService.GenerateToken(user.ID)
+	token, err := h.tokenService.GenerateToken(user.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
@@ -81,12 +81,12 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		return err
 	}
 
-	githubAuth, err := h.GithubService.GenerateAccessTokenFromCode(body.Code)
+	githubAuth, err := h.githubService.GenerateAccessTokenFromCode(body.Code)
 	if err != nil {
 		return err
 	}
 
-	githubClient := h.GithubService.NewClient(githubAuth.AccessToken)
+	githubClient := h.githubService.NewClient(githubAuth.AccessToken)
 	githubUser, err := githubClient.GetUser()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -97,7 +97,7 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		emails := githubClient.GetEmails()
 
 		if len(emails) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.GithubService.ClientId))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.githubService.ClientId))
 		}
 
 		for _, e := range emails {
@@ -108,7 +108,7 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		}
 	}
 
-	userId, err := h.DatabaseService.User.Create().
+	userId, err := h.databaseService.User.Create().
 		SetEmail(email).
 		SetGithubAccessToken(githubAuth.AccessToken).
 		OnConflict(
@@ -124,7 +124,7 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
 	}
 
-	token, err := h.TokenService.GenerateToken(userId)
+	token, err := h.tokenService.GenerateToken(userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
@@ -132,4 +132,18 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 	return c.JSON(200, signupResult{
 		Token: token.String(),
 	})
+}
+
+// /auth/check
+func (h *AuthHandler) Check(c echo.Context) error {
+	valid, err := h.tokenService.VaidateTokenFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	if !valid {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+	}
+
+	return c.NoContent(http.StatusOK)
 }
