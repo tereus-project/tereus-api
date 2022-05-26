@@ -148,6 +148,7 @@ func main() {
 
 	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)
+	e.POST("/auth/check", authHandler.Check)
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
