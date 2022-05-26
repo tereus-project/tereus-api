@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/services"
 )
@@ -338,6 +339,11 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 
 // GET /remix/:id/main
 func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
+	user, err := h.TokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
@@ -372,6 +378,18 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 
 	if _, err := object.Stat(); err != nil {
 		return echo.NewHTTPError(http.StatusNoContent)
+	}
+
+	sub, err := user.QuerySubscription().First(context.Background())
+	if sub.Tier == subscription.TierFree {
+		defer func() {
+			go func() {
+				err := h.S3Service.DeleteSubmission(job.ID.String())
+				if err != nil {
+					logrus.WithError(err).Error("Failed to delete submission from S3")
+				}
+			}()
+		}()
 	}
 
 	return c.Stream(http.StatusOK, "text/plain", object)
