@@ -382,13 +382,11 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 
 	sub, err := user.QuerySubscription().First(context.Background())
 	if sub.Tier == subscription.TierFree {
-		defer func() {
-			go func() {
-				err := h.S3Service.DeleteSubmission(job.ID.String())
-				if err != nil {
-					logrus.WithError(err).Error("Failed to delete submission from S3")
-				}
-			}()
+		go func() {
+			err := h.S3Service.ScheduleForDeletion(job.ID.String())
+			if err != nil {
+				logrus.WithError(err).Error("Failed to delete submission from S3")
+			}
 		}()
 	}
 

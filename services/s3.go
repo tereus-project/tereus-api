@@ -7,6 +7,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7/pkg/tags"
+	"github.com/sirupsen/logrus"
 )
 
 type S3Service struct {
@@ -116,4 +118,31 @@ func (s *S3Service) SizeofObjects(prefix string) int64 {
 	}
 
 	return size
+}
+
+// Set a tag for the objects to be deleted by Lifecycle later on
+func (s *S3Service) ScheduleForDeletion(id string) error {
+	tagMap := map[string]string{
+		"to-delete": "true",
+	}
+	tags, err := tags.MapToObjectTags(tagMap)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, path := range []string{"remix/", "remix-results/"} {
+		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true}) {
+			logrus.WithFields(logrus.Fields{
+				"path": object.Key,
+				"tags": tags,
+			}).Debug("Setting tags on object")
+
+			err := s.client.PutObjectTagging(context.Background(), s.bucket, object.Key, tags, minio.PutObjectTaggingOptions{})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
