@@ -226,20 +226,6 @@ func StripeCustomerIDHasSuffix(v string) predicate.Subscription {
 	})
 }
 
-// StripeCustomerIDIsNil applies the IsNil predicate on the "stripe_customer_id" field.
-func StripeCustomerIDIsNil() predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldStripeCustomerID)))
-	})
-}
-
-// StripeCustomerIDNotNil applies the NotNil predicate on the "stripe_customer_id" field.
-func StripeCustomerIDNotNil() predicate.Subscription {
-	return predicate.Subscription(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldStripeCustomerID)))
-	})
-}
-
 // StripeCustomerIDEqualFold applies the EqualFold predicate on the "stripe_customer_id" field.
 func StripeCustomerIDEqualFold(v string) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
