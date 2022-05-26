@@ -131,13 +131,13 @@ func (s *S3Service) ScheduleForDeletion(id string) error {
 	}
 
 	for _, path := range []string{"remix/", "remix-results/"} {
-		for object := range s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true}) {
+		for object := range s.GetObjects(path + id) {
 			logrus.WithFields(logrus.Fields{
-				"path": object.Key,
+				"path": object.Path,
 				"tags": tags,
 			}).Debug("Setting tags on object")
 
-			err := s.client.PutObjectTagging(context.Background(), s.bucket, object.Key, tags, minio.PutObjectTaggingOptions{})
+			err := s.client.PutObjectTagging(context.Background(), s.bucket, object.Path, tags, minio.PutObjectTaggingOptions{})
 			if err != nil {
 				return err
 			}
