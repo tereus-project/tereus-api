@@ -886,9 +886,22 @@ func (m *SubscriptionMutation) OldStripeCustomerID(ctx context.Context) (v strin
 	return oldValue.StripeCustomerID, nil
 }
 
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (m *SubscriptionMutation) ClearStripeCustomerID() {
+	m.stripe_customer_id = nil
+	m.clearedFields[subscription.FieldStripeCustomerID] = struct{}{}
+}
+
+// StripeCustomerIDCleared returns if the "stripe_customer_id" field was cleared in this mutation.
+func (m *SubscriptionMutation) StripeCustomerIDCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldStripeCustomerID]
+	return ok
+}
+
 // ResetStripeCustomerID resets all changes to the "stripe_customer_id" field.
 func (m *SubscriptionMutation) ResetStripeCustomerID() {
 	m.stripe_customer_id = nil
+	delete(m.clearedFields, subscription.FieldStripeCustomerID)
 }
 
 // SetStripeSubscriptionID sets the "stripe_subscription_id" field.
@@ -1296,6 +1309,9 @@ func (m *SubscriptionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SubscriptionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(subscription.FieldStripeCustomerID) {
+		fields = append(fields, subscription.FieldStripeCustomerID)
+	}
 	if m.FieldCleared(subscription.FieldStripeSubscriptionID) {
 		fields = append(fields, subscription.FieldStripeSubscriptionID)
 	}
@@ -1316,6 +1332,9 @@ func (m *SubscriptionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SubscriptionMutation) ClearField(name string) error {
 	switch name {
+	case subscription.FieldStripeCustomerID:
+		m.ClearStripeCustomerID()
+		return nil
 	case subscription.FieldStripeSubscriptionID:
 		m.ClearStripeSubscriptionID()
 		return nil

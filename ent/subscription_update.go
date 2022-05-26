@@ -36,6 +36,20 @@ func (su *SubscriptionUpdate) SetStripeCustomerID(s string) *SubscriptionUpdate 
 	return su
 }
 
+// SetNillableStripeCustomerID sets the "stripe_customer_id" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableStripeCustomerID(s *string) *SubscriptionUpdate {
+	if s != nil {
+		su.SetStripeCustomerID(*s)
+	}
+	return su
+}
+
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (su *SubscriptionUpdate) ClearStripeCustomerID() *SubscriptionUpdate {
+	su.mutation.ClearStripeCustomerID()
+	return su
+}
+
 // SetStripeSubscriptionID sets the "stripe_subscription_id" field.
 func (su *SubscriptionUpdate) SetStripeSubscriptionID(s string) *SubscriptionUpdate {
 	su.mutation.SetStripeSubscriptionID(s)
@@ -238,6 +252,12 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: subscription.FieldStripeCustomerID,
 		})
 	}
+	if su.mutation.StripeCustomerIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: subscription.FieldStripeCustomerID,
+		})
+	}
 	if value, ok := su.mutation.StripeSubscriptionID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -342,6 +362,20 @@ type SubscriptionUpdateOne struct {
 // SetStripeCustomerID sets the "stripe_customer_id" field.
 func (suo *SubscriptionUpdateOne) SetStripeCustomerID(s string) *SubscriptionUpdateOne {
 	suo.mutation.SetStripeCustomerID(s)
+	return suo
+}
+
+// SetNillableStripeCustomerID sets the "stripe_customer_id" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableStripeCustomerID(s *string) *SubscriptionUpdateOne {
+	if s != nil {
+		suo.SetStripeCustomerID(*s)
+	}
+	return suo
+}
+
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (suo *SubscriptionUpdateOne) ClearStripeCustomerID() *SubscriptionUpdateOne {
+	suo.mutation.ClearStripeCustomerID()
 	return suo
 }
 
@@ -568,6 +602,12 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: subscription.FieldStripeCustomerID,
+		})
+	}
+	if suo.mutation.StripeCustomerIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: subscription.FieldStripeCustomerID,
 		})
 	}

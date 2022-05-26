@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/user"
 	"github.com/tereus-project/tereus-api/services"
 )
@@ -49,6 +50,14 @@ func (h *AuthHandler) ClassicSignup(c echo.Context) error {
 	user, err := h.databaseService.User.Create().
 		SetEmail(body.Email).
 		SetPassword(body.Password).
+		Save(context.Background())
+	if err != nil {
+		return err
+	}
+
+	_, err = h.databaseService.Subscription.Create().
+		SetTier(subscription.TierFree).
+		SetUser(user).
 		Save(context.Background())
 	if err != nil {
 		return err
@@ -122,6 +131,20 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 	if err != nil {
 		logrus.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+	}
+
+	user, err := h.databaseService.User.Get(context.Background(), userId)
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve user")
+	}
+
+	_, err = h.databaseService.Subscription.Create().
+		SetTier(subscription.TierFree).
+		SetUser(user).
+		Save(context.Background())
+	if err != nil {
+		return err
 	}
 
 	token, err := h.tokenService.GenerateToken(userId)

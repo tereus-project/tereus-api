@@ -18,7 +18,7 @@ type Subscription struct {
 func (Subscription) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
-		field.String("stripe_customer_id"),
+		field.String("stripe_customer_id").Optional(),
 		field.String("stripe_subscription_id").Optional(),
 		field.Enum("tier").Values("free", "pro", "enterprise").Default("free"),
 		field.Time("expires_at").Optional(),
