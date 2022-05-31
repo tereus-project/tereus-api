@@ -110,6 +110,9 @@ func main() {
 	logrus.Debugln("Starting subscription data usage reporting worker")
 	startSubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
 
+	logrus.Debugln("Starting retention worker")
+	go retentionWorker(databaseService, s3Service)
+
 	remixHandler, err := handlers.NewRemixHandler(s3Service, kafkaService, databaseService, tokenService)
 	if err != nil {
 		log.Fatal(err)
