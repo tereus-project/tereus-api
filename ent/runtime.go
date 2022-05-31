@@ -19,8 +19,16 @@ import (
 func init() {
 	submissionFields := schema.Submission{}.Fields()
 	_ = submissionFields
+	// submissionDescIsInline is the schema descriptor for is_inline field.
+	submissionDescIsInline := submissionFields[3].Descriptor()
+	// submission.DefaultIsInline holds the default value on creation for the is_inline field.
+	submission.DefaultIsInline = submissionDescIsInline.Default.(bool)
+	// submissionDescIsPublic is the schema descriptor for is_public field.
+	submissionDescIsPublic := submissionFields[4].Descriptor()
+	// submission.DefaultIsPublic holds the default value on creation for the is_public field.
+	submission.DefaultIsPublic = submissionDescIsPublic.Default.(bool)
 	// submissionDescCreatedAt is the schema descriptor for created_at field.
-	submissionDescCreatedAt := submissionFields[6].Descriptor()
+	submissionDescCreatedAt := submissionFields[8].Descriptor()
 	// submission.DefaultCreatedAt holds the default value on creation for the created_at field.
 	submission.DefaultCreatedAt = submissionDescCreatedAt.Default.(func() time.Time)
 	// submissionDescID is the schema descriptor for id field.

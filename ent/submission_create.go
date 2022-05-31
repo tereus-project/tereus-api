@@ -37,6 +37,34 @@ func (sc *SubmissionCreate) SetTargetLanguage(s string) *SubmissionCreate {
 	return sc
 }
 
+// SetIsInline sets the "is_inline" field.
+func (sc *SubmissionCreate) SetIsInline(b bool) *SubmissionCreate {
+	sc.mutation.SetIsInline(b)
+	return sc
+}
+
+// SetNillableIsInline sets the "is_inline" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableIsInline(b *bool) *SubmissionCreate {
+	if b != nil {
+		sc.SetIsInline(*b)
+	}
+	return sc
+}
+
+// SetIsPublic sets the "is_public" field.
+func (sc *SubmissionCreate) SetIsPublic(b bool) *SubmissionCreate {
+	sc.mutation.SetIsPublic(b)
+	return sc
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableIsPublic(b *bool) *SubmissionCreate {
+	if b != nil {
+		sc.SetIsPublic(*b)
+	}
+	return sc
+}
+
 // SetStatus sets the "status" field.
 func (sc *SubmissionCreate) SetStatus(s submission.Status) *SubmissionCreate {
 	sc.mutation.SetStatus(s)
@@ -189,6 +217,14 @@ func (sc *SubmissionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (sc *SubmissionCreate) defaults() {
+	if _, ok := sc.mutation.IsInline(); !ok {
+		v := submission.DefaultIsInline
+		sc.mutation.SetIsInline(v)
+	}
+	if _, ok := sc.mutation.IsPublic(); !ok {
+		v := submission.DefaultIsPublic
+		sc.mutation.SetIsPublic(v)
+	}
 	if _, ok := sc.mutation.Status(); !ok {
 		v := submission.DefaultStatus
 		sc.mutation.SetStatus(v)
@@ -210,6 +246,12 @@ func (sc *SubmissionCreate) check() error {
 	}
 	if _, ok := sc.mutation.TargetLanguage(); !ok {
 		return &ValidationError{Name: "target_language", err: errors.New(`ent: missing required field "Submission.target_language"`)}
+	}
+	if _, ok := sc.mutation.IsInline(); !ok {
+		return &ValidationError{Name: "is_inline", err: errors.New(`ent: missing required field "Submission.is_inline"`)}
+	}
+	if _, ok := sc.mutation.IsPublic(); !ok {
+		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "Submission.is_public"`)}
 	}
 	if _, ok := sc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Submission.status"`)}
@@ -277,6 +319,22 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 			Column: submission.FieldTargetLanguage,
 		})
 		_node.TargetLanguage = value
+	}
+	if value, ok := sc.mutation.IsInline(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsInline,
+		})
+		_node.IsInline = value
+	}
+	if value, ok := sc.mutation.IsPublic(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsPublic,
+		})
+		_node.IsPublic = value
 	}
 	if value, ok := sc.mutation.Status(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -405,6 +463,30 @@ func (u *SubmissionUpsert) SetTargetLanguage(v string) *SubmissionUpsert {
 // UpdateTargetLanguage sets the "target_language" field to the value that was provided on create.
 func (u *SubmissionUpsert) UpdateTargetLanguage() *SubmissionUpsert {
 	u.SetExcluded(submission.FieldTargetLanguage)
+	return u
+}
+
+// SetIsInline sets the "is_inline" field.
+func (u *SubmissionUpsert) SetIsInline(v bool) *SubmissionUpsert {
+	u.Set(submission.FieldIsInline, v)
+	return u
+}
+
+// UpdateIsInline sets the "is_inline" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateIsInline() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldIsInline)
+	return u
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *SubmissionUpsert) SetIsPublic(v bool) *SubmissionUpsert {
+	u.Set(submission.FieldIsPublic, v)
+	return u
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateIsPublic() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldIsPublic)
 	return u
 }
 
@@ -543,6 +625,34 @@ func (u *SubmissionUpsertOne) SetTargetLanguage(v string) *SubmissionUpsertOne {
 func (u *SubmissionUpsertOne) UpdateTargetLanguage() *SubmissionUpsertOne {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateTargetLanguage()
+	})
+}
+
+// SetIsInline sets the "is_inline" field.
+func (u *SubmissionUpsertOne) SetIsInline(v bool) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetIsInline(v)
+	})
+}
+
+// UpdateIsInline sets the "is_inline" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateIsInline() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateIsInline()
+	})
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *SubmissionUpsertOne) SetIsPublic(v bool) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetIsPublic(v)
+	})
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateIsPublic() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateIsPublic()
 	})
 }
 
@@ -857,6 +967,34 @@ func (u *SubmissionUpsertBulk) SetTargetLanguage(v string) *SubmissionUpsertBulk
 func (u *SubmissionUpsertBulk) UpdateTargetLanguage() *SubmissionUpsertBulk {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateTargetLanguage()
+	})
+}
+
+// SetIsInline sets the "is_inline" field.
+func (u *SubmissionUpsertBulk) SetIsInline(v bool) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetIsInline(v)
+	})
+}
+
+// UpdateIsInline sets the "is_inline" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateIsInline() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateIsInline()
+	})
+}
+
+// SetIsPublic sets the "is_public" field.
+func (u *SubmissionUpsertBulk) SetIsPublic(v bool) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetIsPublic(v)
+	})
+}
+
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateIsPublic() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateIsPublic()
 	})
 }
 

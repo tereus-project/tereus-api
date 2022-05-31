@@ -20,6 +20,8 @@ func (Submission) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("source_language"),
 		field.String("target_language"),
+		field.Bool("is_inline").Default(false),
+		field.Bool("is_public").Default(false),
 		field.Enum("status").Values("pending", "processing", "done", "failed", "cleaned").Default("pending"),
 		field.String("reason").Optional(),
 		field.String("git_repo").Optional(),

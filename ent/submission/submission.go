@@ -18,6 +18,10 @@ const (
 	FieldSourceLanguage = "source_language"
 	// FieldTargetLanguage holds the string denoting the target_language field in the database.
 	FieldTargetLanguage = "target_language"
+	// FieldIsInline holds the string denoting the is_inline field in the database.
+	FieldIsInline = "is_inline"
+	// FieldIsPublic holds the string denoting the is_public field in the database.
+	FieldIsPublic = "is_public"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldReason holds the string denoting the reason field in the database.
@@ -44,6 +48,8 @@ var Columns = []string{
 	FieldID,
 	FieldSourceLanguage,
 	FieldTargetLanguage,
+	FieldIsInline,
+	FieldIsPublic,
 	FieldStatus,
 	FieldReason,
 	FieldGitRepo,
@@ -72,6 +78,10 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultIsInline holds the default value on creation for the "is_inline" field.
+	DefaultIsInline bool
+	// DefaultIsPublic holds the default value on creation for the "is_public" field.
+	DefaultIsPublic bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.

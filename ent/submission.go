@@ -22,6 +22,10 @@ type Submission struct {
 	SourceLanguage string `json:"source_language,omitempty"`
 	// TargetLanguage holds the value of the "target_language" field.
 	TargetLanguage string `json:"target_language,omitempty"`
+	// IsInline holds the value of the "is_inline" field.
+	IsInline bool `json:"is_inline,omitempty"`
+	// IsPublic holds the value of the "is_public" field.
+	IsPublic bool `json:"is_public,omitempty"`
 	// Status holds the value of the "status" field.
 	Status submission.Status `json:"status,omitempty"`
 	// Reason holds the value of the "reason" field.
@@ -64,6 +68,8 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case submission.FieldIsInline, submission.FieldIsPublic:
+			values[i] = new(sql.NullBool)
 		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo:
 			values[i] = new(sql.NullString)
 		case submission.FieldCreatedAt:
@@ -104,6 +110,18 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field target_language", values[i])
 			} else if value.Valid {
 				s.TargetLanguage = value.String
+			}
+		case submission.FieldIsInline:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_inline", values[i])
+			} else if value.Valid {
+				s.IsInline = value.Bool
+			}
+		case submission.FieldIsPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_public", values[i])
+			} else if value.Valid {
+				s.IsPublic = value.Bool
 			}
 		case submission.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -173,6 +191,10 @@ func (s *Submission) String() string {
 	builder.WriteString(s.SourceLanguage)
 	builder.WriteString(", target_language=")
 	builder.WriteString(s.TargetLanguage)
+	builder.WriteString(", is_inline=")
+	builder.WriteString(fmt.Sprintf("%v", s.IsInline))
+	builder.WriteString(", is_public=")
+	builder.WriteString(fmt.Sprintf("%v", s.IsPublic))
 	builder.WriteString(", status=")
 	builder.WriteString(fmt.Sprintf("%v", s.Status))
 	builder.WriteString(", reason=")

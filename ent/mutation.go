@@ -42,6 +42,8 @@ type SubmissionMutation struct {
 	id              *uuid.UUID
 	source_language *string
 	target_language *string
+	is_inline       *bool
+	is_public       *bool
 	status          *submission.Status
 	reason          *string
 	git_repo        *string
@@ -228,6 +230,78 @@ func (m *SubmissionMutation) OldTargetLanguage(ctx context.Context) (v string, e
 // ResetTargetLanguage resets all changes to the "target_language" field.
 func (m *SubmissionMutation) ResetTargetLanguage() {
 	m.target_language = nil
+}
+
+// SetIsInline sets the "is_inline" field.
+func (m *SubmissionMutation) SetIsInline(b bool) {
+	m.is_inline = &b
+}
+
+// IsInline returns the value of the "is_inline" field in the mutation.
+func (m *SubmissionMutation) IsInline() (r bool, exists bool) {
+	v := m.is_inline
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsInline returns the old "is_inline" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldIsInline(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsInline is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsInline requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsInline: %w", err)
+	}
+	return oldValue.IsInline, nil
+}
+
+// ResetIsInline resets all changes to the "is_inline" field.
+func (m *SubmissionMutation) ResetIsInline() {
+	m.is_inline = nil
+}
+
+// SetIsPublic sets the "is_public" field.
+func (m *SubmissionMutation) SetIsPublic(b bool) {
+	m.is_public = &b
+}
+
+// IsPublic returns the value of the "is_public" field in the mutation.
+func (m *SubmissionMutation) IsPublic() (r bool, exists bool) {
+	v := m.is_public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublic returns the old "is_public" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldIsPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublic: %w", err)
+	}
+	return oldValue.IsPublic, nil
+}
+
+// ResetIsPublic resets all changes to the "is_public" field.
+func (m *SubmissionMutation) ResetIsPublic() {
+	m.is_public = nil
 }
 
 // SetStatus sets the "status" field.
@@ -458,12 +532,18 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
 	if m.target_language != nil {
 		fields = append(fields, submission.FieldTargetLanguage)
+	}
+	if m.is_inline != nil {
+		fields = append(fields, submission.FieldIsInline)
+	}
+	if m.is_public != nil {
+		fields = append(fields, submission.FieldIsPublic)
 	}
 	if m.status != nil {
 		fields = append(fields, submission.FieldStatus)
@@ -489,6 +569,10 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.SourceLanguage()
 	case submission.FieldTargetLanguage:
 		return m.TargetLanguage()
+	case submission.FieldIsInline:
+		return m.IsInline()
+	case submission.FieldIsPublic:
+		return m.IsPublic()
 	case submission.FieldStatus:
 		return m.Status()
 	case submission.FieldReason:
@@ -510,6 +594,10 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldSourceLanguage(ctx)
 	case submission.FieldTargetLanguage:
 		return m.OldTargetLanguage(ctx)
+	case submission.FieldIsInline:
+		return m.OldIsInline(ctx)
+	case submission.FieldIsPublic:
+		return m.OldIsPublic(ctx)
 	case submission.FieldStatus:
 		return m.OldStatus(ctx)
 	case submission.FieldReason:
@@ -540,6 +628,20 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTargetLanguage(v)
+		return nil
+	case submission.FieldIsInline:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsInline(v)
+		return nil
+	case submission.FieldIsPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublic(v)
 		return nil
 	case submission.FieldStatus:
 		v, ok := value.(submission.Status)
@@ -638,6 +740,12 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldTargetLanguage:
 		m.ResetTargetLanguage()
+		return nil
+	case submission.FieldIsInline:
+		m.ResetIsInline()
+		return nil
+	case submission.FieldIsPublic:
+		m.ResetIsPublic()
 		return nil
 	case submission.FieldStatus:
 		m.ResetStatus()

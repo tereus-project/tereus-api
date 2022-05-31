@@ -108,6 +108,20 @@ func TargetLanguage(v string) predicate.Submission {
 	})
 }
 
+// IsInline applies equality check predicate on the "is_inline" field. It's identical to IsInlineEQ.
+func IsInline(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsInline), v))
+	})
+}
+
+// IsPublic applies equality check predicate on the "is_public" field. It's identical to IsPublicEQ.
+func IsPublic(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsPublic), v))
+	})
+}
+
 // Reason applies equality check predicate on the "reason" field. It's identical to ReasonEQ.
 func Reason(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -348,6 +362,34 @@ func TargetLanguageEqualFold(v string) predicate.Submission {
 func TargetLanguageContainsFold(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldTargetLanguage), v))
+	})
+}
+
+// IsInlineEQ applies the EQ predicate on the "is_inline" field.
+func IsInlineEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsInline), v))
+	})
+}
+
+// IsInlineNEQ applies the NEQ predicate on the "is_inline" field.
+func IsInlineNEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldIsInline), v))
+	})
+}
+
+// IsPublicEQ applies the EQ predicate on the "is_public" field.
+func IsPublicEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsPublic), v))
+	})
+}
+
+// IsPublicNEQ applies the NEQ predicate on the "is_public" field.
+func IsPublicNEQ(v bool) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldIsPublic), v))
 	})
 }
 

@@ -42,6 +42,34 @@ func (su *SubmissionUpdate) SetTargetLanguage(s string) *SubmissionUpdate {
 	return su
 }
 
+// SetIsInline sets the "is_inline" field.
+func (su *SubmissionUpdate) SetIsInline(b bool) *SubmissionUpdate {
+	su.mutation.SetIsInline(b)
+	return su
+}
+
+// SetNillableIsInline sets the "is_inline" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableIsInline(b *bool) *SubmissionUpdate {
+	if b != nil {
+		su.SetIsInline(*b)
+	}
+	return su
+}
+
+// SetIsPublic sets the "is_public" field.
+func (su *SubmissionUpdate) SetIsPublic(b bool) *SubmissionUpdate {
+	su.mutation.SetIsPublic(b)
+	return su
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableIsPublic(b *bool) *SubmissionUpdate {
+	if b != nil {
+		su.SetIsPublic(*b)
+	}
+	return su
+}
+
 // SetStatus sets the "status" field.
 func (su *SubmissionUpdate) SetStatus(s submission.Status) *SubmissionUpdate {
 	su.mutation.SetStatus(s)
@@ -237,6 +265,20 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldTargetLanguage,
 		})
 	}
+	if value, ok := su.mutation.IsInline(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsInline,
+		})
+	}
+	if value, ok := su.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsPublic,
+		})
+	}
 	if value, ok := su.mutation.Status(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
@@ -340,6 +382,34 @@ func (suo *SubmissionUpdateOne) SetSourceLanguage(s string) *SubmissionUpdateOne
 // SetTargetLanguage sets the "target_language" field.
 func (suo *SubmissionUpdateOne) SetTargetLanguage(s string) *SubmissionUpdateOne {
 	suo.mutation.SetTargetLanguage(s)
+	return suo
+}
+
+// SetIsInline sets the "is_inline" field.
+func (suo *SubmissionUpdateOne) SetIsInline(b bool) *SubmissionUpdateOne {
+	suo.mutation.SetIsInline(b)
+	return suo
+}
+
+// SetNillableIsInline sets the "is_inline" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableIsInline(b *bool) *SubmissionUpdateOne {
+	if b != nil {
+		suo.SetIsInline(*b)
+	}
+	return suo
+}
+
+// SetIsPublic sets the "is_public" field.
+func (suo *SubmissionUpdateOne) SetIsPublic(b bool) *SubmissionUpdateOne {
+	suo.mutation.SetIsPublic(b)
+	return suo
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableIsPublic(b *bool) *SubmissionUpdateOne {
+	if b != nil {
+		suo.SetIsPublic(*b)
+	}
 	return suo
 }
 
@@ -560,6 +630,20 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeString,
 			Value:  value,
 			Column: submission.FieldTargetLanguage,
+		})
+	}
+	if value, ok := suo.mutation.IsInline(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsInline,
+		})
+	}
+	if value, ok := suo.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: submission.FieldIsPublic,
 		})
 	}
 	if value, ok := suo.mutation.Status(); ok {

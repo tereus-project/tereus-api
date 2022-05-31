@@ -249,6 +249,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		SetID(jobID).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
+		SetIsInline(remixType == InlineRemixType).
 		SetUserID(user.ID)
 
 	if remixType == GitRemixType {

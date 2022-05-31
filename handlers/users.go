@@ -70,8 +70,19 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	})
 }
 
+type submissionsHistoryItem struct {
+	ID             string `json:"id"`
+	SourceLanguage string `json:"source_language"`
+	TargetLanguage string `json:"target_language"`
+	IsInline       bool   `json:"is_inline"`
+	IsPublic       bool   `json:"is_public"`
+	Status         string `json:"status"`
+	Reason         string `json:"reason"`
+	CreatedAt      string `json:"created_at"`
+}
+
 type submissionsHistory struct {
-	Submissions []RemixResult `json:"submissions"`
+	Submissions []*submissionsHistoryItem `json:"submissions"`
 }
 
 // GET /users/me/submissions
@@ -90,14 +101,16 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 	}
 
 	response := submissionsHistory{
-		Submissions: make([]RemixResult, len(submissions)),
+		Submissions: make([]*submissionsHistoryItem, len(submissions)),
 	}
 
 	for i, s := range submissions {
-		response.Submissions[i] = RemixResult{
+		response.Submissions[i] = &submissionsHistoryItem{
 			ID:             s.ID.String(),
 			SourceLanguage: s.SourceLanguage,
 			TargetLanguage: s.TargetLanguage,
+			IsInline:       s.IsInline,
+			IsPublic:       s.IsPublic,
 			Status:         s.Status.String(),
 			Reason:         s.Reason,
 			CreatedAt:      s.CreatedAt.Format(time.RFC3339),

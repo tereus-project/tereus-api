@@ -156,6 +156,7 @@ func main() {
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
 	e.DELETE("/submissions/:id", submissionHandler.DeleteSubmission)
+	e.PATCH("/submissions/:id/visibility", submissionHandler.UpdateSubmissionVisibility)
 
 	e.POST("/subscription/checkout", subscriptionHandler.CreateCheckoutSession)
 	e.POST("/subscription/portal", subscriptionHandler.CreatePortalSession)
