@@ -37,10 +37,7 @@ func retentionWorker(databaseService *services.DatabaseService, s3Service *servi
 
 		for _, sub := range submissions {
 			err = databaseService.Submission.
-				Update().
-				Where(
-					submission.ID(sub.ID),
-				).
+				UpdateOneID(sub.ID).
 				SetStatus(submission.StatusCleaned).
 				Exec(context.Background())
 			if err != nil {
