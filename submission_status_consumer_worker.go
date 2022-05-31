@@ -9,34 +9,32 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func startSubmissionStatusConsumerWorker(k *services.KafkaService, databaseService *services.DatabaseService) {
-	go func() {
-		ch := k.ConsumeSubmissionStatus(context.Background())
+func submissionStatusConsumerWorker(k *services.KafkaService, databaseService *services.DatabaseService) {
+	ch := k.ConsumeSubmissionStatus(context.Background())
 
-		for {
-			msg := <-ch
+	for {
+		msg := <-ch
 
-			logrus.Info("Received submission status message")
+		logrus.Info("Received submission status message")
 
-			id, err := uuid.Parse(msg.ID)
-			if err != nil {
-				logrus.WithError(err).Error("Failed to parse submission ID")
-				continue
-			}
-
-			err = databaseService.Submission.
-				Update().
-				Where(
-					submission.ID(id),
-					submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
-				).
-				SetStatus(msg.Status).
-				SetReason(msg.Reason).
-				Exec(context.Background())
-			if err != nil {
-				logrus.WithError(err).Error("Failed to update submission status")
-				continue
-			}
+		id, err := uuid.Parse(msg.ID)
+		if err != nil {
+			logrus.WithError(err).Error("Failed to parse submission ID")
+			continue
 		}
-	}()
+
+		err = databaseService.Submission.
+			Update().
+			Where(
+				submission.ID(id),
+				submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
+			).
+			SetStatus(msg.Status).
+			SetReason(msg.Reason).
+			Exec(context.Background())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to update submission status")
+			continue
+		}
+	}
 }

@@ -105,10 +105,10 @@ func main() {
 	}
 
 	logrus.Debugln("Starting submission status consumer worker")
-	startSubmissionStatusConsumerWorker(kafkaService, databaseService)
+	go submissionStatusConsumerWorker(kafkaService, databaseService)
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
-	startSubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
+	go subscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
 
 	logrus.Debugln("Starting retention worker")
 	go retentionWorker(databaseService, s3Service)
