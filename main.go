@@ -143,11 +143,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	e.GET("/remix/:id/main", remixHandler.DownloadRemixedMain)
-	e.GET("/remix/:id", remixHandler.DownloadRemixedFiles)
-	e.POST("/remix/inline/:src/to/:target", remixHandler.RemixInline)
-	e.POST("/remix/zip/:src/to/:target", remixHandler.RemixZip)
-	e.POST("/remix/git/:src/to/:target", remixHandler.RemixGit)
+	e.POST("/submissions/inline/:src/to/:target", remixHandler.RemixInline)
+	e.POST("/submissions/zip/:src/to/:target", remixHandler.RemixZip)
+	e.POST("/submissions/git/:src/to/:target", remixHandler.RemixGit)
+
+	e.DELETE("/submissions/:id", submissionHandler.DeleteSubmission)
+	e.PATCH("/submissions/:id/visibility", submissionHandler.UpdateSubmissionVisibility)
+
+	e.GET("/submissions/:id/download", remixHandler.DownloadRemixedFiles)
+	e.GET("/submissions/:id/inline/source", remixHandler.DownloadInlineRemixSource)
+	e.GET("/submissions/:id/inline/output", remixHandler.DownloadInlineRemixdOutput)
 
 	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)
@@ -155,8 +160,6 @@ func main() {
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
-	e.DELETE("/submissions/:id", submissionHandler.DeleteSubmission)
-	e.PATCH("/submissions/:id/visibility", submissionHandler.UpdateSubmissionVisibility)
 
 	e.POST("/subscription/checkout", subscriptionHandler.CreateCheckoutSession)
 	e.POST("/subscription/portal", subscriptionHandler.CreatePortalSession)

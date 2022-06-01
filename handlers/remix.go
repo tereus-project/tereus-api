@@ -3,8 +3,10 @@ package handlers
 import (
 	"archive/zip"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -272,7 +274,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	})
 }
 
-// GET /remix/:id
+// GET /submissions/:id/download
 func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -337,8 +339,14 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	return nil
 }
 
-// GET /remix/:id/main
-func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
+type downloadInlineResponse struct {
+	Data           string `json:"data"`
+	SourceLanguage string `json:"source_language"`
+	TargetLanguage string `json:"target_language"`
+}
+
+// GET /submissions/:id/inline/source
+func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
@@ -348,6 +356,90 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+	}
+
+	if !job.IsInline {
+		return echo.NewHTTPError(http.StatusNotFound, "This job is not an inline job")
+	}
+
+	if !job.IsPublic {
+		user, err := h.TokenService.GetUserFromContext(c)
+		if err != nil {
+			return err
+		}
+
+		owner, err := job.QueryUser().OnlyID(context.Background())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of job")
+		}
+
+		if user.ID != owner {
+			return echo.NewHTTPError(http.StatusForbidden, "This job is not public and you are not the owner")
+		}
+	}
+
+	if job.Status == submission.StatusCleaned {
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job has been cleaned")
+	}
+
+	objectStoragePath := fmt.Sprintf("remix/%s/main.%s", job.ID, job.SourceLanguage)
+
+	// Get files from S3
+	object, err := h.S3Service.GetObject(objectStoragePath)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get files from S3")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
+	}
+	defer object.Close()
+
+	if _, err := object.Stat(); err != nil {
+		return echo.NewHTTPError(http.StatusNoContent)
+	}
+
+	data, err := ioutil.ReadAll(object)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to read file from S3")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read file from S3")
+	}
+
+	return c.JSON(http.StatusOK, downloadInlineResponse{
+		Data:           base64.StdEncoding.EncodeToString(data),
+		SourceLanguage: job.SourceLanguage,
+		TargetLanguage: job.TargetLanguage,
+	})
+}
+
+// GET /submissions/:id/inline/output
+func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
+	}
+
+	// Get job from database
+	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+	}
+
+	if !job.IsInline {
+		return echo.NewHTTPError(http.StatusNotFound, "This job is not an inline job")
+	}
+
+	if !job.IsPublic {
+		user, err := h.TokenService.GetUserFromContext(c)
+		if err != nil {
+			return err
+		}
+
+		owner, err := job.QueryUser().OnlyID(context.Background())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of job")
+		}
+
+		if user.ID != owner {
+			return echo.NewHTTPError(http.StatusForbidden, "This job is not public and you are not the owner")
+		}
 	}
 
 	if job.Status == submission.StatusFailed {
@@ -375,5 +467,15 @@ func (h *RemixHandler) DownloadRemixedMain(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNoContent)
 	}
 
-	return c.Stream(http.StatusOK, "text/plain", object)
+	data, err := ioutil.ReadAll(object)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to read file from S3")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read file from S3")
+	}
+
+	return c.JSON(http.StatusOK, downloadInlineResponse{
+		Data:           base64.StdEncoding.EncodeToString(data),
+		SourceLanguage: job.TargetLanguage,
+		TargetLanguage: job.TargetLanguage,
+	})
 }
