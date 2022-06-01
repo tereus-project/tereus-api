@@ -108,7 +108,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, srcLanguage))
 	}
 
-	jobID := uuid.New()
+	submissionId := uuid.New()
 
 	switch remixType {
 	case InlineRemixType:
@@ -117,7 +117,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 		reader := strings.NewReader(body.SourceCode)
-		_, err := h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, "main.c"), reader, reader.Size())
+		_, err := h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -155,7 +155,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			}
 			defer f.Close()
 
-			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, file.Name), f, file.FileInfo().Size())
+			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
@@ -222,7 +222,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
-			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", jobID, file.Name()), f, info.Size())
+			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
@@ -237,18 +237,18 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
-	err = h.KafkaService.PublishSubmission(services.RemixJob{
-		ID:             jobID.String(),
+	err = h.KafkaService.PublishSubmission(services.RemixSubmission{
+		ID:             submissionId.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
 	})
 	if err != nil {
-		logrus.WithError(err).Error("Failed to publish job to Kafka")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish job to Kafka")
+		logrus.WithError(err).Error("Failed to publish submission to Kafka")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish submission to Kafka")
 	}
 
 	submissionCreation := h.DatabaseService.Submission.Create().
-		SetID(jobID).
+		SetID(submissionId).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
 		SetIsInline(remixType == InlineRemixType).
@@ -278,24 +278,24 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
 	}
 
-	// Get job from database
-	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	// Get sub from database
+	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
 
-	if job.Status != "done" {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
+	if sub.Status != "done" {
+		return echo.NewHTTPError(http.StatusNotFound, "This submission is not done yet")
 	}
 
 	config := env.Get()
-	objectStoragePath := fmt.Sprintf("%s/%s", config.SubmissionsFolder, job.ID)
+	objectStoragePath := fmt.Sprintf("%s/%s", config.SubmissionsFolder, sub.ID)
 
 	c.Response().Header().Set("Content-Type", "application/zip")
-	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", job.ID))
+	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", sub.ID))
 
 	// Create zip file
 	zipFile := zip.NewWriter(c.Response().Writer)
@@ -314,7 +314,7 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 		}
 
 		objectRelativePath := strings.TrimPrefix(object.Path, objectStoragePath)
-		zippedFilePath := fmt.Sprintf("%s/%s", job.ID, objectRelativePath)
+		zippedFilePath := fmt.Sprintf("%s/%s", sub.ID, objectRelativePath)
 
 		writer, err := zipFile.Create(zippedFilePath)
 		if err != nil {
@@ -349,40 +349,40 @@ type downloadInlineResponse struct {
 func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submissions ID")
 	}
 
-	// Get job from database
-	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	// Get sub from database
+	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
 
-	if !job.IsInline {
-		return echo.NewHTTPError(http.StatusNotFound, "This job is not an inline job")
+	if !sub.IsInline {
+		return echo.NewHTTPError(http.StatusNotFound, "This submission is not inline")
 	}
 
-	if !job.IsPublic {
+	if !sub.IsPublic {
 		user, err := h.TokenService.GetUserFromContext(c)
 		if err != nil {
 			return err
 		}
 
-		owner, err := job.QueryUser().OnlyID(context.Background())
+		owner, err := sub.QueryUser().OnlyID(context.Background())
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of job")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of submission")
 		}
 
 		if user.ID != owner {
-			return echo.NewHTTPError(http.StatusForbidden, "This job is not public and you are not the owner")
+			return echo.NewHTTPError(http.StatusForbidden, "This submission is not public and you are not the owner")
 		}
 	}
 
-	if job.Status == submission.StatusCleaned {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job has been cleaned")
+	if sub.Status == submission.StatusCleaned {
+		return echo.NewHTTPError(http.StatusNotFound, "This submission has been cleaned")
 	}
 
-	objectStoragePath := fmt.Sprintf("remix/%s/main.%s", job.ID, job.SourceLanguage)
+	objectStoragePath := fmt.Sprintf("remix/%s/main.%s", sub.ID, sub.SourceLanguage)
 
 	// Get files from S3
 	object, err := h.S3Service.GetObject(objectStoragePath)
@@ -404,8 +404,8 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
 		Data:           base64.StdEncoding.EncodeToString(data),
-		SourceLanguage: job.SourceLanguage,
-		TargetLanguage: job.TargetLanguage,
+		SourceLanguage: sub.SourceLanguage,
+		TargetLanguage: sub.TargetLanguage,
 	})
 }
 
@@ -413,47 +413,47 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid job ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
 	}
 
-	// Get job from database
-	job, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	// Get sub from database
+	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job does not exist")
+		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
 
-	if !job.IsInline {
-		return echo.NewHTTPError(http.StatusNotFound, "This job is not an inline job")
+	if !sub.IsInline {
+		return echo.NewHTTPError(http.StatusNotFound, "This submission is not inline")
 	}
 
-	if !job.IsPublic {
+	if !sub.IsPublic {
 		user, err := h.TokenService.GetUserFromContext(c)
 		if err != nil {
 			return err
 		}
 
-		owner, err := job.QueryUser().OnlyID(context.Background())
+		owner, err := sub.QueryUser().OnlyID(context.Background())
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of job")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get owner of submission")
 		}
 
 		if user.ID != owner {
-			return echo.NewHTTPError(http.StatusForbidden, "This job is not public and you are not the owner")
+			return echo.NewHTTPError(http.StatusForbidden, "This submission is not public and you are not the owner")
 		}
 	}
 
-	if job.Status == submission.StatusFailed {
+	if sub.Status == submission.StatusFailed {
 		return echo.NewHTTPError(http.StatusOK, map[string][]string{
-			"errors": {job.Reason},
+			"errors": {sub.Reason},
 		})
 	}
 
-	if job.Status != submission.StatusDone {
-		return echo.NewHTTPError(http.StatusNotFound, "This remixing job is not done yet")
+	if sub.Status != submission.StatusDone {
+		return echo.NewHTTPError(http.StatusNotFound, "This submission is not done yet")
 	}
 
 	config := env.Get()
-	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, job.ID, job.TargetLanguage)
+	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, sub.ID, sub.TargetLanguage)
 
 	// Get files from S3
 	object, err := h.S3Service.GetObject(objectStoragePath)
@@ -475,7 +475,7 @@ func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
 		Data:           base64.StdEncoding.EncodeToString(data),
-		SourceLanguage: job.TargetLanguage,
-		TargetLanguage: job.TargetLanguage,
+		SourceLanguage: sub.TargetLanguage,
+		TargetLanguage: sub.TargetLanguage,
 	})
 }

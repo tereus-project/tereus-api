@@ -25,19 +25,19 @@ func NewKafkaService(endpoint string) (*KafkaService, error) {
 	}, nil
 }
 
-type RemixJob struct {
+type RemixSubmission struct {
 	ID             string `json:"id"`
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
 }
 
-func (k *KafkaService) PublishSubmission(remixJob RemixJob) error {
-	msgBytes, err := json.Marshal(&remixJob)
+func (k *KafkaService) PublishSubmission(remixSubmission RemixSubmission) error {
+	msgBytes, err := json.Marshal(&remixSubmission)
 	if err != nil {
 		return err
 	}
 
-	topicName := fmt.Sprintf("remix_jobs_%s_to_%s", remixJob.SourceLanguage, remixJob.TargetLanguage)
+	topicName := fmt.Sprintf("remix_jobs_%s_to_%s", remixSubmission.SourceLanguage, remixSubmission.TargetLanguage)
 	writer, err := k.getWriterForTopic(topicName)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (k *KafkaService) PublishSubmission(remixJob RemixJob) error {
 
 	err = writer.WriteMessages(context.Background(),
 		kafka.Message{
-			Key:   []byte(remixJob.ID),
+			Key:   []byte(remixSubmission.ID),
 			Value: msgBytes,
 		},
 	)
