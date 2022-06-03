@@ -127,7 +127,7 @@ func (uq *UserQuery) QuerySubscription() *SubscriptionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(subscription.Table, subscription.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, user.SubscriptionTable, user.SubscriptionColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SubscriptionTable, user.SubscriptionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -514,6 +514,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Subscription = []*Subscription{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Subscription(func(s *sql.Selector) {
@@ -532,7 +533,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 			if !ok {
 				return nil, fmt.Errorf(`unexpected foreign-key "user_subscription" returned %v for node %v`, *fk, n.ID)
 			}
-			node.Edges.Subscription = n
+			node.Edges.Subscription = append(node.Edges.Subscription, n)
 		}
 	}
 

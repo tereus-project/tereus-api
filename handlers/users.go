@@ -119,3 +119,47 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+// DELETE /users/me
+func (h *UserHandler) DeleteCurrentUser(c echo.Context) error {
+	loggedUser, err := h.tokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	// Get all submissions
+	submissions, err := h.databaseService.Submission.Query().
+		Where(submission.HasUserWith(user.ID(loggedUser.ID))).
+		All(context.Background())
+	if err != nil {
+		return err
+	}
+
+	logrus.WithField("submissions", len(submissions)).Info("Deleting submissions for user")
+
+	// Delete all submissions
+	for _, s := range submissions {
+		err := h.s3Service.DeleteSubmission(s.ID.String())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to delete submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		err = h.databaseService.Submission.DeleteOneID(s.ID).Exec(context.Background())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to delete submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	// TODO cancel subscription if paid
+
+	// Delete user (and cascade delete all relations)
+	err = h.databaseService.User.DeleteOneID(loggedUser.ID).Exec(context.Background())
+	if err != nil {
+		logrus.WithError(err).Error("Failed to delete user")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
+}

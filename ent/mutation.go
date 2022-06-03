@@ -1993,7 +1993,8 @@ type UserMutation struct {
 	submissions         map[uuid.UUID]struct{}
 	removedsubmissions  map[uuid.UUID]struct{}
 	clearedsubmissions  bool
-	subscription        *uuid.UUID
+	subscription        map[uuid.UUID]struct{}
+	removedsubscription map[uuid.UUID]struct{}
 	clearedsubscription bool
 	done                bool
 	oldValue            func(context.Context) (*User, error)
@@ -2382,9 +2383,14 @@ func (m *UserMutation) ResetSubmissions() {
 	m.removedsubmissions = nil
 }
 
-// SetSubscriptionID sets the "subscription" edge to the Subscription entity by id.
-func (m *UserMutation) SetSubscriptionID(id uuid.UUID) {
-	m.subscription = &id
+// AddSubscriptionIDs adds the "subscription" edge to the Subscription entity by ids.
+func (m *UserMutation) AddSubscriptionIDs(ids ...uuid.UUID) {
+	if m.subscription == nil {
+		m.subscription = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.subscription[ids[i]] = struct{}{}
+	}
 }
 
 // ClearSubscription clears the "subscription" edge to the Subscription entity.
@@ -2397,20 +2403,29 @@ func (m *UserMutation) SubscriptionCleared() bool {
 	return m.clearedsubscription
 }
 
-// SubscriptionID returns the "subscription" edge ID in the mutation.
-func (m *UserMutation) SubscriptionID() (id uuid.UUID, exists bool) {
-	if m.subscription != nil {
-		return *m.subscription, true
+// RemoveSubscriptionIDs removes the "subscription" edge to the Subscription entity by IDs.
+func (m *UserMutation) RemoveSubscriptionIDs(ids ...uuid.UUID) {
+	if m.removedsubscription == nil {
+		m.removedsubscription = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.subscription, ids[i])
+		m.removedsubscription[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubscription returns the removed IDs of the "subscription" edge to the Subscription entity.
+func (m *UserMutation) RemovedSubscriptionIDs() (ids []uuid.UUID) {
+	for id := range m.removedsubscription {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // SubscriptionIDs returns the "subscription" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// SubscriptionID instead. It exists only for internal usage by the builders.
 func (m *UserMutation) SubscriptionIDs() (ids []uuid.UUID) {
-	if id := m.subscription; id != nil {
-		ids = append(ids, *id)
+	for id := range m.subscription {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -2419,6 +2434,7 @@ func (m *UserMutation) SubscriptionIDs() (ids []uuid.UUID) {
 func (m *UserMutation) ResetSubscription() {
 	m.subscription = nil
 	m.clearedsubscription = false
+	m.removedsubscription = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -2635,9 +2651,11 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeSubscription:
-		if id := m.subscription; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.subscription))
+		for id := range m.subscription {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -2650,6 +2668,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedsubmissions != nil {
 		edges = append(edges, user.EdgeSubmissions)
+	}
+	if m.removedsubscription != nil {
+		edges = append(edges, user.EdgeSubscription)
 	}
 	return edges
 }
@@ -2667,6 +2688,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	case user.EdgeSubmissions:
 		ids := make([]ent.Value, 0, len(m.removedsubmissions))
 		for id := range m.removedsubmissions {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeSubscription:
+		ids := make([]ent.Value, 0, len(m.removedsubscription))
+		for id := range m.removedsubscription {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2707,9 +2734,6 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
-	case user.EdgeSubscription:
-		m.ClearSubscription()
-		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }
