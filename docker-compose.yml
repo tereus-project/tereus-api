@@ -34,6 +34,7 @@ services:
     networks:
       - tereus_api
       - tereus_workers
+    restart: always
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -51,6 +52,7 @@ services:
     networks:
       - tereus_api
       - tereus_workers
+    restart: always
 
   kafka-ui:
     image: provectuslabs/kafka-ui
