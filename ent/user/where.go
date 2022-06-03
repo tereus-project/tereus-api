@@ -621,7 +621,7 @@ func HasSubscription() predicate.User {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(SubscriptionTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, SubscriptionTable, SubscriptionColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionTable, SubscriptionColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -633,7 +633,7 @@ func HasSubscriptionWith(preds ...predicate.Subscription) predicate.User {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(SubscriptionInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, SubscriptionTable, SubscriptionColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionTable, SubscriptionColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

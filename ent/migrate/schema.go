@@ -31,7 +31,7 @@ var (
 				Symbol:     "submissions_users_submissions",
 				Columns:    []*schema.Column{SubmissionsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -44,7 +44,7 @@ var (
 		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
 		{Name: "cancelled", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "user_subscription", Type: field.TypeUUID, Unique: true},
+		{Name: "user_subscription", Type: field.TypeUUID},
 	}
 	// SubscriptionsTable holds the schema information for the "subscriptions" table.
 	SubscriptionsTable = &schema.Table{
@@ -56,7 +56,7 @@ var (
 				Symbol:     "subscriptions_users_subscription",
 				Columns:    []*schema.Column{SubscriptionsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -77,7 +77,7 @@ var (
 				Symbol:     "tokens_users_tokens",
 				Columns:    []*schema.Column{TokensColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

@@ -91,6 +91,7 @@ func (s *S3Service) GetObjects(prefix string) <-chan *GetObjectsResult {
 }
 
 func (s *S3Service) DeleteSubmission(id string) error {
+	logrus.WithField("id", id).Debug("Deleting submission from S3")
 	for _, path := range []string{"remix/", "remix-results/"} {
 		objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true})
 

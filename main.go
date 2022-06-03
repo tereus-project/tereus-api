@@ -159,6 +159,7 @@ func main() {
 	e.POST("/auth/check", authHandler.Check)
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
+	e.DELETE("/users/me", userHandler.DeleteCurrentUser)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
 
 	e.POST("/subscription/checkout", subscriptionHandler.CreateCheckoutSession)
