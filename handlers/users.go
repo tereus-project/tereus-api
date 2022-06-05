@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -162,4 +167,72 @@ func (h *UserHandler) DeleteCurrentUser(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// GET /users/me/export
+func (h *UserHandler) GetExport(c echo.Context) error {
+	loggedUser, err := h.tokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(buf)
+
+	userJSON, err := json.Marshal(loggedUser)
+	if err != nil {
+		return err
+	}
+
+	userFile, err := zipWriter.Create("user.json")
+	if err != nil {
+		return err
+	}
+
+	_, err = userFile.Write(userJSON)
+	if err != nil {
+		return err
+	}
+
+	// Write submissions in zip file
+	submissions, err := h.databaseService.Submission.Query().
+		Where(submission.HasUserWith(user.ID(loggedUser.ID))).
+		All(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, s := range submissions {
+		submissionJSON, err := json.Marshal(s)
+		if err != nil {
+			return err
+		}
+
+		submissionFile, err := zipWriter.Create(s.ID.String() + ".json")
+		if err != nil {
+			return err
+		}
+
+		_, err = submissionFile.Write(submissionJSON)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = zipWriter.Close()
+	if err != nil {
+		logrus.WithError(err).Error("Failed to close zip writer")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
+	c.Response().Header().Set("Content-Type", "application/zip")
+	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=export-user-%s.zip", loggedUser.ID.String()))
+
+	_, err = io.Copy(c.Response(), buf)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to write to response")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
+	return nil
 }
