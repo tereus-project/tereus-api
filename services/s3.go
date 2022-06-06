@@ -90,6 +90,28 @@ func (s *S3Service) GetObjects(prefix string) <-chan *GetObjectsResult {
 	return ch
 }
 
+func (s *S3Service) ListSubmissionFiles(submissionID string) <-chan *GetObjectsResult {
+	ch := make(chan *GetObjectsResult)
+
+	go func() {
+		defer close(ch)
+		for _, path := range []string{"remix/", "remix-results/"} {
+
+			objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + submissionID, Recursive: true})
+
+			for object := range objects {
+				ch <- &GetObjectsResult{
+					Err:  object.Err,
+					Path: object.Key,
+					Size: object.Size,
+				}
+			}
+		}
+	}()
+
+	return ch
+}
+
 func (s *S3Service) DeleteSubmission(id string) error {
 	logrus.WithField("id", id).Debug("Deleting submission from S3")
 	for _, path := range []string{"remix/", "remix-results/"} {
