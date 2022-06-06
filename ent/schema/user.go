@@ -38,6 +38,7 @@ func (User) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			}),
 		edge.To("subscription", Subscription.Type).
+			Unique().
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
