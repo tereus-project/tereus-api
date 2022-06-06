@@ -173,7 +173,7 @@ func (h *UserHandler) DeleteCurrentUser(c echo.Context) error {
 func (h *UserHandler) GetExport(c echo.Context) error {
 	loggedUser, err := h.tokenService.GetUserFromContext(c)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
 	buf := new(bytes.Buffer)
@@ -181,17 +181,20 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 
 	userJSON, err := json.Marshal(loggedUser)
 	if err != nil {
-		return err
+		logrus.WithError(err).Error("Failed to marshal user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
 	userFile, err := zipWriter.Create("user.json")
 	if err != nil {
-		return err
+		logrus.WithError(err).Error("Failed to create user file in zip")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
 	_, err = userFile.Write(userJSON)
 	if err != nil {
-		return err
+		logrus.WithError(err).Error("Failed to write user file in zip")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
 	// Write submissions in zip file
@@ -199,23 +202,61 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 		Where(submission.HasUserWith(user.ID(loggedUser.ID))).
 		All(context.Background())
 	if err != nil {
-		return err
+		logrus.WithError(err).Error("Failed to get submissions")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
+	submissionJSON, err := json.Marshal(submissions)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to marshal submissions")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
+	submissionFile, err := zipWriter.Create("submissions.json")
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create submissions file in zip")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
+	_, err = submissionFile.Write(submissionJSON)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to write submissions file in zip")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
+	// Extract submissions source and results from S3
 	for _, s := range submissions {
-		submissionJSON, err := json.Marshal(s)
+		objects := h.s3Service.ListSubmissionFiles(s.ID.String())
 		if err != nil {
-			return err
+			logrus.WithError(err).Error("Failed to list submission files")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 		}
 
-		submissionFile, err := zipWriter.Create(s.ID.String() + ".json")
-		if err != nil {
-			return err
-		}
+		for object := range objects {
+			o, err := h.s3Service.GetObject(object.Path)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to get object")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+			}
 
-		_, err = submissionFile.Write(submissionJSON)
-		if err != nil {
-			return err
+			codeFile, err := zipWriter.Create(object.Path)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to create code file in zip")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+			}
+
+			buffer := new(bytes.Buffer)
+			_, err = io.Copy(buffer, o)
+			if err != nil {
+				logrus.WithError(err).Error("Failed to copy object")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+			}
+
+			_, err = codeFile.Write(buffer.Bytes())
+			if err != nil {
+				logrus.WithError(err).Error("Failed to write code file in zip")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+			}
 		}
 	}
 
