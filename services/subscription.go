@@ -85,6 +85,8 @@ func (s *SubscriptionService) GetCurrentUserSubscription(userID uuid.UUID) (*ent
 				user.ID(userID),
 			),
 			subscription.ExpiresAtGTE(time.Now()),
+			subscription.StripeSubscriptionIDNotNil(),
+			subscription.StripeCustomerIDNotNil(),
 		).
 		Only(context.Background())
 }
@@ -109,9 +111,11 @@ func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, las
 		customerParams := &stripe.CustomerParams{}
 		customerParams.AddExpand("subscriptions")
 
-		stripeCustomer, err = customer.Get(lastUserSubscription.StripeCustomerID, customerParams)
-		if err != nil {
-			return nil, nil, err
+		if lastUserSubscription.StripeCustomerID != "" {
+			stripeCustomer, err = customer.Get(lastUserSubscription.StripeCustomerID, customerParams)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 
 		if lastUserSubscription.StripeSubscriptionID != "" {
@@ -347,6 +351,10 @@ func (s *SubscriptionService) CancelSubscriptionFromStripeCustomerId(stripeCusto
 		).
 		Only(context.Background())
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil
+		}
+
 		return err
 	}
 
@@ -363,8 +371,21 @@ func (s *SubscriptionService) GetActiveSubscriptions(offset int, limit int) ([]*
 			subscription.TierNEQ(subscription.TierFree),
 			subscription.ExpiresAtGTE(time.Now()),
 			subscription.StripeSubscriptionIDNotNil(),
+			subscription.StripeCustomerIDNotNil(),
 		).
 		Offset(offset).
 		Limit(limit).
 		All(context.Background())
+}
+
+func (s *SubscriptionService) RemoveSubscriptionsFromStripeCustomerId(stripeCustomerId string) error {
+	return s.databaseService.Subscription.Update().
+		Where(
+			subscription.StripeCustomerID(stripeCustomerId),
+		).
+		ClearStripeCustomerID().
+		ClearStripeSubscriptionID().
+		ClearExpiresAt().
+		SetTier(subscription.TierFree).
+		Exec(context.Background())
 }

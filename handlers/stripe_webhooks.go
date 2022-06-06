@@ -85,6 +85,18 @@ func (h *StripeWebhooksHandler) HandleWebhooks(c echo.Context) error {
 			logrus.WithError(err).Error("Failed to expire subscription from invoice")
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+	case "customer.deleted":
+		var customer stripe.Customer
+		err := json.Unmarshal(event.Data.Raw, &customer)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		err = h.subscriptionService.RemoveSubscriptionsFromStripeCustomerId(customer.ID)
+		if err != nil {
+			logrus.WithError(err).Error("Failed to remove customer's subscriptions")
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 
 	return c.NoContent(200)

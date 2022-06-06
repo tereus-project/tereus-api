@@ -226,6 +226,20 @@ func StripeCustomerIDHasSuffix(v string) predicate.Subscription {
 	})
 }
 
+// StripeCustomerIDIsNil applies the IsNil predicate on the "stripe_customer_id" field.
+func StripeCustomerIDIsNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldStripeCustomerID)))
+	})
+}
+
+// StripeCustomerIDNotNil applies the NotNil predicate on the "stripe_customer_id" field.
+func StripeCustomerIDNotNil() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldStripeCustomerID)))
+	})
+}
+
 // StripeCustomerIDEqualFold applies the EqualFold predicate on the "stripe_customer_id" field.
 func StripeCustomerIDEqualFold(v string) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
@@ -599,7 +613,7 @@ func HasUser() predicate.Subscription {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(UserTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -611,7 +625,7 @@ func HasUserWith(preds ...predicate.User) predicate.Subscription {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(UserInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

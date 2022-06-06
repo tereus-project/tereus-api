@@ -344,7 +344,7 @@ func (c *SubscriptionClient) QueryUser(s *Subscription) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(subscription.Table, subscription.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, subscription.UserTable, subscription.UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, subscription.UserTable, subscription.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -588,7 +588,7 @@ func (c *UserClient) QuerySubscription(u *User) *SubscriptionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(subscription.Table, subscription.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.SubscriptionTable, user.SubscriptionColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.SubscriptionTable, user.SubscriptionColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

@@ -38,13 +38,13 @@ var (
 	// SubscriptionsColumns holds the columns for the "subscriptions" table.
 	SubscriptionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "stripe_customer_id", Type: field.TypeString},
+		{Name: "stripe_customer_id", Type: field.TypeString, Nullable: true},
 		{Name: "stripe_subscription_id", Type: field.TypeString, Nullable: true},
 		{Name: "tier", Type: field.TypeEnum, Enums: []string{"free", "pro", "enterprise"}, Default: "free"},
 		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
 		{Name: "cancelled", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "user_subscription", Type: field.TypeUUID},
+		{Name: "user_subscription", Type: field.TypeUUID, Unique: true},
 	}
 	// SubscriptionsTable holds the schema information for the "subscriptions" table.
 	SubscriptionsTable = &schema.Table{

@@ -31,6 +31,14 @@ func (sc *SubscriptionCreate) SetStripeCustomerID(s string) *SubscriptionCreate 
 	return sc
 }
 
+// SetNillableStripeCustomerID sets the "stripe_customer_id" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableStripeCustomerID(s *string) *SubscriptionCreate {
+	if s != nil {
+		sc.SetStripeCustomerID(*s)
+	}
+	return sc
+}
+
 // SetStripeSubscriptionID sets the "stripe_subscription_id" field.
 func (sc *SubscriptionCreate) SetStripeSubscriptionID(s string) *SubscriptionCreate {
 	sc.mutation.SetStripeSubscriptionID(s)
@@ -217,9 +225,6 @@ func (sc *SubscriptionCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (sc *SubscriptionCreate) check() error {
-	if _, ok := sc.mutation.StripeCustomerID(); !ok {
-		return &ValidationError{Name: "stripe_customer_id", err: errors.New(`ent: missing required field "Subscription.stripe_customer_id"`)}
-	}
 	if _, ok := sc.mutation.Tier(); !ok {
 		return &ValidationError{Name: "tier", err: errors.New(`ent: missing required field "Subscription.tier"`)}
 	}
@@ -324,7 +329,7 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 	}
 	if nodes := sc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   subscription.UserTable,
 			Columns: []string{subscription.UserColumn},
@@ -405,6 +410,12 @@ func (u *SubscriptionUpsert) SetStripeCustomerID(v string) *SubscriptionUpsert {
 // UpdateStripeCustomerID sets the "stripe_customer_id" field to the value that was provided on create.
 func (u *SubscriptionUpsert) UpdateStripeCustomerID() *SubscriptionUpsert {
 	u.SetExcluded(subscription.FieldStripeCustomerID)
+	return u
+}
+
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (u *SubscriptionUpsert) ClearStripeCustomerID() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldStripeCustomerID)
 	return u
 }
 
@@ -541,6 +552,13 @@ func (u *SubscriptionUpsertOne) SetStripeCustomerID(v string) *SubscriptionUpser
 func (u *SubscriptionUpsertOne) UpdateStripeCustomerID() *SubscriptionUpsertOne {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateStripeCustomerID()
+	})
+}
+
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (u *SubscriptionUpsertOne) ClearStripeCustomerID() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStripeCustomerID()
 	})
 }
 
@@ -855,6 +873,13 @@ func (u *SubscriptionUpsertBulk) SetStripeCustomerID(v string) *SubscriptionUpse
 func (u *SubscriptionUpsertBulk) UpdateStripeCustomerID() *SubscriptionUpsertBulk {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateStripeCustomerID()
+	})
+}
+
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (u *SubscriptionUpsertBulk) ClearStripeCustomerID() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStripeCustomerID()
 	})
 }
 

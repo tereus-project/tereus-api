@@ -994,9 +994,22 @@ func (m *SubscriptionMutation) OldStripeCustomerID(ctx context.Context) (v strin
 	return oldValue.StripeCustomerID, nil
 }
 
+// ClearStripeCustomerID clears the value of the "stripe_customer_id" field.
+func (m *SubscriptionMutation) ClearStripeCustomerID() {
+	m.stripe_customer_id = nil
+	m.clearedFields[subscription.FieldStripeCustomerID] = struct{}{}
+}
+
+// StripeCustomerIDCleared returns if the "stripe_customer_id" field was cleared in this mutation.
+func (m *SubscriptionMutation) StripeCustomerIDCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldStripeCustomerID]
+	return ok
+}
+
 // ResetStripeCustomerID resets all changes to the "stripe_customer_id" field.
 func (m *SubscriptionMutation) ResetStripeCustomerID() {
 	m.stripe_customer_id = nil
+	delete(m.clearedFields, subscription.FieldStripeCustomerID)
 }
 
 // SetStripeSubscriptionID sets the "stripe_subscription_id" field.
@@ -1404,6 +1417,9 @@ func (m *SubscriptionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SubscriptionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(subscription.FieldStripeCustomerID) {
+		fields = append(fields, subscription.FieldStripeCustomerID)
+	}
 	if m.FieldCleared(subscription.FieldStripeSubscriptionID) {
 		fields = append(fields, subscription.FieldStripeSubscriptionID)
 	}
@@ -1424,6 +1440,9 @@ func (m *SubscriptionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SubscriptionMutation) ClearField(name string) error {
 	switch name {
+	case subscription.FieldStripeCustomerID:
+		m.ClearStripeCustomerID()
+		return nil
 	case subscription.FieldStripeSubscriptionID:
 		m.ClearStripeSubscriptionID()
 		return nil
@@ -1993,8 +2012,7 @@ type UserMutation struct {
 	submissions         map[uuid.UUID]struct{}
 	removedsubmissions  map[uuid.UUID]struct{}
 	clearedsubmissions  bool
-	subscription        map[uuid.UUID]struct{}
-	removedsubscription map[uuid.UUID]struct{}
+	subscription        *uuid.UUID
 	clearedsubscription bool
 	done                bool
 	oldValue            func(context.Context) (*User, error)
@@ -2383,14 +2401,9 @@ func (m *UserMutation) ResetSubmissions() {
 	m.removedsubmissions = nil
 }
 
-// AddSubscriptionIDs adds the "subscription" edge to the Subscription entity by ids.
-func (m *UserMutation) AddSubscriptionIDs(ids ...uuid.UUID) {
-	if m.subscription == nil {
-		m.subscription = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.subscription[ids[i]] = struct{}{}
-	}
+// SetSubscriptionID sets the "subscription" edge to the Subscription entity by id.
+func (m *UserMutation) SetSubscriptionID(id uuid.UUID) {
+	m.subscription = &id
 }
 
 // ClearSubscription clears the "subscription" edge to the Subscription entity.
@@ -2403,29 +2416,20 @@ func (m *UserMutation) SubscriptionCleared() bool {
 	return m.clearedsubscription
 }
 
-// RemoveSubscriptionIDs removes the "subscription" edge to the Subscription entity by IDs.
-func (m *UserMutation) RemoveSubscriptionIDs(ids ...uuid.UUID) {
-	if m.removedsubscription == nil {
-		m.removedsubscription = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.subscription, ids[i])
-		m.removedsubscription[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedSubscription returns the removed IDs of the "subscription" edge to the Subscription entity.
-func (m *UserMutation) RemovedSubscriptionIDs() (ids []uuid.UUID) {
-	for id := range m.removedsubscription {
-		ids = append(ids, id)
+// SubscriptionID returns the "subscription" edge ID in the mutation.
+func (m *UserMutation) SubscriptionID() (id uuid.UUID, exists bool) {
+	if m.subscription != nil {
+		return *m.subscription, true
 	}
 	return
 }
 
 // SubscriptionIDs returns the "subscription" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubscriptionID instead. It exists only for internal usage by the builders.
 func (m *UserMutation) SubscriptionIDs() (ids []uuid.UUID) {
-	for id := range m.subscription {
-		ids = append(ids, id)
+	if id := m.subscription; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -2434,7 +2438,6 @@ func (m *UserMutation) SubscriptionIDs() (ids []uuid.UUID) {
 func (m *UserMutation) ResetSubscription() {
 	m.subscription = nil
 	m.clearedsubscription = false
-	m.removedsubscription = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -2651,11 +2654,9 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeSubscription:
-		ids := make([]ent.Value, 0, len(m.subscription))
-		for id := range m.subscription {
-			ids = append(ids, id)
+		if id := m.subscription; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -2668,9 +2669,6 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedsubmissions != nil {
 		edges = append(edges, user.EdgeSubmissions)
-	}
-	if m.removedsubscription != nil {
-		edges = append(edges, user.EdgeSubscription)
 	}
 	return edges
 }
@@ -2688,12 +2686,6 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	case user.EdgeSubmissions:
 		ids := make([]ent.Value, 0, len(m.removedsubmissions))
 		for id := range m.removedsubmissions {
-			ids = append(ids, id)
-		}
-		return ids
-	case user.EdgeSubscription:
-		ids := make([]ent.Value, 0, len(m.removedsubscription))
-		for id := range m.removedsubscription {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2734,6 +2726,9 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
+	case user.EdgeSubscription:
+		m.ClearSubscription()
+		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }
