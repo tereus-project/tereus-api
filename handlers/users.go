@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -97,20 +99,32 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 		return err
 	}
 
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	if err != nil {
+		limit = 10
+	}
+
 	submissions, err := h.databaseService.Submission.Query().
 		Where(submission.HasUserWith(user.ID(tereusUser.ID))).
 		Order(ent.Desc(submission.FieldCreatedAt)).
+		Offset(limit * (page - 1)).
+		Limit(limit).
 		All(context.Background())
 	if err != nil {
 		return err
 	}
 
-	response := submissionsHistory{
+	items := submissionsHistory{
 		Submissions: make([]*submissionsHistoryItem, len(submissions)),
 	}
 
 	for i, s := range submissions {
-		response.Submissions[i] = &submissionsHistoryItem{
+		items.Submissions[i] = &submissionsHistoryItem{
 			ID:             s.ID.String(),
 			SourceLanguage: s.SourceLanguage,
 			TargetLanguage: s.TargetLanguage,
@@ -120,6 +134,24 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 			Reason:         s.Reason,
 			CreatedAt:      s.CreatedAt.Format(time.RFC3339),
 		}
+	}
+
+	totalItems, err := h.databaseService.Submission.Query().
+		Where(submission.HasUserWith(user.ID(tereusUser.ID))).
+		Count(context.Background())
+	if err != nil {
+		return err
+	}
+
+	response := PaginatedResponse[*submissionsHistoryItem]{
+		Items: items.Submissions,
+		Meta: PaginatedMeta{
+			ItemCount:    len(items.Submissions),
+			TotalItems:   totalItems,
+			ItemsPerPage: limit,
+			TotalPages:   int(math.Ceil(float64(totalItems) / float64(limit))),
+			CurrentPage:  page,
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
