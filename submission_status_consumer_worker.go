@@ -9,8 +9,8 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func submissionStatusConsumerWorker(k *services.KafkaService, databaseService *services.DatabaseService) {
-	ch := k.ConsumeSubmissionStatus(context.Background())
+func submissionStatusConsumerWorker(submissionService *services.SubmissionService, databaseService *services.DatabaseService) {
+	ch := submissionService.ConsumeSubmissionsStatus()
 
 	for {
 		msg := <-ch

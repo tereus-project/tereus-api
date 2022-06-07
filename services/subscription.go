@@ -3,10 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v72"
 	portalsession "github.com/stripe/stripe-go/v72/billingportal/session"
 	"github.com/stripe/stripe-go/v72/checkout/session"
@@ -15,7 +17,7 @@ import (
 	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/ent/subscription"
 	"github.com/tereus-project/tereus-api/ent/user"
-	"github.com/tereus-project/tereus-api/env"
+	"github.com/tereus-project/tereus-api/services/internal"
 )
 
 type TierPrices struct {
@@ -25,27 +27,27 @@ type TierPrices struct {
 
 type SubscriptionService struct {
 	databaseService *DatabaseService
-	stripeService   *StripeService
+	stripeService   *internal.StripeService
 
 	stripeTierPriceIds map[string]TierPrices
 }
 
-func NewSubscriptionService(databaseService *DatabaseService, stripeService *StripeService) *SubscriptionService {
-	config := env.Get()
+func NewSubscriptionService(
+	stripeSecretKey string,
+	stripeProTierPrices TierPrices,
+	stripeEnterpriseTierPrices TierPrices,
+	databaseService *DatabaseService,
+) *SubscriptionService {
+	logrus.Debugln("Initializing stripe service")
+	stripeService := internal.NewStripeService(stripeSecretKey)
 
 	return &SubscriptionService{
 		databaseService: databaseService,
 		stripeService:   stripeService,
 
 		stripeTierPriceIds: map[string]TierPrices{
-			"pro": {
-				BasePriceId:    config.StripeTierProBase,
-				MeteredPriceId: config.StripeTierProMetered,
-			},
-			"enterprise": {
-				BasePriceId:    config.StripeTierEnterpriseBase,
-				MeteredPriceId: config.StripeTierEnterpriseMetered,
-			},
+			"pro":        stripeProTierPrices,
+			"enterprise": stripeEnterpriseTierPrices,
 		},
 	}
 }
@@ -76,6 +78,10 @@ func (s *SubscriptionService) GetTierFromPriceId(priceId string) string {
 	}
 
 	return ""
+}
+
+func (s *SubscriptionService) ConstructWebhookEvent(w http.ResponseWriter, req *http.Request, endpointSecret string) (stripe.Event, error) {
+	return s.stripeService.ConstructWebhookEvent(w, req, endpointSecret)
 }
 
 func (s *SubscriptionService) GetCurrentUserSubscription(userID uuid.UUID) (*ent.Subscription, error) {

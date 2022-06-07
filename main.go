@@ -56,14 +56,6 @@ func main() {
 		logrus.WithError(err).Fatalln("Failed to create bucket")
 	}
 
-	// Initialize Kafka service
-	logrus.Debugln("Initializing Kafka service")
-	kafkaService, err := services.NewKafkaService(config.KafkaEndpoint)
-	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize Kafka service")
-	}
-	defer kafkaService.CloseAllWriters()
-
 	// Initialize database service
 	logrus.Debugln("Initializing database service")
 	databaseService, err := services.NewDatabaseService(config.DatabaseDriver, config.DatabaseEndpoint)
@@ -86,26 +78,35 @@ func main() {
 	// Initialize token service
 	logrus.Debugln("Initializing token service")
 	tokenService := services.NewTokenService(databaseService)
-	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize token service")
-	}
-
-	// Initialize Stripe service
-	logrus.Debugln("Initializing stripe service")
-	stripeService := services.NewStripeService(config.StripeSecretKey)
-	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize stripe service")
-	}
 
 	// Initialize subscription service
 	logrus.Debugln("Initializing subscription service")
-	subscriptionService := services.NewSubscriptionService(databaseService, stripeService)
+	subscriptionService := services.NewSubscriptionService(
+		config.StripeSecretKey,
+		services.TierPrices{
+			BasePriceId:    config.StripeTierProBase,
+			MeteredPriceId: config.StripeTierProMetered,
+		},
+		services.TierPrices{
+			BasePriceId:    config.StripeTierEnterpriseBase,
+			MeteredPriceId: config.StripeTierEnterpriseMetered,
+		},
+		databaseService,
+	)
+
+	// Initialize submission service
+	logrus.Debugln("Initializing submission service")
+	queueService, err := services.NewQueueService(config.KafkaEndpoint)
 	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize subscription service")
+		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
 	}
 
+	// Initialize submission service
+	logrus.Debugln("Initializing submission service")
+	submissionService := services.NewSubmissionService(queueService)
+
 	logrus.Debugln("Starting submission status consumer worker")
-	go submissionStatusConsumerWorker(kafkaService, databaseService)
+	go submissionStatusConsumerWorker(submissionService, databaseService)
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
 	go subscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
@@ -113,7 +114,7 @@ func main() {
 	logrus.Debugln("Starting retention worker")
 	go retentionWorker(databaseService, s3Service)
 
-	remixHandler, err := handlers.NewRemixHandler(s3Service, kafkaService, databaseService, tokenService)
+	remixHandler, err := handlers.NewRemixHandler(s3Service, databaseService, tokenService, submissionService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -138,7 +139,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stripeWebhooksHandler, err := handlers.NewStripeWebhooksHandler(databaseService, subscriptionService, stripeService, config.StripeWebhookSecret)
+	stripeWebhooksHandler, err := handlers.NewStripeWebhooksHandler(databaseService, subscriptionService, config.StripeWebhookSecret)
 	if err != nil {
 		log.Fatal(err)
 	}

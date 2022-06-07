@@ -25,26 +25,18 @@ import (
 )
 
 type RemixHandler struct {
-	S3Service       *services.S3Service
-	KafkaService    *services.KafkaService
-	DatabaseService *services.DatabaseService
-	TokenService    *services.TokenService
-
-	supportedLanguages map[string]map[string]int
+	s3Service         *services.S3Service
+	databaseService   *services.DatabaseService
+	tokenService      *services.TokenService
+	submissionService *services.SubmissionService
 }
 
-func NewRemixHandler(s3Service *services.S3Service, k *services.KafkaService, databaseService *services.DatabaseService, tokenService *services.TokenService) (*RemixHandler, error) {
-	supportedLanguages := make(map[string]map[string]int)
-	supportedLanguages["c"] = map[string]int{
-		"go": 1,
-	}
-
+func NewRemixHandler(s3Service *services.S3Service, databaseService *services.DatabaseService, tokenService *services.TokenService, submissionService *services.SubmissionService) (*RemixHandler, error) {
 	return &RemixHandler{
-		S3Service:          s3Service,
-		KafkaService:       k,
-		DatabaseService:    databaseService,
-		TokenService:       tokenService,
-		supportedLanguages: supportedLanguages,
+		s3Service:         s3Service,
+		databaseService:   databaseService,
+		tokenService:      tokenService,
+		submissionService: submissionService,
 	}, nil
 }
 
@@ -84,7 +76,7 @@ func (h *RemixHandler) RemixGit(c echo.Context) error {
 }
 
 func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
-	user, err := h.TokenService.GetUserFromContext(c)
+	user, err := h.tokenService.GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -102,10 +94,9 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 	srcLanguage := strings.ToLower(c.Param("src"))
 	targetLanguage := strings.ToLower(c.Param("target"))
 
-	if sourceMap, ok := h.supportedLanguages[srcLanguage]; !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("source language %s is not supported", srcLanguage))
-	} else if _, ok := sourceMap[targetLanguage]; !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, srcLanguage))
+	err = h.submissionService.CheckSupport(srcLanguage, targetLanguage)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	submissionId := uuid.New()
@@ -117,7 +108,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		}
 
 		reader := strings.NewReader(body.SourceCode)
-		_, err := h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, "main.c"), reader, reader.Size())
+		_, err := h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -155,7 +146,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			}
 			defer f.Close()
 
-			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
+			_, err = h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
@@ -222,7 +213,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
-			_, err = h.S3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name()), f, info.Size())
+			_, err = h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
@@ -237,7 +228,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
-	err = h.KafkaService.PublishSubmission(services.RemixSubmission{
+	err = h.submissionService.PublishSubmission(&services.SubmissionMessage{
 		ID:             submissionId.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
@@ -247,7 +238,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish submission to Kafka")
 	}
 
-	submissionCreation := h.DatabaseService.Submission.Create().
+	submissionCreation := h.databaseService.Submission.Create().
 		SetID(submissionId).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
@@ -282,7 +273,7 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	}
 
 	// Get sub from database
-	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	sub, err := h.databaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
@@ -300,14 +291,14 @@ func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
 	// Create zip file
 	zipFile := zip.NewWriter(c.Response().Writer)
 
-	objects := h.S3Service.GetObjects(objectStoragePath)
+	objects := h.s3Service.GetObjects(objectStoragePath)
 	for object := range objects {
 		if object.Err != nil {
 			logrus.WithError(object.Err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
 		}
 
-		reader, err := h.S3Service.GetObject(object.Path)
+		reader, err := h.s3Service.GetObject(object.Path)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file from S3")
@@ -353,7 +344,7 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	}
 
 	// Get sub from database
-	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	sub, err := h.databaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
@@ -363,7 +354,7 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	}
 
 	if !sub.IsPublic {
-		user, err := h.TokenService.GetUserFromContext(c)
+		user, err := h.tokenService.GetUserFromContext(c)
 		if err != nil {
 			return err
 		}
@@ -385,7 +376,7 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	objectStoragePath := fmt.Sprintf("remix/%s/main.%s", sub.ID, sub.SourceLanguage)
 
 	// Get files from S3
-	object, err := h.S3Service.GetObject(objectStoragePath)
+	object, err := h.s3Service.GetObject(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
@@ -417,7 +408,7 @@ func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 	}
 
 	// Get sub from database
-	sub, err := h.DatabaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	sub, err := h.databaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
@@ -427,7 +418,7 @@ func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 	}
 
 	if !sub.IsPublic {
-		user, err := h.TokenService.GetUserFromContext(c)
+		user, err := h.tokenService.GetUserFromContext(c)
 		if err != nil {
 			return err
 		}
@@ -456,7 +447,7 @@ func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, sub.ID, sub.TargetLanguage)
 
 	// Get files from S3
-	object, err := h.S3Service.GetObject(objectStoragePath)
+	object, err := h.s3Service.GetObject(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")

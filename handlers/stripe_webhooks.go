@@ -15,12 +15,11 @@ import (
 type StripeWebhooksHandler struct {
 	databaseService     *services.DatabaseService
 	subscriptionService *services.SubscriptionService
-	stripeService       *services.StripeService
 
 	endpointSecret string
 }
 
-func NewStripeWebhooksHandler(databaseService *services.DatabaseService, subscriptionService *services.SubscriptionService, stripeService *services.StripeService, endpointSecret string) (*StripeWebhooksHandler, error) {
+func NewStripeWebhooksHandler(databaseService *services.DatabaseService, subscriptionService *services.SubscriptionService, endpointSecret string) (*StripeWebhooksHandler, error) {
 	return &StripeWebhooksHandler{
 		databaseService:     databaseService,
 		subscriptionService: subscriptionService,
@@ -29,7 +28,7 @@ func NewStripeWebhooksHandler(databaseService *services.DatabaseService, subscri
 }
 
 func (h *StripeWebhooksHandler) HandleWebhooks(c echo.Context) error {
-	event, err := h.stripeService.ConstructWebhookEvent(c.Response().Writer, c.Request(), h.endpointSecret)
+	event, err := h.subscriptionService.ConstructWebhookEvent(c.Response().Writer, c.Request(), h.endpointSecret)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
