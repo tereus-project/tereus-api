@@ -101,7 +101,7 @@ func (s *SubscriptionService) GetLastUserSubscription(userID uuid.UUID) (*ent.Su
 		Only(context.Background())
 }
 
-func (s *SubscriptionService) GetOrCreateCustomer(subscribingUser *ent.User, lastUserSubscription *ent.Subscription) (*stripe.Customer, *ent.Subscription, error) {
+func (s *SubscriptionService) GetOrCreateStripeCustomer(subscribingUser *ent.User, lastUserSubscription *ent.Subscription) (*stripe.Customer, *ent.Subscription, error) {
 	var err error
 	var stripeCustomer *stripe.Customer
 	var stripeSubscription *stripe.Subscription

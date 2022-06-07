@@ -65,33 +65,33 @@ func (h *SubscriptionHandler) CreateCheckoutSession(c echo.Context) error {
 		return err
 	}
 
-	stripeCustomer, lastUserSubscription, err := h.subscriptionService.GetOrCreateCustomer(user, lastUserSubscription)
+	stripeCustomer, userSubscription, err := h.subscriptionService.GetOrCreateStripeCustomer(user, lastUserSubscription)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get or create customer")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get or create customer")
 	}
 
-	if h.subscriptionService.IsActive(lastUserSubscription) {
-		if lastUserSubscription.Tier.String() == body.Tier && !lastUserSubscription.Cancelled {
+	if h.subscriptionService.IsActive(userSubscription) {
+		if userSubscription.Tier.String() == body.Tier && !userSubscription.Cancelled {
 			return echo.NewHTTPError(http.StatusBadRequest, "You already are subscribed to this tier")
 		}
 
 		if body.Tier == "free" {
-			if !lastUserSubscription.Cancelled {
-				err := h.subscriptionService.CancelStripeSubscription(lastUserSubscription.StripeSubscriptionID)
+			if !userSubscription.Cancelled {
+				err := h.subscriptionService.CancelStripeSubscription(userSubscription.StripeSubscriptionID)
 				if err != nil {
 					logrus.WithError(err).Error("Failed to downgrade subscription")
 					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")
 				}
 
-				err = h.subscriptionService.CancelUserSubscription(user.ID, lastUserSubscription.ExpiresAt)
+				err = h.subscriptionService.CancelUserSubscription(user.ID, userSubscription.ExpiresAt)
 				if err != nil {
 					logrus.WithError(err).Error("Failed to downgrade subscription")
 					return echo.NewHTTPError(http.StatusInternalServerError, "Failed to downgrade subscription")
 				}
 			}
 		} else {
-			stripeSubscription, err := h.subscriptionService.UpdateStripeSubscription(lastUserSubscription.StripeSubscriptionID, body.Tier)
+			stripeSubscription, err := h.subscriptionService.UpdateStripeSubscription(userSubscription.StripeSubscriptionID, body.Tier)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upgrade subscription")
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to upgrade subscription")
