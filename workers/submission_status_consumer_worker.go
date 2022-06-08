@@ -1,4 +1,4 @@
-package main
+package workers
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func submissionStatusConsumerWorker(submissionService *services.SubmissionService, databaseService *services.DatabaseService) {
+func SubmissionStatusConsumerWorker(submissionService *services.SubmissionService, databaseService *services.DatabaseService) {
 	ch := submissionService.ConsumeSubmissionsStatus()
 
 	for {

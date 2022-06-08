@@ -1,4 +1,4 @@
-package main
+package workers
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 
 const mb = 1024 * 1024
 
-func subscriptionDataUsageReportingWorker(subscriptionService *services.SubscriptionService, databaseService *services.DatabaseService, s3Service *services.S3Service) {
+func SubscriptionDataUsageReportingWorker(subscriptionService *services.SubscriptionService, databaseService *services.DatabaseService, s3Service *services.S3Service) {
 	config := env.Get()
 	subscriptionsBatchSize := 100
 

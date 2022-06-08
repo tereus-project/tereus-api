@@ -10,6 +10,7 @@ import (
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/handlers"
 	"github.com/tereus-project/tereus-api/services"
+	"github.com/tereus-project/tereus-api/workers"
 	"github.com/tereus-project/tereus-go-std/logging"
 )
 
@@ -106,13 +107,13 @@ func main() {
 	submissionService := services.NewSubmissionService(queueService)
 
 	logrus.Debugln("Starting submission status consumer worker")
-	go submissionStatusConsumerWorker(submissionService, databaseService)
+	go workers.SubmissionStatusConsumerWorker(submissionService, databaseService)
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
-	go subscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
+	go workers.SubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
 
 	logrus.Debugln("Starting retention worker")
-	go retentionWorker(databaseService, s3Service)
+	go workers.RetentionWorker(databaseService, s3Service)
 
 	remixHandler, err := handlers.NewRemixHandler(s3Service, databaseService, tokenService, submissionService)
 	if err != nil {

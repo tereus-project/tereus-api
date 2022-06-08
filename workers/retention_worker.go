@@ -1,4 +1,4 @@
-package main
+package workers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func retentionWorker(databaseService *services.DatabaseService, s3Service *services.S3Service) {
+func RetentionWorker(databaseService *services.DatabaseService, s3Service *services.S3Service) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
