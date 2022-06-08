@@ -14,10 +14,10 @@ type KafkaService struct {
 	writers         map[string]*kafka.Writer
 }
 
-func NewKafkaService(endpoint string) (*KafkaService, error) {
+func NewKafkaService(endpoint string, consumerGroupID string) (*KafkaService, error) {
 	return &KafkaService{
 		endpoint:        endpoint,
-		consumerGroupID: "api",
+		consumerGroupID: consumerGroupID,
 		writers:         make(map[string]*kafka.Writer),
 	}, nil
 }

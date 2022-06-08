@@ -14,7 +14,7 @@ type QueueService struct {
 
 func NewQueueService(kafkaEndpoint string) (*QueueService, error) {
 	logrus.Debugln("Initializing Kafka service")
-	kafkaService, err := internal.NewKafkaService(kafkaEndpoint)
+	kafkaService, err := internal.NewKafkaService(kafkaEndpoint, "api")
 	if err != nil {
 		return nil, fmt.Errorf("Failed initializing kafka service: %s", err)
 	}
