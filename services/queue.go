@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tereus-project/tereus-api/services/internal"
+	"github.com/tereus-project/tereus-go-std/kafka"
 )
 
 type QueueService struct {
-	kafkaService *internal.KafkaService
+	kafkaService *kafka.KafkaService
 }
 
 func NewQueueService(kafkaEndpoint string) (*QueueService, error) {
 	logrus.Debugln("Initializing Kafka service")
-	kafkaService, err := internal.NewKafkaService(kafkaEndpoint, "api")
+	kafkaService, err := kafka.NewKafkaService(kafkaEndpoint, "api")
 	if err != nil {
 		return nil, fmt.Errorf("Failed initializing kafka service: %s", err)
 	}
