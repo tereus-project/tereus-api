@@ -19,7 +19,7 @@ var (
 		{Name: "reason", Type: field.TypeString, Nullable: true},
 		{Name: "git_repo", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "share_id", Type: field.TypeString, Nullable: true},
+		{Name: "share_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "user_submissions", Type: field.TypeUUID},
 	}
 	// SubmissionsTable holds the schema information for the "submissions" table.
