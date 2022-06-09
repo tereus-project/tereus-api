@@ -86,6 +86,7 @@ type submissionsHistoryItem struct {
 	Status         string `json:"status"`
 	Reason         string `json:"reason"`
 	CreatedAt      string `json:"created_at"`
+	ShareID        string `json:"share_id"`
 }
 
 type submissionsHistory struct {
@@ -133,6 +134,7 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 			Status:         s.Status.String(),
 			Reason:         s.Reason,
 			CreatedAt:      s.CreatedAt.Format(time.RFC3339),
+			ShareID:        s.ShareID,
 		}
 	}
 
