@@ -139,7 +139,7 @@ func (h *SubmissionsHandler) UpdateSubmissionVisibility(c echo.Context) error {
 
 	share_id := ""
 	if body.IsPublic {
-		share_id, err = gonanoid.Generate("abcdefghijklmnopqrstuvwxyz", 8)
+		share_id, err = gonanoid.Generate("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 8)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate share ID")
 		}
