@@ -143,6 +143,13 @@ func CreatedAt(v time.Time) predicate.Submission {
 	})
 }
 
+// ShareID applies equality check predicate on the "share_id" field. It's identical to ShareIDEQ.
+func ShareID(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldShareID), v))
+	})
+}
+
 // SourceLanguageEQ applies the EQ predicate on the "source_language" field.
 func SourceLanguageEQ(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -764,6 +771,131 @@ func CreatedAtLT(v time.Time) predicate.Submission {
 func CreatedAtLTE(v time.Time) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
+	})
+}
+
+// ShareIDEQ applies the EQ predicate on the "share_id" field.
+func ShareIDEQ(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDNEQ applies the NEQ predicate on the "share_id" field.
+func ShareIDNEQ(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDIn applies the In predicate on the "share_id" field.
+func ShareIDIn(vs ...string) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldShareID), v...))
+	})
+}
+
+// ShareIDNotIn applies the NotIn predicate on the "share_id" field.
+func ShareIDNotIn(vs ...string) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldShareID), v...))
+	})
+}
+
+// ShareIDGT applies the GT predicate on the "share_id" field.
+func ShareIDGT(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDGTE applies the GTE predicate on the "share_id" field.
+func ShareIDGTE(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDLT applies the LT predicate on the "share_id" field.
+func ShareIDLT(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDLTE applies the LTE predicate on the "share_id" field.
+func ShareIDLTE(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDContains applies the Contains predicate on the "share_id" field.
+func ShareIDContains(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDHasPrefix applies the HasPrefix predicate on the "share_id" field.
+func ShareIDHasPrefix(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDHasSuffix applies the HasSuffix predicate on the "share_id" field.
+func ShareIDHasSuffix(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDIsNil applies the IsNil predicate on the "share_id" field.
+func ShareIDIsNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldShareID)))
+	})
+}
+
+// ShareIDNotNil applies the NotNil predicate on the "share_id" field.
+func ShareIDNotNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldShareID)))
+	})
+}
+
+// ShareIDEqualFold applies the EqualFold predicate on the "share_id" field.
+func ShareIDEqualFold(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldShareID), v))
+	})
+}
+
+// ShareIDContainsFold applies the ContainsFold predicate on the "share_id" field.
+func ShareIDContainsFold(v string) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldShareID), v))
 	})
 }
 

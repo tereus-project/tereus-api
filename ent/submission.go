@@ -34,6 +34,8 @@ type Submission struct {
 	GitRepo string `json:"git_repo,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// ShareID holds the value of the "share_id" field.
+	ShareID string `json:"share_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SubmissionQuery when eager-loading is set.
 	Edges            SubmissionEdges `json:"edges"`
@@ -70,7 +72,7 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case submission.FieldIsInline, submission.FieldIsPublic:
 			values[i] = new(sql.NullBool)
-		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo:
+		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo, submission.FieldShareID:
 			values[i] = new(sql.NullString)
 		case submission.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -147,6 +149,12 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				s.CreatedAt = value.Time
 			}
+		case submission.FieldShareID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field share_id", values[i])
+			} else if value.Valid {
+				s.ShareID = value.String
+			}
 		case submission.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_submissions", values[i])
@@ -203,6 +211,8 @@ func (s *Submission) String() string {
 	builder.WriteString(s.GitRepo)
 	builder.WriteString(", created_at=")
 	builder.WriteString(s.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", share_id=")
+	builder.WriteString(s.ShareID)
 	builder.WriteByte(')')
 	return builder.String()
 }

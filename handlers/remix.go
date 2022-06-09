@@ -338,13 +338,24 @@ type downloadInlineResponse struct {
 
 // GET /submissions/:id/inline/source
 func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
-	id, err := uuid.Parse(c.Param("id"))
+	var subID uuid.UUID
+	var shareID string
+
+	subID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submissions ID")
+		if len(c.Param("id")) != 8 {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
+		}
+		shareID = c.Param("id")
 	}
 
 	// Get sub from database
-	sub, err := h.databaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	sub, err := h.databaseService.Submission.Query().
+		Where(submission.Or(
+			submission.ID(subID),
+			submission.ShareID(shareID),
+		)).
+		Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}
@@ -402,13 +413,24 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 
 // GET /submissions/:id/inline/output
 func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
-	id, err := uuid.Parse(c.Param("id"))
+	var subID uuid.UUID
+	var shareID string
+
+	subID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
+		if len(c.Param("id")) != 8 {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
+		}
+		shareID = c.Param("id")
 	}
 
 	// Get sub from database
-	sub, err := h.databaseService.Submission.Query().Where(submission.ID(id)).Only(context.Background())
+	sub, err := h.databaseService.Submission.Query().
+		Where(submission.Or(
+			submission.ID(subID),
+			submission.ShareID(shareID),
+		)).
+		Only(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
 	}

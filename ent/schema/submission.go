@@ -26,6 +26,7 @@ func (Submission) Fields() []ent.Field {
 		field.String("reason").Optional(),
 		field.String("git_repo").Optional(),
 		field.Time("created_at").Default(time.Now),
+		field.String("share_id").Optional(),
 	}
 }
 

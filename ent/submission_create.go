@@ -121,6 +121,20 @@ func (sc *SubmissionCreate) SetNillableCreatedAt(t *time.Time) *SubmissionCreate
 	return sc
 }
 
+// SetShareID sets the "share_id" field.
+func (sc *SubmissionCreate) SetShareID(s string) *SubmissionCreate {
+	sc.mutation.SetShareID(s)
+	return sc
+}
+
+// SetNillableShareID sets the "share_id" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableShareID(s *string) *SubmissionCreate {
+	if s != nil {
+		sc.SetShareID(*s)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *SubmissionCreate) SetID(u uuid.UUID) *SubmissionCreate {
 	sc.mutation.SetID(u)
@@ -368,6 +382,14 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 		})
 		_node.CreatedAt = value
 	}
+	if value, ok := sc.mutation.ShareID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldShareID,
+		})
+		_node.ShareID = value
+	}
 	if nodes := sc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -550,6 +572,24 @@ func (u *SubmissionUpsert) UpdateCreatedAt() *SubmissionUpsert {
 	return u
 }
 
+// SetShareID sets the "share_id" field.
+func (u *SubmissionUpsert) SetShareID(v string) *SubmissionUpsert {
+	u.Set(submission.FieldShareID, v)
+	return u
+}
+
+// UpdateShareID sets the "share_id" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateShareID() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldShareID)
+	return u
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (u *SubmissionUpsert) ClearShareID() *SubmissionUpsert {
+	u.SetNull(submission.FieldShareID)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -723,6 +763,27 @@ func (u *SubmissionUpsertOne) SetCreatedAt(v time.Time) *SubmissionUpsertOne {
 func (u *SubmissionUpsertOne) UpdateCreatedAt() *SubmissionUpsertOne {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateCreatedAt()
+	})
+}
+
+// SetShareID sets the "share_id" field.
+func (u *SubmissionUpsertOne) SetShareID(v string) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetShareID(v)
+	})
+}
+
+// UpdateShareID sets the "share_id" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateShareID() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateShareID()
+	})
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (u *SubmissionUpsertOne) ClearShareID() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearShareID()
 	})
 }
 
@@ -1065,6 +1126,27 @@ func (u *SubmissionUpsertBulk) SetCreatedAt(v time.Time) *SubmissionUpsertBulk {
 func (u *SubmissionUpsertBulk) UpdateCreatedAt() *SubmissionUpsertBulk {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateCreatedAt()
+	})
+}
+
+// SetShareID sets the "share_id" field.
+func (u *SubmissionUpsertBulk) SetShareID(v string) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetShareID(v)
+	})
+}
+
+// UpdateShareID sets the "share_id" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateShareID() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateShareID()
+	})
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (u *SubmissionUpsertBulk) ClearShareID() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearShareID()
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/ent/submission"
@@ -92,6 +93,7 @@ type updateSubmissionVisibilityBody struct {
 type updateSubmissionVisibilityResponse struct {
 	Id       string `json:"id"`
 	IsPublic bool   `json:"is_public"`
+	ShareID  string `json:"share_id"`
 }
 
 // PATCH /submissions/:id/visibility
@@ -135,9 +137,18 @@ func (h *SubmissionsHandler) UpdateSubmissionVisibility(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "You are not allowed to update this submission")
 	}
 
+	share_id := ""
+	if body.IsPublic {
+		share_id, err = gonanoid.Generate("abcdefghijklmnopqrstuvwxyz", 8)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate share ID")
+		}
+	}
+
 	err = h.databaseService.Submission.
 		UpdateOneID(sub.ID).
 		SetIsPublic(body.IsPublic).
+		SetShareID(share_id).
 		Exec(context.Background())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to update submission visibility")
@@ -147,5 +158,6 @@ func (h *SubmissionsHandler) UpdateSubmissionVisibility(c echo.Context) error {
 	return c.JSON(http.StatusOK, &updateSubmissionVisibilityResponse{
 		Id:       sub.ID.String(),
 		IsPublic: body.IsPublic,
+		ShareID:  share_id,
 	})
 }

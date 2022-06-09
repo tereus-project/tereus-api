@@ -138,6 +138,26 @@ func (su *SubmissionUpdate) SetNillableCreatedAt(t *time.Time) *SubmissionUpdate
 	return su
 }
 
+// SetShareID sets the "share_id" field.
+func (su *SubmissionUpdate) SetShareID(s string) *SubmissionUpdate {
+	su.mutation.SetShareID(s)
+	return su
+}
+
+// SetNillableShareID sets the "share_id" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableShareID(s *string) *SubmissionUpdate {
+	if s != nil {
+		su.SetShareID(*s)
+	}
+	return su
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (su *SubmissionUpdate) ClearShareID() *SubmissionUpdate {
+	su.mutation.ClearShareID()
+	return su
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (su *SubmissionUpdate) SetUserID(id uuid.UUID) *SubmissionUpdate {
 	su.mutation.SetUserID(id)
@@ -319,6 +339,19 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldCreatedAt,
 		})
 	}
+	if value, ok := su.mutation.ShareID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldShareID,
+		})
+	}
+	if su.mutation.ShareIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldShareID,
+		})
+	}
 	if su.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -478,6 +511,26 @@ func (suo *SubmissionUpdateOne) SetNillableCreatedAt(t *time.Time) *SubmissionUp
 	if t != nil {
 		suo.SetCreatedAt(*t)
 	}
+	return suo
+}
+
+// SetShareID sets the "share_id" field.
+func (suo *SubmissionUpdateOne) SetShareID(s string) *SubmissionUpdateOne {
+	suo.mutation.SetShareID(s)
+	return suo
+}
+
+// SetNillableShareID sets the "share_id" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableShareID(s *string) *SubmissionUpdateOne {
+	if s != nil {
+		suo.SetShareID(*s)
+	}
+	return suo
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (suo *SubmissionUpdateOne) ClearShareID() *SubmissionUpdateOne {
+	suo.mutation.ClearShareID()
 	return suo
 }
 
@@ -684,6 +737,19 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: submission.FieldCreatedAt,
+		})
+	}
+	if value, ok := suo.mutation.ShareID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: submission.FieldShareID,
+		})
+	}
+	if suo.mutation.ShareIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: submission.FieldShareID,
 		})
 	}
 	if suo.mutation.UserCleared() {

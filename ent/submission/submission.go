@@ -30,6 +30,8 @@ const (
 	FieldGitRepo = "git_repo"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldShareID holds the string denoting the share_id field in the database.
+	FieldShareID = "share_id"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the submission in the database.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldReason,
 	FieldGitRepo,
 	FieldCreatedAt,
+	FieldShareID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "submissions"

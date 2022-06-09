@@ -48,6 +48,7 @@ type SubmissionMutation struct {
 	reason          *string
 	git_repo        *string
 	created_at      *time.Time
+	share_id        *string
 	clearedFields   map[string]struct{}
 	user            *uuid.UUID
 	cleareduser     bool
@@ -474,6 +475,55 @@ func (m *SubmissionMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
+// SetShareID sets the "share_id" field.
+func (m *SubmissionMutation) SetShareID(s string) {
+	m.share_id = &s
+}
+
+// ShareID returns the value of the "share_id" field in the mutation.
+func (m *SubmissionMutation) ShareID() (r string, exists bool) {
+	v := m.share_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShareID returns the old "share_id" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldShareID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShareID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShareID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShareID: %w", err)
+	}
+	return oldValue.ShareID, nil
+}
+
+// ClearShareID clears the value of the "share_id" field.
+func (m *SubmissionMutation) ClearShareID() {
+	m.share_id = nil
+	m.clearedFields[submission.FieldShareID] = struct{}{}
+}
+
+// ShareIDCleared returns if the "share_id" field was cleared in this mutation.
+func (m *SubmissionMutation) ShareIDCleared() bool {
+	_, ok := m.clearedFields[submission.FieldShareID]
+	return ok
+}
+
+// ResetShareID resets all changes to the "share_id" field.
+func (m *SubmissionMutation) ResetShareID() {
+	m.share_id = nil
+	delete(m.clearedFields, submission.FieldShareID)
+}
+
 // SetUserID sets the "user" edge to the User entity by id.
 func (m *SubmissionMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
@@ -532,7 +582,7 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
@@ -556,6 +606,9 @@ func (m *SubmissionMutation) Fields() []string {
 	}
 	if m.created_at != nil {
 		fields = append(fields, submission.FieldCreatedAt)
+	}
+	if m.share_id != nil {
+		fields = append(fields, submission.FieldShareID)
 	}
 	return fields
 }
@@ -581,6 +634,8 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.GitRepo()
 	case submission.FieldCreatedAt:
 		return m.CreatedAt()
+	case submission.FieldShareID:
+		return m.ShareID()
 	}
 	return nil, false
 }
@@ -606,6 +661,8 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldGitRepo(ctx)
 	case submission.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
+	case submission.FieldShareID:
+		return m.OldShareID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Submission field %s", name)
 }
@@ -671,6 +728,13 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCreatedAt(v)
 		return nil
+	case submission.FieldShareID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShareID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)
 }
@@ -707,6 +771,9 @@ func (m *SubmissionMutation) ClearedFields() []string {
 	if m.FieldCleared(submission.FieldGitRepo) {
 		fields = append(fields, submission.FieldGitRepo)
 	}
+	if m.FieldCleared(submission.FieldShareID) {
+		fields = append(fields, submission.FieldShareID)
+	}
 	return fields
 }
 
@@ -726,6 +793,9 @@ func (m *SubmissionMutation) ClearField(name string) error {
 		return nil
 	case submission.FieldGitRepo:
 		m.ClearGitRepo()
+		return nil
+	case submission.FieldShareID:
+		m.ClearShareID()
 		return nil
 	}
 	return fmt.Errorf("unknown Submission nullable field %s", name)
@@ -758,6 +828,9 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldCreatedAt:
 		m.ResetCreatedAt()
+		return nil
+	case submission.FieldShareID:
+		m.ResetShareID()
 		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)
