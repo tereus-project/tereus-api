@@ -65,6 +65,8 @@ type SubmissionStatusMessage struct {
 }
 
 func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
+	logrus.WithField("status", msg).Info("Handling submission status")
+
 	id, err := uuid.Parse(msg.ID)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to parse submission ID")

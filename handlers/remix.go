@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"github.com/tereus-project/tereus-api/ent"
 	"github.com/tereus-project/tereus-api/ent/submission"
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/services"
@@ -351,14 +352,31 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 	}
 
 	// Get sub from database
-	sub, err := h.databaseService.Submission.Query().
-		Where(submission.Or(
-			submission.ID(subID),
-			submission.ShareID(shareID),
-		)).
-		Only(context.Background())
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+	var sub *ent.Submission
+	if subID != uuid.Nil {
+		sub, err = h.databaseService.Submission.Query().
+			Where(submission.ID(subID)).
+			Only(context.Background())
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+			}
+
+			logrus.WithError(err).Error("Failed to get submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get submission")
+		}
+	} else {
+		sub, err = h.databaseService.Submission.Query().
+			Where(submission.ShareID(shareID)).
+			Only(context.Background())
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+			}
+
+			logrus.WithError(err).Error("Failed to get submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get submission")
+		}
 	}
 
 	if !sub.IsInline {
@@ -426,14 +444,31 @@ func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
 	}
 
 	// Get sub from database
-	sub, err := h.databaseService.Submission.Query().
-		Where(submission.Or(
-			submission.ID(subID),
-			submission.ShareID(shareID),
-		)).
-		Only(context.Background())
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+	var sub *ent.Submission
+	if subID != uuid.Nil {
+		sub, err = h.databaseService.Submission.Query().
+			Where(submission.ID(subID)).
+			Only(context.Background())
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+			}
+
+			logrus.WithError(err).Error("Failed to get submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get submission")
+		}
+	} else {
+		sub, err = h.databaseService.Submission.Query().
+			Where(submission.ShareID(shareID)).
+			Only(context.Background())
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return echo.NewHTTPError(http.StatusNotFound, "This submission does not exist")
+			}
+
+			logrus.WithError(err).Error("Failed to get submission")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get submission")
+		}
 	}
 
 	if !sub.IsInline {

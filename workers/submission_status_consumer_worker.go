@@ -16,7 +16,7 @@ type SubsmissionStatusHandler struct {
 // HandleMessage implements the Handler interface.
 // Returning a non-nil error will automatically send a REQ command to NSQ to re-queue the message.
 func (h *SubsmissionStatusHandler) HandleMessage(m *nsq.Message) error {
-	logrus.WithField("msg", m.Body).Info("Received submission status message")
+	logrus.WithField("nsq_msg_id", m.ID).Info("Received submission status message")
 
 	var msg services.SubmissionStatusMessage
 	err := json.Unmarshal(m.Body, &msg)
