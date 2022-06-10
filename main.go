@@ -49,7 +49,7 @@ func main() {
 
 	// Initialize S3 service
 	logrus.Debugln("Initializing S3 service")
-	s3Service, err := services.NewS3Service(config.S3Endpoint, config.S3AccessKey, config.S3SecretKey, config.S3Bucket)
+	s3Service, err := services.NewS3Service(config.S3Endpoint, config.S3AccessKey, config.S3SecretKey, config.S3Bucket, config.S3HTTPSEnabled)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize S3 service")
 	}

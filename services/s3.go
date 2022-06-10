@@ -17,10 +17,10 @@ type S3Service struct {
 	client *minio.Client
 }
 
-func NewS3Service(endpoint string, accessKey string, secretKey string, bucket string) (*S3Service, error) {
+func NewS3Service(endpoint string, accessKey string, secretKey string, bucket string, secure bool) (*S3Service, error) {
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: false,
+		Secure: secure,
 	})
 	if err != nil {
 		return nil, err
