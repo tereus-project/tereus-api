@@ -8,8 +8,8 @@ volumes:
 networks:
   tereus_api:
     name: tereus_api
-  tereus_workers:
-    name: tereus_workers
+  tereus_shared:
+    name: tereus_shared
 
 services:
   nsqlookupd:
@@ -20,7 +20,7 @@ services:
       - "4161:4161"
     networks:
       - tereus_api
-      - tereus_workers
+      - tereus_shared
     restart: always
 
   nsqd:
@@ -33,7 +33,7 @@ services:
       - "4151:4151"
     networks:
       - tereus_api
-      - tereus_workers
+      - tereus_shared
     restart: always
 
   nsqadmin:
@@ -43,67 +43,67 @@ services:
       - nsqlookupd
     networks:
       - tereus_api
-      - tereus_workers
+      - tereus_shared
     ports:
       - "4171:4171"
     restart: always
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    networks:
-      - tereus_api
-      - tereus_workers
-    ports:
-      - 5672:5672
-      - 15672:15672
-    restart: always
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: admin
+  #     RABBITMQ_DEFAULT_PASS: admin
+  #   networks:
+  #     - tereus_api
+  #     - tereus_shared
+  #   ports:
+  #     - 5672:5672
+  #     - 15672:15672
+  #   restart: always
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - 22181:2181
-    networks:
-      - tereus_api
-      - tereus_workers
-    restart: always
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:latest
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   ports:
+  #     - 22181:2181
+  #   networks:
+  #     - tereus_api
+  #     - tereus_shared
+  #   restart: always
 
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    depends_on:
-      - zookeeper
-    ports:
-      - 29092:29092
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      - tereus_api
-      - tereus_workers
-    restart: always
+  # kafka:
+  #   image: confluentinc/cp-kafka:latest
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - 29092:29092
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   networks:
+  #     - tereus_api
+  #     - tereus_shared
+  #   restart: always
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui
-    container_name: kafka-ui
-    ports:
-      - "8081:8080"
-    restart: always
-    networks:
-      - tereus_api
-      - tereus_workers
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui
+  #   container_name: kafka-ui
+  #   ports:
+  #     - "8081:8080"
+  #   restart: always
+  #   networks:
+  #     - tereus_api
+  #     - tereus_shared
+  #   environment:
+  #     - KAFKA_CLUSTERS_0_NAME=local
+  #     - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+  #     - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
 
   postgres:
     image: postgres:13.2-alpine
@@ -130,6 +130,7 @@ services:
     command: server --console-address ":9001" /data
     networks:
       - tereus_api
+      - tereus_shared
     ports:
       - 9000:9000
       - 9001:9001
