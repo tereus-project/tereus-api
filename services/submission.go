@@ -1,23 +1,30 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent/submission"
+	"github.com/tereus-project/tereus-go-std/nsq"
 )
 
 type SubmissionService struct {
-	queueService *QueueService
+	queueService    *nsq.NSQService
+	databaseService *DatabaseService
 
-	submissionQueues map[string]map[string]*Queue[SubmissionMessage]
+	submissionQueues map[string]map[string]string
 }
 
-func NewSubmissionService(queueService *QueueService) *SubmissionService {
+func NewSubmissionService(queueService *nsq.NSQService, databaseService *DatabaseService) *SubmissionService {
 	return &SubmissionService{
-		queueService: queueService,
-		submissionQueues: map[string]map[string]*Queue[SubmissionMessage]{
+		queueService:    queueService,
+		databaseService: databaseService,
+		submissionQueues: map[string]map[string]string{
 			"c": {
-				"go": NewQueue[SubmissionMessage]("remix_jobs_c_to_go", queueService),
+				"go": "remix_jobs_c_to_go",
 			},
 		},
 	}
@@ -43,7 +50,12 @@ type SubmissionMessage struct {
 }
 
 func (s *SubmissionService) PublishSubmission(message *SubmissionMessage) error {
-	return s.submissionQueues[message.SourceLanguage][message.TargetLanguage].Publish(message.ID, message)
+	bytes, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	return s.queueService.Publish("remix_submission_status", bytes)
 }
 
 type SubmissionStatusMessage struct {
@@ -52,7 +64,35 @@ type SubmissionStatusMessage struct {
 	Reason string            `json:"reason"`
 }
 
-func (s *SubmissionService) ConsumeSubmissionsStatus() <-chan SubmissionStatusMessage {
-	queue := NewQueue[SubmissionStatusMessage]("submission_status", s.queueService)
-	return queue.Consume()
+func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
+	id, err := uuid.Parse(msg.ID)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to parse submission ID")
+		return nil
+	}
+
+	err = s.databaseService.Submission.
+		Update().
+		Where(
+			submission.ID(id),
+			submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
+		).
+		SetStatus(msg.Status).
+		SetReason(msg.Reason).
+		Exec(context.Background())
+	if err != nil {
+		logrus.WithError(err).Error("Failed to update submission status")
+		return err
+	}
+
+	return nil
+}
+
+func (s *SubmissionService) PublishSubmissionToRemix(sub SubmissionMessage) error {
+	bytes, err := json.Marshal(sub)
+	if err != nil {
+		return err
+	}
+
+	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
 }

@@ -18,6 +18,9 @@ type Env struct {
 
 	KafkaEndpoint string `env:"KAFKA_ENDPOINT" env-required:"true"`
 
+	NSQEndpoint        string `env:"NSQ_ENDPOINT" env-required:"true"`
+	NSQLookupdEndpoint string `env:"NSQ_LOOKUPD" env-required:"true"`
+
 	GithubOAuthClientId     string `env:"GITHUB_OAUTH_CLIENT_ID" env-required:"true"`
 	GithubOAuthClientSecret string `env:"GITHUB_OAUTH_CLIENT_SECRET" env-required:"true"`
 

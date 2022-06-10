@@ -228,14 +228,15 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return c.JSON(http.StatusBadRequest, "Invalid remix type")
 	}
 
-	err = h.submissionService.PublishSubmission(&services.SubmissionMessage{
+	newSubmission := services.SubmissionMessage{
 		ID:             submissionId.String(),
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
-	})
+	}
+	err = h.submissionService.PublishSubmissionToRemix(newSubmission)
 	if err != nil {
-		logrus.WithError(err).Error("Failed to publish submission to Kafka")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to publish submission to Kafka")
+		logrus.WithError(err).Error("Failed to publish submission to remix")
+		return c.JSON(http.StatusInternalServerError, "Failed to publish submission to remix")
 	}
 
 	submissionCreation := h.databaseService.Submission.Create().

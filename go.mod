@@ -17,7 +17,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stripe/stripe-go/v72 v72.110.0
-	github.com/tereus-project/tereus-go-std v0.0.0-20220608144622-8f4d89683cdd
+	github.com/tereus-project/tereus-go-std v0.0.0-20220610114449-647d5d0a6a8b
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )
 
@@ -39,6 +39,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.10.0 // indirect
@@ -61,6 +62,7 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nsqio/go-nsq v1.1.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onrik/logrus v0.9.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect

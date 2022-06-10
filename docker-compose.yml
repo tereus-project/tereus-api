@@ -4,6 +4,7 @@ volumes:
   tereus_db:
   tereus_minio:
 
+
 networks:
   tereus_api:
     name: tereus_api
@@ -11,6 +12,42 @@ networks:
     name: tereus_workers
 
 services:
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+    networks:
+      - tereus_api
+      - tereus_workers
+    restart: always
+
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 -broadcast-address=nsqd
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    networks:
+      - tereus_api
+      - tereus_workers
+    restart: always
+
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    networks:
+      - tereus_api
+      - tereus_workers
+    ports:
+      - "4171:4171"
+    restart: always
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
@@ -97,7 +134,13 @@ services:
       - 9000:9000
       - 9001:9001
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:9000/minio/health/live"
+        ]
     restart: always
 
   api:

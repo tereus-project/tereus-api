@@ -12,6 +12,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 	"github.com/tereus-project/tereus-api/workers"
 	"github.com/tereus-project/tereus-go-std/logging"
+	"github.com/tereus-project/tereus-go-std/nsq"
 )
 
 func main() {
@@ -95,19 +96,20 @@ func main() {
 		databaseService,
 	)
 
-	// Initialize submission service
-	logrus.Debugln("Initializing submission service")
-	queueService, err := services.NewQueueService(config.KafkaEndpoint)
+	// Initialize NSQ service
+	logrus.Debugln("Initializing NSQ service")
+	nsqService, err := nsq.NewNSQService(config.NSQEndpoint, config.NSQLookupdEndpoint)
 	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
+		logrus.WithError(err).Fatalln("Failed to initialize NSQ service")
 	}
+	defer nsqService.ShutDown()
 
 	// Initialize submission service
 	logrus.Debugln("Initializing submission service")
-	submissionService := services.NewSubmissionService(queueService)
+	submissionService := services.NewSubmissionService(nsqService, databaseService)
 
 	logrus.Debugln("Starting submission status consumer worker")
-	go workers.SubmissionStatusConsumerWorker(submissionService, databaseService)
+	go workers.SubmissionStatusConsumerWorker(submissionService, nsqService)
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
 	go workers.SubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)

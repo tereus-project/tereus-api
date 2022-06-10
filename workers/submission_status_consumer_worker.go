@@ -1,40 +1,43 @@
 package workers
 
 import (
-	"context"
+	"encoding/json"
 
-	"github.com/google/uuid"
+	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
-	"github.com/tereus-project/tereus-api/ent/submission"
 	"github.com/tereus-project/tereus-api/services"
+	std "github.com/tereus-project/tereus-go-std/nsq"
 )
 
-func SubmissionStatusConsumerWorker(submissionService *services.SubmissionService, databaseService *services.DatabaseService) {
-	ch := submissionService.ConsumeSubmissionsStatus()
+type SubsmissionStatusHandler struct {
+	submissionService *services.SubmissionService
+}
 
-	for {
-		msg := <-ch
+// HandleMessage implements the Handler interface.
+// Returning a non-nil error will automatically send a REQ command to NSQ to re-queue the message.
+func (h *SubsmissionStatusHandler) HandleMessage(m *nsq.Message) error {
+	logrus.WithField("msg", m.Body).Info("Received submission status message")
 
-		logrus.Info("Received submission status message")
-
-		id, err := uuid.Parse(msg.ID)
-		if err != nil {
-			logrus.WithError(err).Error("Failed to parse submission ID")
-			continue
-		}
-
-		err = databaseService.Submission.
-			Update().
-			Where(
-				submission.ID(id),
-				submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
-			).
-			SetStatus(msg.Status).
-			SetReason(msg.Reason).
-			Exec(context.Background())
-		if err != nil {
-			logrus.WithError(err).Error("Failed to update submission status")
-			continue
-		}
+	var msg services.SubmissionStatusMessage
+	err := json.Unmarshal(m.Body, &msg)
+	if err != nil {
+		logrus.WithError(err).Error("Error unmarshaling message")
+		return nil
 	}
+
+	h.submissionService.HandleSubmissionStatus(msg)
+
+	return nil
+}
+
+func SubmissionStatusConsumerWorker(submissionService *services.SubmissionService, nsqService *std.NSQService) error {
+	logrus.Info("Starting submission status consumer worker")
+
+	h := &SubsmissionStatusHandler{
+		submissionService: submissionService,
+	}
+
+	err := nsqService.RegisterHandler("remix_submission_status", "api", h)
+
+	return err
 }
