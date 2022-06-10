@@ -16,8 +16,6 @@ type Env struct {
 	S3Endpoint        string `env:"S3_ENDPOINT" env-required:"true"`
 	SubmissionsFolder string `env:"SUBMISSIONS_FOLDER" env-required:"true"`
 
-	KafkaEndpoint string `env:"KAFKA_ENDPOINT" env-required:"true"`
-
 	NSQEndpoint        string `env:"NSQ_ENDPOINT" env-required:"true"`
 	NSQLookupdEndpoint string `env:"NSQ_LOOKUPD" env-required:"true"`
 
