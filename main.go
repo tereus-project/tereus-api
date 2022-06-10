@@ -109,7 +109,10 @@ func main() {
 	submissionService := services.NewSubmissionService(nsqService, databaseService)
 
 	logrus.Debugln("Starting submission status consumer worker")
-	go workers.SubmissionStatusConsumerWorker(submissionService, nsqService)
+	err = workers.RegisterStatusConsumerWorker(submissionService, nsqService)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to start submission status consumer worker")
+	}
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
 	go workers.SubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)

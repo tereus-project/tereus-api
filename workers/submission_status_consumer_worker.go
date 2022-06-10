@@ -25,12 +25,10 @@ func (h *SubsmissionStatusHandler) HandleMessage(m *nsq.Message) error {
 		return nil
 	}
 
-	h.submissionService.HandleSubmissionStatus(msg)
-
-	return nil
+	return h.submissionService.HandleSubmissionStatus(msg)
 }
 
-func SubmissionStatusConsumerWorker(submissionService *services.SubmissionService, nsqService *std.NSQService) error {
+func RegisterStatusConsumerWorker(submissionService *services.SubmissionService, nsqService *std.NSQService) error {
 	logrus.Info("Starting submission status consumer worker")
 
 	h := &SubsmissionStatusHandler{
