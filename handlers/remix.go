@@ -25,15 +25,15 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-type RemixHandler struct {
+type TranspilationHandler struct {
 	s3Service         *services.S3Service
 	databaseService   *services.DatabaseService
 	tokenService      *services.TokenService
 	submissionService *services.SubmissionService
 }
 
-func NewRemixHandler(s3Service *services.S3Service, databaseService *services.DatabaseService, tokenService *services.TokenService, submissionService *services.SubmissionService) (*RemixHandler, error) {
-	return &RemixHandler{
+func NewTranspilationHandler(s3Service *services.S3Service, databaseService *services.DatabaseService, tokenService *services.TokenService, submissionService *services.SubmissionService) (*TranspilationHandler, error) {
+	return &TranspilationHandler{
 		s3Service:         s3Service,
 		databaseService:   databaseService,
 		tokenService:      tokenService,
@@ -41,7 +41,7 @@ func NewRemixHandler(s3Service *services.S3Service, databaseService *services.Da
 	}, nil
 }
 
-type RemixResult struct {
+type TranspilationResult struct {
 	ID             string `json:"id"`
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
@@ -50,39 +50,39 @@ type RemixResult struct {
 	CreatedAt      string `json:"created_at"`
 }
 
-type remixBody struct {
+type transpilationBody struct {
 	GitRepo    string `json:"git_repo"`
 	SourceCode string `json:"source_code"`
 }
 
-type RemixType int64
+type TranspilationType int64
 
 const (
-	UndefinedRemixType RemixType = iota
-	InlineRemixType
-	ZipRemixType
-	GitRemixType
+	UndefinedTranspilationType TranspilationType = iota
+	InlineTranspilationType
+	ZipTranspilationType
+	GitTranspilationType
 )
 
-func (h *RemixHandler) RemixInline(c echo.Context) error {
-	return h.Remix(c, InlineRemixType)
+func (h *TranspilationHandler) TranspileInline(c echo.Context) error {
+	return h.Transpile(c, InlineTranspilationType)
 }
 
-func (h *RemixHandler) RemixZip(c echo.Context) error {
-	return h.Remix(c, ZipRemixType)
+func (h *TranspilationHandler) TranspileZip(c echo.Context) error {
+	return h.Transpile(c, ZipTranspilationType)
 }
 
-func (h *RemixHandler) RemixGit(c echo.Context) error {
-	return h.Remix(c, GitRemixType)
+func (h *TranspilationHandler) TranspileGit(c echo.Context) error {
+	return h.Transpile(c, GitTranspilationType)
 }
 
-func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
+func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType TranspilationType) error {
 	user, err := h.tokenService.GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
 
-	body := new(remixBody)
+	body := new(transpilationBody)
 
 	if err := c.Bind(body); err != nil {
 		return err
@@ -102,19 +102,19 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 
 	submissionId := uuid.New()
 
-	switch remixType {
-	case InlineRemixType:
+	switch transpilationType {
+	case InlineTranspilationType:
 		if body.SourceCode == "" {
 			return c.JSON(http.StatusBadRequest, "Missing source code")
 		}
 
 		reader := strings.NewReader(body.SourceCode)
-		_, err := h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, "main.c"), reader, reader.Size())
+		_, err := h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
 		}
-	case ZipRemixType:
+	case ZipTranspilationType:
 		// Open file and unzip it
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -147,14 +147,14 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			}
 			defer f.Close()
 
-			_, err = h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
+			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
 			}
 		}
 
-	case GitRemixType:
+	case GitTranspilationType:
 		if body.GitRepo == "" {
 			return c.JSON(http.StatusBadRequest, "Missing git repository")
 		}
@@ -214,7 +214,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
-			_, err = h.s3Service.PutObject(fmt.Sprintf("remix/%s/%s", submissionId, file.Name()), f, info.Size())
+			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
@@ -226,7 +226,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 			logrus.WithError(err).Error("Failed to remove temporary directory")
 		}
 	default:
-		return c.JSON(http.StatusBadRequest, "Invalid remix type")
+		return c.JSON(http.StatusBadRequest, "Invalid transpilation type")
 	}
 
 	newSubmission := services.SubmissionMessage{
@@ -234,20 +234,20 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		SourceLanguage: srcLanguage,
 		TargetLanguage: targetLanguage,
 	}
-	err = h.submissionService.PublishSubmissionToRemix(newSubmission)
+	err = h.submissionService.PublishSubmissionToTranspile(newSubmission)
 	if err != nil {
-		logrus.WithError(err).Error("Failed to publish submission to remix")
-		return c.JSON(http.StatusInternalServerError, "Failed to publish submission to remix")
+		logrus.WithError(err).Error("Failed to publish submission")
+		return c.JSON(http.StatusInternalServerError, "Failed to process submission")
 	}
 
 	submissionCreation := h.databaseService.Submission.Create().
 		SetID(submissionId).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
-		SetIsInline(remixType == InlineRemixType).
+		SetIsInline(transpilationType == InlineTranspilationType).
 		SetUserID(user.ID)
 
-	if remixType == GitRemixType {
+	if transpilationType == GitTranspilationType {
 		submissionCreation.SetGitRepo(body.GitRepo)
 	}
 
@@ -257,7 +257,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save submission to database")
 	}
 
-	return c.JSON(http.StatusOK, RemixResult{
+	return c.JSON(http.StatusOK, TranspilationResult{
 		ID:             s.ID.String(),
 		SourceLanguage: s.SourceLanguage,
 		TargetLanguage: s.TargetLanguage,
@@ -268,7 +268,7 @@ func (h *RemixHandler) Remix(c echo.Context, remixType RemixType) error {
 }
 
 // GET /submissions/:id/download
-func (h *RemixHandler) DownloadRemixedFiles(c echo.Context) error {
+func (h *TranspilationHandler) DownloadTranspiledFiles(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid submission ID")
@@ -339,7 +339,7 @@ type downloadInlineResponse struct {
 }
 
 // GET /submissions/:id/inline/source
-func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
+func (h *TranspilationHandler) DownloadInlineTranspilationSource(c echo.Context) error {
 	var subID uuid.UUID
 	var shareID string
 
@@ -403,7 +403,7 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "This submission has been cleaned")
 	}
 
-	objectStoragePath := fmt.Sprintf("remix/%s/main.%s", sub.ID, sub.SourceLanguage)
+	objectStoragePath := fmt.Sprintf("transpilations/%s/main.%s", sub.ID, sub.SourceLanguage)
 
 	// Get files from S3
 	object, err := h.s3Service.GetObject(objectStoragePath)
@@ -431,7 +431,7 @@ func (h *RemixHandler) DownloadInlineRemixSource(c echo.Context) error {
 }
 
 // GET /submissions/:id/inline/output
-func (h *RemixHandler) DownloadInlineRemixdOutput(c echo.Context) error {
+func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) error {
 	var subID uuid.UUID
 	var shareID string
 
