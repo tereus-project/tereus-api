@@ -304,6 +304,12 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/zip")
 	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=export-user-%s.zip", loggedUser.ID.String()))
 
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to seek file")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+
 	_, err = io.Copy(c.Response(), file)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to write to response")
