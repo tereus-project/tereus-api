@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -210,8 +211,15 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 	}
 
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
+	file, err := ioutil.TempFile("", "export")
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create temporary file")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
+	}
+	defer file.Close()
+	defer os.Remove(file.Name())
+
+	zipWriter := zip.NewWriter(file)
 
 	userJSON, err := json.Marshal(loggedUser)
 	if err != nil {
@@ -279,16 +287,9 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 			}
 
-			buffer := new(bytes.Buffer)
-			_, err = io.Copy(buffer, o)
+			_, err = io.Copy(codeFile, o)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to copy object")
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
-			}
-
-			_, err = codeFile.Write(buffer.Bytes())
-			if err != nil {
-				logrus.WithError(err).Error("Failed to write code file in zip")
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 			}
 		}
@@ -303,7 +304,7 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "application/zip")
 	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=export-user-%s.zip", loggedUser.ID.String()))
 
-	_, err = io.Copy(c.Response(), buf)
+	_, err = io.Copy(c.Response(), file)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to write to response")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
