@@ -37,24 +37,28 @@ const (
 // SubmissionMutation represents an operation that mutates the Submission nodes in the graph.
 type SubmissionMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	source_language *string
-	target_language *string
-	is_inline       *bool
-	is_public       *bool
-	status          *submission.Status
-	reason          *string
-	git_repo        *string
-	created_at      *time.Time
-	share_id        *string
-	clearedFields   map[string]struct{}
-	user            *uuid.UUID
-	cleareduser     bool
-	done            bool
-	oldValue        func(context.Context) (*Submission, error)
-	predicates      []predicate.Submission
+	op                              Op
+	typ                             string
+	id                              *uuid.UUID
+	source_language                 *string
+	target_language                 *string
+	is_inline                       *bool
+	is_public                       *bool
+	status                          *submission.Status
+	reason                          *string
+	git_repo                        *string
+	created_at                      *time.Time
+	share_id                        *string
+	submission_source_size_bytes    *int
+	addsubmission_source_size_bytes *int
+	submission_target_size_bytes    *int
+	addsubmission_target_size_bytes *int
+	clearedFields                   map[string]struct{}
+	user                            *uuid.UUID
+	cleareduser                     bool
+	done                            bool
+	oldValue                        func(context.Context) (*Submission, error)
+	predicates                      []predicate.Submission
 }
 
 var _ ent.Mutation = (*SubmissionMutation)(nil)
@@ -524,6 +528,118 @@ func (m *SubmissionMutation) ResetShareID() {
 	delete(m.clearedFields, submission.FieldShareID)
 }
 
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (m *SubmissionMutation) SetSubmissionSourceSizeBytes(i int) {
+	m.submission_source_size_bytes = &i
+	m.addsubmission_source_size_bytes = nil
+}
+
+// SubmissionSourceSizeBytes returns the value of the "submission_source_size_bytes" field in the mutation.
+func (m *SubmissionMutation) SubmissionSourceSizeBytes() (r int, exists bool) {
+	v := m.submission_source_size_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmissionSourceSizeBytes returns the old "submission_source_size_bytes" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldSubmissionSourceSizeBytes(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmissionSourceSizeBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmissionSourceSizeBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmissionSourceSizeBytes: %w", err)
+	}
+	return oldValue.SubmissionSourceSizeBytes, nil
+}
+
+// AddSubmissionSourceSizeBytes adds i to the "submission_source_size_bytes" field.
+func (m *SubmissionMutation) AddSubmissionSourceSizeBytes(i int) {
+	if m.addsubmission_source_size_bytes != nil {
+		*m.addsubmission_source_size_bytes += i
+	} else {
+		m.addsubmission_source_size_bytes = &i
+	}
+}
+
+// AddedSubmissionSourceSizeBytes returns the value that was added to the "submission_source_size_bytes" field in this mutation.
+func (m *SubmissionMutation) AddedSubmissionSourceSizeBytes() (r int, exists bool) {
+	v := m.addsubmission_source_size_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSubmissionSourceSizeBytes resets all changes to the "submission_source_size_bytes" field.
+func (m *SubmissionMutation) ResetSubmissionSourceSizeBytes() {
+	m.submission_source_size_bytes = nil
+	m.addsubmission_source_size_bytes = nil
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (m *SubmissionMutation) SetSubmissionTargetSizeBytes(i int) {
+	m.submission_target_size_bytes = &i
+	m.addsubmission_target_size_bytes = nil
+}
+
+// SubmissionTargetSizeBytes returns the value of the "submission_target_size_bytes" field in the mutation.
+func (m *SubmissionMutation) SubmissionTargetSizeBytes() (r int, exists bool) {
+	v := m.submission_target_size_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmissionTargetSizeBytes returns the old "submission_target_size_bytes" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldSubmissionTargetSizeBytes(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmissionTargetSizeBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmissionTargetSizeBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmissionTargetSizeBytes: %w", err)
+	}
+	return oldValue.SubmissionTargetSizeBytes, nil
+}
+
+// AddSubmissionTargetSizeBytes adds i to the "submission_target_size_bytes" field.
+func (m *SubmissionMutation) AddSubmissionTargetSizeBytes(i int) {
+	if m.addsubmission_target_size_bytes != nil {
+		*m.addsubmission_target_size_bytes += i
+	} else {
+		m.addsubmission_target_size_bytes = &i
+	}
+}
+
+// AddedSubmissionTargetSizeBytes returns the value that was added to the "submission_target_size_bytes" field in this mutation.
+func (m *SubmissionMutation) AddedSubmissionTargetSizeBytes() (r int, exists bool) {
+	v := m.addsubmission_target_size_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSubmissionTargetSizeBytes resets all changes to the "submission_target_size_bytes" field.
+func (m *SubmissionMutation) ResetSubmissionTargetSizeBytes() {
+	m.submission_target_size_bytes = nil
+	m.addsubmission_target_size_bytes = nil
+}
+
 // SetUserID sets the "user" edge to the User entity by id.
 func (m *SubmissionMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
@@ -582,7 +698,7 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 11)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
@@ -610,6 +726,12 @@ func (m *SubmissionMutation) Fields() []string {
 	if m.share_id != nil {
 		fields = append(fields, submission.FieldShareID)
 	}
+	if m.submission_source_size_bytes != nil {
+		fields = append(fields, submission.FieldSubmissionSourceSizeBytes)
+	}
+	if m.submission_target_size_bytes != nil {
+		fields = append(fields, submission.FieldSubmissionTargetSizeBytes)
+	}
 	return fields
 }
 
@@ -636,6 +758,10 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case submission.FieldShareID:
 		return m.ShareID()
+	case submission.FieldSubmissionSourceSizeBytes:
+		return m.SubmissionSourceSizeBytes()
+	case submission.FieldSubmissionTargetSizeBytes:
+		return m.SubmissionTargetSizeBytes()
 	}
 	return nil, false
 }
@@ -663,6 +789,10 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCreatedAt(ctx)
 	case submission.FieldShareID:
 		return m.OldShareID(ctx)
+	case submission.FieldSubmissionSourceSizeBytes:
+		return m.OldSubmissionSourceSizeBytes(ctx)
+	case submission.FieldSubmissionTargetSizeBytes:
+		return m.OldSubmissionTargetSizeBytes(ctx)
 	}
 	return nil, fmt.Errorf("unknown Submission field %s", name)
 }
@@ -735,6 +865,20 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetShareID(v)
 		return nil
+	case submission.FieldSubmissionSourceSizeBytes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmissionSourceSizeBytes(v)
+		return nil
+	case submission.FieldSubmissionTargetSizeBytes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmissionTargetSizeBytes(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)
 }
@@ -742,13 +886,26 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *SubmissionMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addsubmission_source_size_bytes != nil {
+		fields = append(fields, submission.FieldSubmissionSourceSizeBytes)
+	}
+	if m.addsubmission_target_size_bytes != nil {
+		fields = append(fields, submission.FieldSubmissionTargetSizeBytes)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *SubmissionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case submission.FieldSubmissionSourceSizeBytes:
+		return m.AddedSubmissionSourceSizeBytes()
+	case submission.FieldSubmissionTargetSizeBytes:
+		return m.AddedSubmissionTargetSizeBytes()
+	}
 	return nil, false
 }
 
@@ -757,6 +914,20 @@ func (m *SubmissionMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *SubmissionMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case submission.FieldSubmissionSourceSizeBytes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSubmissionSourceSizeBytes(v)
+		return nil
+	case submission.FieldSubmissionTargetSizeBytes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSubmissionTargetSizeBytes(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Submission numeric field %s", name)
 }
@@ -831,6 +1002,12 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldShareID:
 		m.ResetShareID()
+		return nil
+	case submission.FieldSubmissionSourceSizeBytes:
+		m.ResetSubmissionSourceSizeBytes()
+		return nil
+	case submission.FieldSubmissionTargetSizeBytes:
+		m.ResetSubmissionTargetSizeBytes()
 		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)

@@ -106,7 +106,7 @@ func main() {
 
 	// Initialize submission service
 	logrus.Debugln("Initializing submission service")
-	submissionService := services.NewSubmissionService(nsqService, databaseService)
+	submissionService := services.NewSubmissionService(nsqService, databaseService, s3Service)
 
 	logrus.Debugln("Starting submission status consumer worker")
 	err = workers.RegisterStatusConsumerWorker(submissionService, nsqService)

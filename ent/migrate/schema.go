@@ -20,6 +20,8 @@ var (
 		{Name: "git_repo", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "share_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "submission_source_size_bytes", Type: field.TypeInt, Default: 0},
+		{Name: "submission_target_size_bytes", Type: field.TypeInt, Default: 0},
 		{Name: "user_submissions", Type: field.TypeUUID},
 	}
 	// SubmissionsTable holds the schema information for the "submissions" table.
@@ -30,7 +32,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "submissions_users_submissions",
-				Columns:    []*schema.Column{SubmissionsColumns[10]},
+				Columns:    []*schema.Column{SubmissionsColumns[12]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

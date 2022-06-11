@@ -14,14 +14,16 @@ import (
 type SubmissionService struct {
 	queueService    *nsq.NSQService
 	databaseService *DatabaseService
+	s3Service       *S3Service
 
 	submissionQueues map[string]map[string]string
 }
 
-func NewSubmissionService(queueService *nsq.NSQService, databaseService *DatabaseService) *SubmissionService {
+func NewSubmissionService(queueService *nsq.NSQService, databaseService *DatabaseService, s3Service *S3Service) *SubmissionService {
 	return &SubmissionService{
 		queueService:    queueService,
 		databaseService: databaseService,
+		s3Service:       s3Service,
 		submissionQueues: map[string]map[string]string{
 			"c": {
 				"go": "transpilation_jobs_c_to_go",
@@ -73,12 +75,18 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) 
 		return nil
 	}
 
+	var submissionBytesCount int64
+	if msg.Status == submission.StatusDone {
+		submissionBytesCount = s.s3Service.SizeofObjects(fmt.Sprintf("transpilations-results/%s/", id))
+	}
+
 	err = s.databaseService.Submission.
 		Update().
 		Where(
 			submission.ID(id),
 			submission.StatusIn(submission.StatusPending, submission.StatusProcessing),
 		).
+		SetSubmissionTargetSizeBytes(int(submissionBytesCount)).
 		SetStatus(msg.Status).
 		SetReason(msg.Reason).
 		Exec(context.Background())

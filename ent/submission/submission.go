@@ -32,6 +32,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldShareID holds the string denoting the share_id field in the database.
 	FieldShareID = "share_id"
+	// FieldSubmissionSourceSizeBytes holds the string denoting the submission_source_size_bytes field in the database.
+	FieldSubmissionSourceSizeBytes = "submission_source_size_bytes"
+	// FieldSubmissionTargetSizeBytes holds the string denoting the submission_target_size_bytes field in the database.
+	FieldSubmissionTargetSizeBytes = "submission_target_size_bytes"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the submission in the database.
@@ -57,6 +61,8 @@ var Columns = []string{
 	FieldGitRepo,
 	FieldCreatedAt,
 	FieldShareID,
+	FieldSubmissionSourceSizeBytes,
+	FieldSubmissionTargetSizeBytes,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "submissions"
@@ -87,6 +93,10 @@ var (
 	DefaultIsPublic bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
+	// DefaultSubmissionSourceSizeBytes holds the default value on creation for the "submission_source_size_bytes" field.
+	DefaultSubmissionSourceSizeBytes int
+	// DefaultSubmissionTargetSizeBytes holds the default value on creation for the "submission_target_size_bytes" field.
+	DefaultSubmissionTargetSizeBytes int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
