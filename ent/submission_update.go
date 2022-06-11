@@ -158,6 +158,48 @@ func (su *SubmissionUpdate) ClearShareID() *SubmissionUpdate {
 	return su
 }
 
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (su *SubmissionUpdate) SetSubmissionSourceSizeBytes(i int) *SubmissionUpdate {
+	su.mutation.ResetSubmissionSourceSizeBytes()
+	su.mutation.SetSubmissionSourceSizeBytes(i)
+	return su
+}
+
+// SetNillableSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableSubmissionSourceSizeBytes(i *int) *SubmissionUpdate {
+	if i != nil {
+		su.SetSubmissionSourceSizeBytes(*i)
+	}
+	return su
+}
+
+// AddSubmissionSourceSizeBytes adds i to the "submission_source_size_bytes" field.
+func (su *SubmissionUpdate) AddSubmissionSourceSizeBytes(i int) *SubmissionUpdate {
+	su.mutation.AddSubmissionSourceSizeBytes(i)
+	return su
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (su *SubmissionUpdate) SetSubmissionTargetSizeBytes(i int) *SubmissionUpdate {
+	su.mutation.ResetSubmissionTargetSizeBytes()
+	su.mutation.SetSubmissionTargetSizeBytes(i)
+	return su
+}
+
+// SetNillableSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableSubmissionTargetSizeBytes(i *int) *SubmissionUpdate {
+	if i != nil {
+		su.SetSubmissionTargetSizeBytes(*i)
+	}
+	return su
+}
+
+// AddSubmissionTargetSizeBytes adds i to the "submission_target_size_bytes" field.
+func (su *SubmissionUpdate) AddSubmissionTargetSizeBytes(i int) *SubmissionUpdate {
+	su.mutation.AddSubmissionTargetSizeBytes(i)
+	return su
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (su *SubmissionUpdate) SetUserID(id uuid.UUID) *SubmissionUpdate {
 	su.mutation.SetUserID(id)
@@ -352,6 +394,34 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: submission.FieldShareID,
 		})
 	}
+	if value, ok := su.mutation.SubmissionSourceSizeBytes(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionSourceSizeBytes,
+		})
+	}
+	if value, ok := su.mutation.AddedSubmissionSourceSizeBytes(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionSourceSizeBytes,
+		})
+	}
+	if value, ok := su.mutation.SubmissionTargetSizeBytes(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+	}
+	if value, ok := su.mutation.AddedSubmissionTargetSizeBytes(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+	}
 	if su.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -531,6 +601,48 @@ func (suo *SubmissionUpdateOne) SetNillableShareID(s *string) *SubmissionUpdateO
 // ClearShareID clears the value of the "share_id" field.
 func (suo *SubmissionUpdateOne) ClearShareID() *SubmissionUpdateOne {
 	suo.mutation.ClearShareID()
+	return suo
+}
+
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (suo *SubmissionUpdateOne) SetSubmissionSourceSizeBytes(i int) *SubmissionUpdateOne {
+	suo.mutation.ResetSubmissionSourceSizeBytes()
+	suo.mutation.SetSubmissionSourceSizeBytes(i)
+	return suo
+}
+
+// SetNillableSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableSubmissionSourceSizeBytes(i *int) *SubmissionUpdateOne {
+	if i != nil {
+		suo.SetSubmissionSourceSizeBytes(*i)
+	}
+	return suo
+}
+
+// AddSubmissionSourceSizeBytes adds i to the "submission_source_size_bytes" field.
+func (suo *SubmissionUpdateOne) AddSubmissionSourceSizeBytes(i int) *SubmissionUpdateOne {
+	suo.mutation.AddSubmissionSourceSizeBytes(i)
+	return suo
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (suo *SubmissionUpdateOne) SetSubmissionTargetSizeBytes(i int) *SubmissionUpdateOne {
+	suo.mutation.ResetSubmissionTargetSizeBytes()
+	suo.mutation.SetSubmissionTargetSizeBytes(i)
+	return suo
+}
+
+// SetNillableSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableSubmissionTargetSizeBytes(i *int) *SubmissionUpdateOne {
+	if i != nil {
+		suo.SetSubmissionTargetSizeBytes(*i)
+	}
+	return suo
+}
+
+// AddSubmissionTargetSizeBytes adds i to the "submission_target_size_bytes" field.
+func (suo *SubmissionUpdateOne) AddSubmissionTargetSizeBytes(i int) *SubmissionUpdateOne {
+	suo.mutation.AddSubmissionTargetSizeBytes(i)
 	return suo
 }
 
@@ -750,6 +862,34 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: submission.FieldShareID,
+		})
+	}
+	if value, ok := suo.mutation.SubmissionSourceSizeBytes(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionSourceSizeBytes,
+		})
+	}
+	if value, ok := suo.mutation.AddedSubmissionSourceSizeBytes(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionSourceSizeBytes,
+		})
+	}
+	if value, ok := suo.mutation.SubmissionTargetSizeBytes(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+	}
+	if value, ok := suo.mutation.AddedSubmissionTargetSizeBytes(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionTargetSizeBytes,
 		})
 	}
 	if suo.mutation.UserCleared() {

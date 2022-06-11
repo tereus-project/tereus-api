@@ -150,6 +150,20 @@ func ShareID(v string) predicate.Submission {
 	})
 }
 
+// SubmissionSourceSizeBytes applies equality check predicate on the "submission_source_size_bytes" field. It's identical to SubmissionSourceSizeBytesEQ.
+func SubmissionSourceSizeBytes(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytes applies equality check predicate on the "submission_target_size_bytes" field. It's identical to SubmissionTargetSizeBytesEQ.
+func SubmissionTargetSizeBytes(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
 // SourceLanguageEQ applies the EQ predicate on the "source_language" field.
 func SourceLanguageEQ(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -896,6 +910,158 @@ func ShareIDEqualFold(v string) predicate.Submission {
 func ShareIDContainsFold(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldShareID), v))
+	})
+}
+
+// SubmissionSourceSizeBytesEQ applies the EQ predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesEQ(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionSourceSizeBytesNEQ applies the NEQ predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesNEQ(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionSourceSizeBytesIn applies the In predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesIn(vs ...int) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSubmissionSourceSizeBytes), v...))
+	})
+}
+
+// SubmissionSourceSizeBytesNotIn applies the NotIn predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesNotIn(vs ...int) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSubmissionSourceSizeBytes), v...))
+	})
+}
+
+// SubmissionSourceSizeBytesGT applies the GT predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesGT(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionSourceSizeBytesGTE applies the GTE predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesGTE(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionSourceSizeBytesLT applies the LT predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesLT(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionSourceSizeBytesLTE applies the LTE predicate on the "submission_source_size_bytes" field.
+func SubmissionSourceSizeBytesLTE(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSubmissionSourceSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesEQ applies the EQ predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesEQ(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesNEQ applies the NEQ predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesNEQ(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesIn applies the In predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesIn(vs ...int) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSubmissionTargetSizeBytes), v...))
+	})
+}
+
+// SubmissionTargetSizeBytesNotIn applies the NotIn predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesNotIn(vs ...int) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSubmissionTargetSizeBytes), v...))
+	})
+}
+
+// SubmissionTargetSizeBytesGT applies the GT predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesGT(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesGTE applies the GTE predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesGTE(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesLT applies the LT predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesLT(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// SubmissionTargetSizeBytesLTE applies the LTE predicate on the "submission_target_size_bytes" field.
+func SubmissionTargetSizeBytesLTE(v int) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSubmissionTargetSizeBytes), v))
 	})
 }
 

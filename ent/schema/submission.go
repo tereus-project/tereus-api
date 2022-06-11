@@ -27,6 +27,8 @@ func (Submission) Fields() []ent.Field {
 		field.String("git_repo").Optional(),
 		field.Time("created_at").Default(time.Now),
 		field.String("share_id").Optional().Unique(),
+		field.Int("submission_source_size_bytes").Default(0),
+		field.Int("submission_target_size_bytes").Default(0),
 	}
 }
 

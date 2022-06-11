@@ -36,6 +36,10 @@ type Submission struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// ShareID holds the value of the "share_id" field.
 	ShareID string `json:"share_id,omitempty"`
+	// SubmissionSourceSizeBytes holds the value of the "submission_source_size_bytes" field.
+	SubmissionSourceSizeBytes int `json:"submission_source_size_bytes,omitempty"`
+	// SubmissionTargetSizeBytes holds the value of the "submission_target_size_bytes" field.
+	SubmissionTargetSizeBytes int `json:"submission_target_size_bytes,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SubmissionQuery when eager-loading is set.
 	Edges            SubmissionEdges `json:"edges"`
@@ -72,6 +76,8 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case submission.FieldIsInline, submission.FieldIsPublic:
 			values[i] = new(sql.NullBool)
+		case submission.FieldSubmissionSourceSizeBytes, submission.FieldSubmissionTargetSizeBytes:
+			values[i] = new(sql.NullInt64)
 		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo, submission.FieldShareID:
 			values[i] = new(sql.NullString)
 		case submission.FieldCreatedAt:
@@ -155,6 +161,18 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				s.ShareID = value.String
 			}
+		case submission.FieldSubmissionSourceSizeBytes:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field submission_source_size_bytes", values[i])
+			} else if value.Valid {
+				s.SubmissionSourceSizeBytes = int(value.Int64)
+			}
+		case submission.FieldSubmissionTargetSizeBytes:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field submission_target_size_bytes", values[i])
+			} else if value.Valid {
+				s.SubmissionTargetSizeBytes = int(value.Int64)
+			}
 		case submission.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_submissions", values[i])
@@ -213,6 +231,10 @@ func (s *Submission) String() string {
 	builder.WriteString(s.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", share_id=")
 	builder.WriteString(s.ShareID)
+	builder.WriteString(", submission_source_size_bytes=")
+	builder.WriteString(fmt.Sprintf("%v", s.SubmissionSourceSizeBytes))
+	builder.WriteString(", submission_target_size_bytes=")
+	builder.WriteString(fmt.Sprintf("%v", s.SubmissionTargetSizeBytes))
 	builder.WriteByte(')')
 	return builder.String()
 }

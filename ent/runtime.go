@@ -31,6 +31,14 @@ func init() {
 	submissionDescCreatedAt := submissionFields[8].Descriptor()
 	// submission.DefaultCreatedAt holds the default value on creation for the created_at field.
 	submission.DefaultCreatedAt = submissionDescCreatedAt.Default.(func() time.Time)
+	// submissionDescSubmissionSourceSizeBytes is the schema descriptor for submission_source_size_bytes field.
+	submissionDescSubmissionSourceSizeBytes := submissionFields[10].Descriptor()
+	// submission.DefaultSubmissionSourceSizeBytes holds the default value on creation for the submission_source_size_bytes field.
+	submission.DefaultSubmissionSourceSizeBytes = submissionDescSubmissionSourceSizeBytes.Default.(int)
+	// submissionDescSubmissionTargetSizeBytes is the schema descriptor for submission_target_size_bytes field.
+	submissionDescSubmissionTargetSizeBytes := submissionFields[11].Descriptor()
+	// submission.DefaultSubmissionTargetSizeBytes holds the default value on creation for the submission_target_size_bytes field.
+	submission.DefaultSubmissionTargetSizeBytes = submissionDescSubmissionTargetSizeBytes.Default.(int)
 	// submissionDescID is the schema descriptor for id field.
 	submissionDescID := submissionFields[0].Descriptor()
 	// submission.DefaultID holds the default value on creation for the id field.

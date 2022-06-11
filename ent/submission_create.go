@@ -135,6 +135,34 @@ func (sc *SubmissionCreate) SetNillableShareID(s *string) *SubmissionCreate {
 	return sc
 }
 
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (sc *SubmissionCreate) SetSubmissionSourceSizeBytes(i int) *SubmissionCreate {
+	sc.mutation.SetSubmissionSourceSizeBytes(i)
+	return sc
+}
+
+// SetNillableSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableSubmissionSourceSizeBytes(i *int) *SubmissionCreate {
+	if i != nil {
+		sc.SetSubmissionSourceSizeBytes(*i)
+	}
+	return sc
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (sc *SubmissionCreate) SetSubmissionTargetSizeBytes(i int) *SubmissionCreate {
+	sc.mutation.SetSubmissionTargetSizeBytes(i)
+	return sc
+}
+
+// SetNillableSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableSubmissionTargetSizeBytes(i *int) *SubmissionCreate {
+	if i != nil {
+		sc.SetSubmissionTargetSizeBytes(*i)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *SubmissionCreate) SetID(u uuid.UUID) *SubmissionCreate {
 	sc.mutation.SetID(u)
@@ -247,6 +275,14 @@ func (sc *SubmissionCreate) defaults() {
 		v := submission.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
 	}
+	if _, ok := sc.mutation.SubmissionSourceSizeBytes(); !ok {
+		v := submission.DefaultSubmissionSourceSizeBytes
+		sc.mutation.SetSubmissionSourceSizeBytes(v)
+	}
+	if _, ok := sc.mutation.SubmissionTargetSizeBytes(); !ok {
+		v := submission.DefaultSubmissionTargetSizeBytes
+		sc.mutation.SetSubmissionTargetSizeBytes(v)
+	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := submission.DefaultID()
 		sc.mutation.SetID(v)
@@ -277,6 +313,12 @@ func (sc *SubmissionCreate) check() error {
 	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Submission.created_at"`)}
+	}
+	if _, ok := sc.mutation.SubmissionSourceSizeBytes(); !ok {
+		return &ValidationError{Name: "submission_source_size_bytes", err: errors.New(`ent: missing required field "Submission.submission_source_size_bytes"`)}
+	}
+	if _, ok := sc.mutation.SubmissionTargetSizeBytes(); !ok {
+		return &ValidationError{Name: "submission_target_size_bytes", err: errors.New(`ent: missing required field "Submission.submission_target_size_bytes"`)}
 	}
 	if _, ok := sc.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Submission.user"`)}
@@ -389,6 +431,22 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 			Column: submission.FieldShareID,
 		})
 		_node.ShareID = value
+	}
+	if value, ok := sc.mutation.SubmissionSourceSizeBytes(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionSourceSizeBytes,
+		})
+		_node.SubmissionSourceSizeBytes = value
+	}
+	if value, ok := sc.mutation.SubmissionTargetSizeBytes(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+		_node.SubmissionTargetSizeBytes = value
 	}
 	if nodes := sc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -590,6 +648,42 @@ func (u *SubmissionUpsert) ClearShareID() *SubmissionUpsert {
 	return u
 }
 
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (u *SubmissionUpsert) SetSubmissionSourceSizeBytes(v int) *SubmissionUpsert {
+	u.Set(submission.FieldSubmissionSourceSizeBytes, v)
+	return u
+}
+
+// UpdateSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateSubmissionSourceSizeBytes() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldSubmissionSourceSizeBytes)
+	return u
+}
+
+// AddSubmissionSourceSizeBytes adds v to the "submission_source_size_bytes" field.
+func (u *SubmissionUpsert) AddSubmissionSourceSizeBytes(v int) *SubmissionUpsert {
+	u.Add(submission.FieldSubmissionSourceSizeBytes, v)
+	return u
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (u *SubmissionUpsert) SetSubmissionTargetSizeBytes(v int) *SubmissionUpsert {
+	u.Set(submission.FieldSubmissionTargetSizeBytes, v)
+	return u
+}
+
+// UpdateSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateSubmissionTargetSizeBytes() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldSubmissionTargetSizeBytes)
+	return u
+}
+
+// AddSubmissionTargetSizeBytes adds v to the "submission_target_size_bytes" field.
+func (u *SubmissionUpsert) AddSubmissionTargetSizeBytes(v int) *SubmissionUpsert {
+	u.Add(submission.FieldSubmissionTargetSizeBytes, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -784,6 +878,48 @@ func (u *SubmissionUpsertOne) UpdateShareID() *SubmissionUpsertOne {
 func (u *SubmissionUpsertOne) ClearShareID() *SubmissionUpsertOne {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.ClearShareID()
+	})
+}
+
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (u *SubmissionUpsertOne) SetSubmissionSourceSizeBytes(v int) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetSubmissionSourceSizeBytes(v)
+	})
+}
+
+// AddSubmissionSourceSizeBytes adds v to the "submission_source_size_bytes" field.
+func (u *SubmissionUpsertOne) AddSubmissionSourceSizeBytes(v int) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.AddSubmissionSourceSizeBytes(v)
+	})
+}
+
+// UpdateSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateSubmissionSourceSizeBytes() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateSubmissionSourceSizeBytes()
+	})
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (u *SubmissionUpsertOne) SetSubmissionTargetSizeBytes(v int) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetSubmissionTargetSizeBytes(v)
+	})
+}
+
+// AddSubmissionTargetSizeBytes adds v to the "submission_target_size_bytes" field.
+func (u *SubmissionUpsertOne) AddSubmissionTargetSizeBytes(v int) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.AddSubmissionTargetSizeBytes(v)
+	})
+}
+
+// UpdateSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateSubmissionTargetSizeBytes() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateSubmissionTargetSizeBytes()
 	})
 }
 
@@ -1147,6 +1283,48 @@ func (u *SubmissionUpsertBulk) UpdateShareID() *SubmissionUpsertBulk {
 func (u *SubmissionUpsertBulk) ClearShareID() *SubmissionUpsertBulk {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.ClearShareID()
+	})
+}
+
+// SetSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field.
+func (u *SubmissionUpsertBulk) SetSubmissionSourceSizeBytes(v int) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetSubmissionSourceSizeBytes(v)
+	})
+}
+
+// AddSubmissionSourceSizeBytes adds v to the "submission_source_size_bytes" field.
+func (u *SubmissionUpsertBulk) AddSubmissionSourceSizeBytes(v int) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.AddSubmissionSourceSizeBytes(v)
+	})
+}
+
+// UpdateSubmissionSourceSizeBytes sets the "submission_source_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateSubmissionSourceSizeBytes() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateSubmissionSourceSizeBytes()
+	})
+}
+
+// SetSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field.
+func (u *SubmissionUpsertBulk) SetSubmissionTargetSizeBytes(v int) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetSubmissionTargetSizeBytes(v)
+	})
+}
+
+// AddSubmissionTargetSizeBytes adds v to the "submission_target_size_bytes" field.
+func (u *SubmissionUpsertBulk) AddSubmissionTargetSizeBytes(v int) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.AddSubmissionTargetSizeBytes(v)
+	})
+}
+
+// UpdateSubmissionTargetSizeBytes sets the "submission_target_size_bytes" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateSubmissionTargetSizeBytes() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateSubmissionTargetSizeBytes()
 	})
 }
 

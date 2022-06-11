@@ -101,6 +101,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 	}
 
 	submissionId := uuid.New()
+	submissionSourceSize := 0
 
 	switch transpilationType {
 	case InlineTranspilationType:
@@ -109,6 +110,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		}
 
 		reader := strings.NewReader(body.SourceCode)
+		submissionSourceSize = int(reader.Size())
 		_, err := h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, "main.c"), reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
@@ -146,6 +148,8 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
 			}
 			defer f.Close()
+
+			submissionSourceSize += int(file.UncompressedSize64)
 
 			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
 			if err != nil {
@@ -214,6 +218,8 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
+			submissionSourceSize += int(info.Size())
+
 			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name()), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
@@ -244,6 +250,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		SetID(submissionId).
 		SetSourceLanguage(srcLanguage).
 		SetTargetLanguage(targetLanguage).
+		SetSubmissionSourceSizeBytes(submissionSourceSize).
 		SetIsInline(transpilationType == InlineTranspilationType).
 		SetUserID(user.ID)
 
