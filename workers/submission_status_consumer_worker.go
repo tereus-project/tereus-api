@@ -35,7 +35,7 @@ func RegisterStatusConsumerWorker(submissionService *services.SubmissionService,
 		submissionService: submissionService,
 	}
 
-	err := nsqService.RegisterHandler("remix_submission_status", "api", h)
+	err := nsqService.RegisterHandler("transpilation_submission_status", "api", h)
 
 	return err
 }

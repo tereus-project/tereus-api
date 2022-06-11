@@ -58,11 +58,11 @@ func SubscriptionDataUsageReportingWorker(subscriptionService *services.Subscrip
 				var totalBytes int64
 
 				for _, submissionRow := range submissions {
-					submissionBytesCount := s3Service.SizeofObjects(fmt.Sprintf("remix/%s/", submissionRow.ID))
+					submissionBytesCount := s3Service.SizeofObjects(fmt.Sprintf("transpilations/%s/", submissionRow.ID))
 
 					var submissionResultBytesCount int64
 					if submissionRow.Status == submission.StatusDone {
-						submissionResultBytesCount = s3Service.SizeofObjects(fmt.Sprintf("remix-results/%s/", submissionRow.ID.String()))
+						submissionResultBytesCount = s3Service.SizeofObjects(fmt.Sprintf("transpilations/%s/", submissionRow.ID.String()))
 					}
 
 					totalBytes += submissionBytesCount + submissionResultBytesCount

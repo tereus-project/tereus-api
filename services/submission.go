@@ -24,7 +24,7 @@ func NewSubmissionService(queueService *nsq.NSQService, databaseService *Databas
 		databaseService: databaseService,
 		submissionQueues: map[string]map[string]string{
 			"c": {
-				"go": "remix_jobs_c_to_go",
+				"go": "transpilation_jobs_c_to_go",
 			},
 		},
 	}
@@ -49,19 +49,19 @@ type SubmissionMessage struct {
 	TargetLanguage string `json:"target_language"`
 }
 
-func (s *SubmissionService) PublishSubmission(message *SubmissionMessage) error {
-	bytes, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	return s.queueService.Publish("remix_submission_status", bytes)
-}
-
 type SubmissionStatusMessage struct {
 	ID     string            `json:"id"`
 	Status submission.Status `json:"status"`
 	Reason string            `json:"reason"`
+}
+
+func (s *SubmissionService) PublishSubmissionToTranspile(sub SubmissionMessage) error {
+	bytes, err := json.Marshal(sub)
+	if err != nil {
+		return err
+	}
+
+	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
 }
 
 func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
@@ -88,13 +88,4 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) 
 	}
 
 	return nil
-}
-
-func (s *SubmissionService) PublishSubmissionToRemix(sub SubmissionMessage) error {
-	bytes, err := json.Marshal(sub)
-	if err != nil {
-		return err
-	}
-
-	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
 }

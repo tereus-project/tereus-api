@@ -120,7 +120,7 @@ func main() {
 	logrus.Debugln("Starting retention worker")
 	go workers.RetentionWorker(databaseService, s3Service)
 
-	remixHandler, err := handlers.NewRemixHandler(s3Service, databaseService, tokenService, submissionService)
+	transpilationHandler, err := handlers.NewTranspilationHandler(s3Service, databaseService, tokenService, submissionService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,16 +150,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	e.POST("/submissions/inline/:src/to/:target", remixHandler.RemixInline)
-	e.POST("/submissions/zip/:src/to/:target", remixHandler.RemixZip)
-	e.POST("/submissions/git/:src/to/:target", remixHandler.RemixGit)
+	e.POST("/submissions/inline/:src/to/:target", transpilationHandler.TranspileInline)
+	e.POST("/submissions/zip/:src/to/:target", transpilationHandler.TranspileZip)
+	e.POST("/submissions/git/:src/to/:target", transpilationHandler.TranspileGit)
 
 	e.DELETE("/submissions/:id", submissionHandler.DeleteSubmission)
 	e.PATCH("/submissions/:id/visibility", submissionHandler.UpdateSubmissionVisibility)
 
-	e.GET("/submissions/:id/download", remixHandler.DownloadRemixedFiles)
-	e.GET("/submissions/:id/inline/source", remixHandler.DownloadInlineRemixSource)
-	e.GET("/submissions/:id/inline/output", remixHandler.DownloadInlineRemixdOutput)
+	e.GET("/submissions/:id/download", transpilationHandler.DownloadTranspiledFiles)
+	e.GET("/submissions/:id/inline/source", transpilationHandler.DownloadInlineTranspilationSource)
+	e.GET("/submissions/:id/inline/output", transpilationHandler.DownloadInlineTranspiledOutput)
 
 	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)

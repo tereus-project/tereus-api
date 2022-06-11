@@ -95,7 +95,7 @@ func (s *S3Service) ListSubmissionFiles(submissionID string) <-chan *GetObjectsR
 
 	go func() {
 		defer close(ch)
-		for _, path := range []string{"remix/", "remix-results/"} {
+		for _, path := range []string{"transpilations/", "transpilations-results/"} {
 
 			objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + submissionID, Recursive: true})
 
@@ -114,7 +114,7 @@ func (s *S3Service) ListSubmissionFiles(submissionID string) <-chan *GetObjectsR
 
 func (s *S3Service) DeleteSubmission(id string) error {
 	logrus.WithField("id", id).Debug("Deleting submission from S3")
-	for _, path := range []string{"remix/", "remix-results/"} {
+	for _, path := range []string{"transpilations/", "transpilations-results/"} {
 		objects := s.client.ListObjects(context.Background(), s.bucket, minio.ListObjectsOptions{Prefix: path + id, Recursive: true})
 
 		for object := range objects {
@@ -153,7 +153,7 @@ func (s *S3Service) ScheduleForDeletion(id string) error {
 		log.Fatalln(err)
 	}
 
-	for _, path := range []string{"remix/", "remix-results/"} {
+	for _, path := range []string{"transpilations/", "transpilations-results/"} {
 		for object := range s.GetObjects(path + id) {
 			logrus.WithFields(logrus.Fields{
 				"path": object.Path,
