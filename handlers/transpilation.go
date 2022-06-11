@@ -340,9 +340,11 @@ func (h *TranspilationHandler) DownloadTranspiledFiles(c echo.Context) error {
 }
 
 type downloadInlineResponse struct {
-	Data           string `json:"data"`
-	SourceLanguage string `json:"source_language"`
-	TargetLanguage string `json:"target_language"`
+	Data            string `json:"data"`
+	SourceLanguage  string `json:"source_language"`
+	TargetLanguage  string `json:"target_language"`
+	SourceSizeBytes int    `json:"source_size_bytes"`
+	TargetSizeBytes int    `json:"target_size_bytes"`
 }
 
 // GET /submissions/:id/inline/source
@@ -431,9 +433,11 @@ func (h *TranspilationHandler) DownloadInlineTranspilationSource(c echo.Context)
 	}
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
-		Data:           base64.StdEncoding.EncodeToString(data),
-		SourceLanguage: sub.SourceLanguage,
-		TargetLanguage: sub.TargetLanguage,
+		Data:            base64.StdEncoding.EncodeToString(data),
+		SourceLanguage:  sub.SourceLanguage,
+		TargetLanguage:  sub.TargetLanguage,
+		SourceSizeBytes: sub.SubmissionSourceSizeBytes,
+		TargetSizeBytes: sub.SubmissionTargetSizeBytes,
 	})
 }
 
@@ -530,8 +534,10 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 	}
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
-		Data:           base64.StdEncoding.EncodeToString(data),
-		SourceLanguage: sub.TargetLanguage,
-		TargetLanguage: sub.TargetLanguage,
+		Data:            base64.StdEncoding.EncodeToString(data),
+		SourceLanguage:  sub.TargetLanguage,
+		TargetLanguage:  sub.TargetLanguage,
+		SourceSizeBytes: sub.SubmissionSourceSizeBytes,
+		TargetSizeBytes: sub.SubmissionTargetSizeBytes,
 	})
 }
