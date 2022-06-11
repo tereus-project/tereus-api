@@ -79,15 +79,17 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 }
 
 type submissionsHistoryItem struct {
-	ID             string `json:"id"`
-	SourceLanguage string `json:"source_language"`
-	TargetLanguage string `json:"target_language"`
-	IsInline       bool   `json:"is_inline"`
-	IsPublic       bool   `json:"is_public"`
-	Status         string `json:"status"`
-	Reason         string `json:"reason"`
-	CreatedAt      string `json:"created_at"`
-	ShareID        string `json:"share_id"`
+	ID              string `json:"id"`
+	SourceLanguage  string `json:"source_language"`
+	TargetLanguage  string `json:"target_language"`
+	IsInline        bool   `json:"is_inline"`
+	IsPublic        bool   `json:"is_public"`
+	Status          string `json:"status"`
+	Reason          string `json:"reason"`
+	CreatedAt       string `json:"created_at"`
+	ShareID         string `json:"share_id"`
+	SourceSizeBytes int    `json:"source_size_bytes"`
+	TargetSizeBytes int    `json:"target_size_bytes"`
 }
 
 type submissionsHistory struct {
@@ -127,15 +129,17 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 
 	for i, s := range submissions {
 		items.Submissions[i] = &submissionsHistoryItem{
-			ID:             s.ID.String(),
-			SourceLanguage: s.SourceLanguage,
-			TargetLanguage: s.TargetLanguage,
-			IsInline:       s.IsInline,
-			IsPublic:       s.IsPublic,
-			Status:         s.Status.String(),
-			Reason:         s.Reason,
-			CreatedAt:      s.CreatedAt.Format(time.RFC3339),
-			ShareID:        s.ShareID,
+			ID:              s.ID.String(),
+			SourceLanguage:  s.SourceLanguage,
+			TargetLanguage:  s.TargetLanguage,
+			IsInline:        s.IsInline,
+			IsPublic:        s.IsPublic,
+			Status:          s.Status.String(),
+			Reason:          s.Reason,
+			CreatedAt:       s.CreatedAt.Format(time.RFC3339),
+			ShareID:         s.ShareID,
+			SourceSizeBytes: s.SubmissionSourceSizeBytes,
+			TargetSizeBytes: s.SubmissionTargetSizeBytes,
 		}
 	}
 
