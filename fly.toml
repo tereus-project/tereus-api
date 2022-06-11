@@ -11,6 +11,7 @@ processes = []
   S3_BUCKET = "tereus"
   S3_ENDPOINT = "ams3.digitaloceanspaces.com"
   S3_HTTPS_ENABLED = "true"
+  SUBMISSIONS_FOLDER = "transpilations-results"
 
 [experimental]
   allowed_public_ports = []
