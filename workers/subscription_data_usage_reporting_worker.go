@@ -2,7 +2,6 @@ package workers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -58,14 +57,14 @@ func SubscriptionDataUsageReportingWorker(subscriptionService *services.Subscrip
 				var totalBytes int64
 
 				for _, submissionRow := range submissions {
-					submissionBytesCount := s3Service.SizeofObjects(fmt.Sprintf("transpilations/%s/", submissionRow.ID))
+					submissionBytesCount := submissionRow.SubmissionSourceSizeBytes
 
 					var submissionResultBytesCount int64
 					if submissionRow.Status == submission.StatusDone {
-						submissionResultBytesCount = s3Service.SizeofObjects(fmt.Sprintf("transpilations/%s/", submissionRow.ID.String()))
+						submissionResultBytesCount = int64(submissionRow.SubmissionTargetSizeBytes)
 					}
 
-					totalBytes += submissionBytesCount + submissionResultBytesCount
+					totalBytes += int64(submissionBytesCount) + submissionResultBytesCount
 				}
 
 				totalMegaBytes := totalBytes / mb
