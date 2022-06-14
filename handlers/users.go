@@ -81,6 +81,10 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 			s.Select("COALESCE(SUM(submission_source_size_bytes + submission_target_size_bytes),0) as usage")
 		}).
 		Int(context.Background())
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get current user usage")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.JSON(http.StatusOK, getCurrentUserResult{
 		ID:                loggedUser.ID.String(),
