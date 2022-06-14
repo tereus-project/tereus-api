@@ -27,8 +27,9 @@ type TokenQuery struct {
 	fields     []string
 	predicates []predicate.Token
 	// eager-loading edges.
-	withUser *UserQuery
-	withFKs  bool
+	withUser  *UserQuery
+	withFKs   bool
+	modifiers []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -376,6 +377,9 @@ func (tq *TokenQuery) sqlAll(ctx context.Context) ([]*Token, error) {
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
@@ -417,6 +421,9 @@ func (tq *TokenQuery) sqlAll(ctx context.Context) ([]*Token, error) {
 
 func (tq *TokenQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	_spec.Node.Columns = tq.fields
 	if len(tq.fields) > 0 {
 		_spec.Unique = tq.unique != nil && *tq.unique
@@ -495,6 +502,9 @@ func (tq *TokenQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if tq.unique != nil && *tq.unique {
 		selector.Distinct()
 	}
+	for _, m := range tq.modifiers {
+		m(selector)
+	}
 	for _, p := range tq.predicates {
 		p(selector)
 	}
@@ -510,6 +520,12 @@ func (tq *TokenQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (tq *TokenQuery) Modify(modifiers ...func(s *sql.Selector)) *TokenSelect {
+	tq.modifiers = append(tq.modifiers, modifiers...)
+	return tq.Select()
 }
 
 // TokenGroupBy is the group-by builder for Token entities.
@@ -998,4 +1014,10 @@ func (ts *TokenSelect) sqlScan(ctx context.Context, v interface{}) error {
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ts *TokenSelect) Modify(modifiers ...func(s *sql.Selector)) *TokenSelect {
+	ts.modifiers = append(ts.modifiers, modifiers...)
+	return ts
 }

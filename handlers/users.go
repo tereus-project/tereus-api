@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent"
@@ -44,9 +45,10 @@ type getCurrentUserResultSubscription struct {
 }
 
 type getCurrentUserResult struct {
-	ID           string                            `json:"id"`
-	Email        string                            `json:"email"`
-	Subscription *getCurrentUserResultSubscription `json:"subscription"`
+	ID                string                            `json:"id"`
+	Email             string                            `json:"email"`
+	Subscription      *getCurrentUserResultSubscription `json:"subscription"`
+	CurrentUsageBytes int64                             `json:"current_usage_bytes"`
 }
 
 // GET /users/me
@@ -71,10 +73,20 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		}
 	}
 
+	currentUsageBytes, err := h.databaseService.Submission.Query().
+		Where(submission.HasUserWith(user.ID(loggedUser.ID))).
+		Modify(func(s *sql.Selector) {
+			// COALESCE is so that we have a default value of 0 if there are no volumes in the DB
+			// otherwise it will return a null row which will cause an error
+			s.Select("COALESCE(SUM(submission_source_size_bytes + submission_target_size_bytes),0) as usage")
+		}).
+		Int(context.Background())
+
 	return c.JSON(http.StatusOK, getCurrentUserResult{
-		ID:           loggedUser.ID.String(),
-		Email:        loggedUser.Email,
-		Subscription: subscriptionResult,
+		ID:                loggedUser.ID.String(),
+		Email:             loggedUser.Email,
+		Subscription:      subscriptionResult,
+		CurrentUsageBytes: int64(currentUsageBytes),
 	})
 }
 
