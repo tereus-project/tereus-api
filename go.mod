@@ -14,12 +14,12 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/mattn/go-sqlite3 v1.14.12
-	github.com/minio/minio-go/v7 v7.0.24
+	github.com/minio/minio-go/v7 v7.0.28
 	github.com/nsqio/go-nsq v1.1.0
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stripe/stripe-go/v72 v72.110.0
-	github.com/tereus-project/tereus-go-std v0.0.0-20220610114449-647d5d0a6a8b
+	github.com/tereus-project/tereus-go-std v0.0.0-20220616130631-898149e3d688
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )
 

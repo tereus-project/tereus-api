@@ -8,22 +8,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent/submission"
-	"github.com/tereus-project/tereus-go-std/nsq"
+	"github.com/tereus-project/tereus-go-std/queue"
 )
 
 type SubmissionService struct {
-	queueService    *nsq.NSQService
+	queueService    *queue.QueueService
 	databaseService *DatabaseService
-	s3Service       *S3Service
+	storageService  *StorageService
 
 	submissionQueues map[string]map[string]string
 }
 
-func NewSubmissionService(queueService *nsq.NSQService, databaseService *DatabaseService, s3Service *S3Service) *SubmissionService {
+func NewSubmissionService(queueService *queue.QueueService, databaseService *DatabaseService, storageService *StorageService) *SubmissionService {
 	return &SubmissionService{
 		queueService:    queueService,
 		databaseService: databaseService,
-		s3Service:       s3Service,
+		storageService:  storageService,
 		submissionQueues: map[string]map[string]string{
 			"c": {
 				"go": "transpilation_jobs_c_to_go",
@@ -77,7 +77,7 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) 
 
 	var submissionBytesCount int64
 	if msg.Status == submission.StatusDone {
-		submissionBytesCount = s.s3Service.SizeofObjects(fmt.Sprintf("transpilations-results/%s/", id))
+		submissionBytesCount = s.storageService.SizeofObjects(fmt.Sprintf("transpilations-results/%s/", id))
 	}
 
 	err = s.databaseService.Submission.

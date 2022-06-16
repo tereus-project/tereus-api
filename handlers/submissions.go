@@ -16,14 +16,14 @@ import (
 type SubmissionsHandler struct {
 	databaseService *services.DatabaseService
 	tokenService    *services.TokenService
-	s3Service       *services.S3Service
+	storageService  *services.StorageService
 }
 
-func NewSubmissionsHandler(databaseService *services.DatabaseService, tokenService *services.TokenService, s3Service *services.S3Service) (*SubmissionsHandler, error) {
+func NewSubmissionsHandler(databaseService *services.DatabaseService, tokenService *services.TokenService, storageService *services.StorageService) (*SubmissionsHandler, error) {
 	return &SubmissionsHandler{
 		databaseService: databaseService,
 		tokenService:    tokenService,
-		s3Service:       s3Service,
+		storageService:  storageService,
 	}, nil
 }
 
@@ -64,7 +64,7 @@ func (h *SubmissionsHandler) DeleteSubmission(c echo.Context) error {
 	}
 
 	// Delete from object storage
-	err = h.s3Service.DeleteSubmission(sub.ID.String())
+	err = h.storageService.DeleteSubmission(sub.ID.String())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to delete submission from object storage")
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

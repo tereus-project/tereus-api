@@ -12,7 +12,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 	"github.com/tereus-project/tereus-api/workers"
 	"github.com/tereus-project/tereus-go-std/logging"
-	"github.com/tereus-project/tereus-go-std/nsq"
+	"github.com/tereus-project/tereus-go-std/queue"
 )
 
 func main() {
@@ -47,15 +47,11 @@ func main() {
 
 	e.Validator = &services.CustomValidator{Validator: validator.New()}
 
-	// Initialize S3 service
-	logrus.Debugln("Initializing S3 service")
-	s3Service, err := services.NewS3Service(config.S3Endpoint, config.S3AccessKey, config.S3SecretKey, config.S3Bucket, config.S3HTTPSEnabled)
+	// Initialize storage service
+	logrus.Debugln("Initializing storage service")
+	storageService, err := services.NewStorageService(config.S3Endpoint, config.S3AccessKey, config.S3SecretKey, config.S3Bucket, config.S3HTTPSEnabled)
 	if err != nil {
-		logrus.WithError(err).Fatal("Failed to initialize S3 service")
-	}
-
-	if err := s3Service.MakeBucketIfNotExists(config.S3Bucket); err != nil {
-		logrus.WithError(err).Fatalln("Failed to create bucket")
+		logrus.WithError(err).Fatal("Failed to initialize storage service")
 	}
 
 	// Initialize database service
@@ -96,31 +92,31 @@ func main() {
 		databaseService,
 	)
 
-	// Initialize NSQ service
-	logrus.Debugln("Initializing NSQ service")
-	nsqService, err := nsq.NewNSQService(config.NSQEndpoint, config.NSQLookupdEndpoint)
+	// Initialize queue service
+	logrus.Debugln("Initializing queue service")
+	queueService, err := queue.NewQueueService(config.NSQEndpoint, config.NSQLookupdEndpoint)
 	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize NSQ service")
+		logrus.WithError(err).Fatalln("Failed to initialize queue service")
 	}
-	defer nsqService.ShutDown()
+	defer queueService.Close()
 
 	// Initialize submission service
 	logrus.Debugln("Initializing submission service")
-	submissionService := services.NewSubmissionService(nsqService, databaseService, s3Service)
+	submissionService := services.NewSubmissionService(queueService, databaseService, storageService)
 
 	logrus.Debugln("Starting submission status consumer worker")
-	err = workers.RegisterStatusConsumerWorker(submissionService, nsqService)
+	err = workers.RegisterStatusConsumerWorker(submissionService, queueService)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to start submission status consumer worker")
 	}
 
 	logrus.Debugln("Starting subscription data usage reporting worker")
-	go workers.SubscriptionDataUsageReportingWorker(subscriptionService, databaseService, s3Service)
+	go workers.SubscriptionDataUsageReportingWorker(subscriptionService, databaseService)
 
 	logrus.Debugln("Starting retention worker")
-	go workers.RetentionWorker(databaseService, s3Service)
+	go workers.RetentionWorker(databaseService, storageService)
 
-	transpilationHandler, err := handlers.NewTranspilationHandler(s3Service, databaseService, tokenService, submissionService)
+	transpilationHandler, err := handlers.NewTranspilationHandler(storageService, databaseService, tokenService, submissionService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -130,12 +126,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userHandler, err := handlers.NewUserHandler(databaseService, tokenService, subscriptionService, s3Service)
+	userHandler, err := handlers.NewUserHandler(databaseService, tokenService, subscriptionService, storageService)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	submissionHandler, err := handlers.NewSubmissionsHandler(databaseService, tokenService, s3Service)
+	submissionHandler, err := handlers.NewSubmissionsHandler(databaseService, tokenService, storageService)
 	if err != nil {
 		log.Fatal(err)
 	}

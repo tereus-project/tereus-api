@@ -26,15 +26,15 @@ import (
 )
 
 type TranspilationHandler struct {
-	s3Service         *services.S3Service
+	storageService    *services.StorageService
 	databaseService   *services.DatabaseService
 	tokenService      *services.TokenService
 	submissionService *services.SubmissionService
 }
 
-func NewTranspilationHandler(s3Service *services.S3Service, databaseService *services.DatabaseService, tokenService *services.TokenService, submissionService *services.SubmissionService) (*TranspilationHandler, error) {
+func NewTranspilationHandler(storageService *services.StorageService, databaseService *services.DatabaseService, tokenService *services.TokenService, submissionService *services.SubmissionService) (*TranspilationHandler, error) {
 	return &TranspilationHandler{
-		s3Service:         s3Service,
+		storageService:    storageService,
 		databaseService:   databaseService,
 		tokenService:      tokenService,
 		submissionService: submissionService,
@@ -111,7 +111,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 
 		reader := strings.NewReader(body.SourceCode)
 		submissionSourceSize = int(reader.Size())
-		_, err := h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, "main.c"), reader, reader.Size())
+		_, err := h.storageService.PutSubmissionObject(submissionId.String(), "main.c", reader, reader.Size())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -151,7 +151,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 
 			submissionSourceSize += int(file.UncompressedSize64)
 
-			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name), f, file.FileInfo().Size())
+			_, err = h.storageService.PutSubmissionObject(submissionId.String(), file.Name, f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
@@ -220,7 +220,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 
 			submissionSourceSize += int(info.Size())
 
-			_, err = h.s3Service.PutObject(fmt.Sprintf("transpilations/%s/%s", submissionId, file.Name()), f, info.Size())
+			_, err = h.storageService.PutSubmissionObject(submissionId.String(), file.Name(), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
 				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
@@ -300,14 +300,14 @@ func (h *TranspilationHandler) DownloadTranspiledFiles(c echo.Context) error {
 	// Create zip file
 	zipFile := zip.NewWriter(c.Response().Writer)
 
-	objects := h.s3Service.GetObjects(objectStoragePath)
+	objects := h.storageService.GetObjects(objectStoragePath)
 	for object := range objects {
 		if object.Err != nil {
 			logrus.WithError(object.Err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
 		}
 
-		reader, err := h.s3Service.GetObject(object.Path)
+		reader, err := h.storageService.GetObject(object.Path)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to get file from S3")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file from S3")
@@ -415,7 +415,7 @@ func (h *TranspilationHandler) DownloadInlineTranspilationSource(c echo.Context)
 	objectStoragePath := fmt.Sprintf("transpilations/%s/main.%s", sub.ID, sub.SourceLanguage)
 
 	// Get files from S3
-	object, err := h.s3Service.GetObject(objectStoragePath)
+	object, err := h.storageService.GetObject(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")
@@ -516,7 +516,7 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, sub.ID, sub.TargetLanguage)
 
 	// Get files from S3
-	object, err := h.s3Service.GetObject(objectStoragePath)
+	object, err := h.storageService.GetObject(objectStoragePath)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get files from S3")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get files from S3")

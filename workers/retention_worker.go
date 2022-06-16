@@ -11,7 +11,7 @@ import (
 	"github.com/tereus-project/tereus-api/services"
 )
 
-func RetentionWorker(databaseService *services.DatabaseService, s3Service *services.S3Service) {
+func RetentionWorker(databaseService *services.DatabaseService, storageService *services.StorageService) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
@@ -45,7 +45,7 @@ func RetentionWorker(databaseService *services.DatabaseService, s3Service *servi
 			}
 
 			// Delete submission from S3
-			err = s3Service.DeleteSubmission(sub.ID.String())
+			err = storageService.DeleteSubmission(sub.ID.String())
 			if err != nil {
 				logrus.WithField("submission_id", sub.ID).WithError(err).Errorln("Failed to delete submission from S3")
 			}

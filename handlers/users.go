@@ -26,15 +26,15 @@ type UserHandler struct {
 	databaseService     *services.DatabaseService
 	tokenService        *services.TokenService
 	subscriptionService *services.SubscriptionService
-	s3Service           *services.S3Service
+	storageService      *services.StorageService
 }
 
-func NewUserHandler(databaseService *services.DatabaseService, tokenService *services.TokenService, subscriptionService *services.SubscriptionService, s3Service *services.S3Service) (*UserHandler, error) {
+func NewUserHandler(databaseService *services.DatabaseService, tokenService *services.TokenService, subscriptionService *services.SubscriptionService, storageService *services.StorageService) (*UserHandler, error) {
 	return &UserHandler{
 		databaseService:     databaseService,
 		tokenService:        tokenService,
 		subscriptionService: subscriptionService,
-		s3Service:           s3Service,
+		storageService:      storageService,
 	}, nil
 }
 
@@ -199,7 +199,7 @@ func (h *UserHandler) DeleteCurrentUser(c echo.Context) error {
 
 	// Delete all submissions
 	for _, s := range submissions {
-		err := h.s3Service.DeleteSubmission(s.ID.String())
+		err := h.storageService.DeleteSubmission(s.ID.String())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to delete submission")
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -288,14 +288,14 @@ func (h *UserHandler) GetExport(c echo.Context) error {
 
 	// Extract submissions source and results from S3
 	for _, s := range submissions {
-		objects := h.s3Service.ListSubmissionFiles(s.ID.String())
+		objects := h.storageService.ListSubmissionFiles(s.ID.String())
 		if err != nil {
 			logrus.WithError(err).Error("Failed to list submission files")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")
 		}
 
 		for object := range objects {
-			o, err := h.s3Service.GetObject(object.Path)
+			o, err := h.storageService.GetObject(object.Path)
 			if err != nil {
 				logrus.WithError(err).Error("Failed to get object")
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to export data")

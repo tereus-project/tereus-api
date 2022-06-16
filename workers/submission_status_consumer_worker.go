@@ -6,7 +6,7 @@ import (
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/services"
-	std "github.com/tereus-project/tereus-go-std/nsq"
+	"github.com/tereus-project/tereus-go-std/queue"
 )
 
 type SubsmissionStatusHandler struct {
@@ -28,14 +28,14 @@ func (h *SubsmissionStatusHandler) HandleMessage(m *nsq.Message) error {
 	return h.submissionService.HandleSubmissionStatus(msg)
 }
 
-func RegisterStatusConsumerWorker(submissionService *services.SubmissionService, nsqService *std.NSQService) error {
+func RegisterStatusConsumerWorker(submissionService *services.SubmissionService, queueService *queue.QueueService) error {
 	logrus.Info("Starting submission status consumer worker")
 
 	h := &SubsmissionStatusHandler{
 		submissionService: submissionService,
 	}
 
-	err := nsqService.RegisterHandler("transpilation_submission_status", "api", h)
+	err := queueService.AddHandler("transpilation_submission_status", "api", h.HandleMessage)
 
 	return err
 }
