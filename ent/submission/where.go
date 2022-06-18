@@ -164,6 +164,20 @@ func SubmissionTargetSizeBytes(v int) predicate.Submission {
 	})
 }
 
+// ProcessingStartedAt applies equality check predicate on the "processing_started_at" field. It's identical to ProcessingStartedAtEQ.
+func ProcessingStartedAt(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingFinishedAt applies equality check predicate on the "processing_finished_at" field. It's identical to ProcessingFinishedAtEQ.
+func ProcessingFinishedAt(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
 // SourceLanguageEQ applies the EQ predicate on the "source_language" field.
 func SourceLanguageEQ(v string) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
@@ -1062,6 +1076,186 @@ func SubmissionTargetSizeBytesLT(v int) predicate.Submission {
 func SubmissionTargetSizeBytesLTE(v int) predicate.Submission {
 	return predicate.Submission(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldSubmissionTargetSizeBytes), v))
+	})
+}
+
+// ProcessingStartedAtEQ applies the EQ predicate on the "processing_started_at" field.
+func ProcessingStartedAtEQ(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtNEQ applies the NEQ predicate on the "processing_started_at" field.
+func ProcessingStartedAtNEQ(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtIn applies the In predicate on the "processing_started_at" field.
+func ProcessingStartedAtIn(vs ...time.Time) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldProcessingStartedAt), v...))
+	})
+}
+
+// ProcessingStartedAtNotIn applies the NotIn predicate on the "processing_started_at" field.
+func ProcessingStartedAtNotIn(vs ...time.Time) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldProcessingStartedAt), v...))
+	})
+}
+
+// ProcessingStartedAtGT applies the GT predicate on the "processing_started_at" field.
+func ProcessingStartedAtGT(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtGTE applies the GTE predicate on the "processing_started_at" field.
+func ProcessingStartedAtGTE(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtLT applies the LT predicate on the "processing_started_at" field.
+func ProcessingStartedAtLT(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtLTE applies the LTE predicate on the "processing_started_at" field.
+func ProcessingStartedAtLTE(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldProcessingStartedAt), v))
+	})
+}
+
+// ProcessingStartedAtIsNil applies the IsNil predicate on the "processing_started_at" field.
+func ProcessingStartedAtIsNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldProcessingStartedAt)))
+	})
+}
+
+// ProcessingStartedAtNotNil applies the NotNil predicate on the "processing_started_at" field.
+func ProcessingStartedAtNotNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldProcessingStartedAt)))
+	})
+}
+
+// ProcessingFinishedAtEQ applies the EQ predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtEQ(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtNEQ applies the NEQ predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtNEQ(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtIn applies the In predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtIn(vs ...time.Time) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldProcessingFinishedAt), v...))
+	})
+}
+
+// ProcessingFinishedAtNotIn applies the NotIn predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtNotIn(vs ...time.Time) predicate.Submission {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Submission(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldProcessingFinishedAt), v...))
+	})
+}
+
+// ProcessingFinishedAtGT applies the GT predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtGT(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtGTE applies the GTE predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtGTE(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtLT applies the LT predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtLT(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtLTE applies the LTE predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtLTE(v time.Time) predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldProcessingFinishedAt), v))
+	})
+}
+
+// ProcessingFinishedAtIsNil applies the IsNil predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtIsNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldProcessingFinishedAt)))
+	})
+}
+
+// ProcessingFinishedAtNotNil applies the NotNil predicate on the "processing_finished_at" field.
+func ProcessingFinishedAtNotNil() predicate.Submission {
+	return predicate.Submission(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldProcessingFinishedAt)))
 	})
 }
 

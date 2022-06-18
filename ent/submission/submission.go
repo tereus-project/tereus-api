@@ -36,6 +36,10 @@ const (
 	FieldSubmissionSourceSizeBytes = "submission_source_size_bytes"
 	// FieldSubmissionTargetSizeBytes holds the string denoting the submission_target_size_bytes field in the database.
 	FieldSubmissionTargetSizeBytes = "submission_target_size_bytes"
+	// FieldProcessingStartedAt holds the string denoting the processing_started_at field in the database.
+	FieldProcessingStartedAt = "processing_started_at"
+	// FieldProcessingFinishedAt holds the string denoting the processing_finished_at field in the database.
+	FieldProcessingFinishedAt = "processing_finished_at"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the submission in the database.
@@ -63,6 +67,8 @@ var Columns = []string{
 	FieldShareID,
 	FieldSubmissionSourceSizeBytes,
 	FieldSubmissionTargetSizeBytes,
+	FieldProcessingStartedAt,
+	FieldProcessingFinishedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "submissions"

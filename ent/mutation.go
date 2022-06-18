@@ -53,6 +53,8 @@ type SubmissionMutation struct {
 	addsubmission_source_size_bytes *int
 	submission_target_size_bytes    *int
 	addsubmission_target_size_bytes *int
+	processing_started_at           *time.Time
+	processing_finished_at          *time.Time
 	clearedFields                   map[string]struct{}
 	user                            *uuid.UUID
 	cleareduser                     bool
@@ -640,6 +642,104 @@ func (m *SubmissionMutation) ResetSubmissionTargetSizeBytes() {
 	m.addsubmission_target_size_bytes = nil
 }
 
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (m *SubmissionMutation) SetProcessingStartedAt(t time.Time) {
+	m.processing_started_at = &t
+}
+
+// ProcessingStartedAt returns the value of the "processing_started_at" field in the mutation.
+func (m *SubmissionMutation) ProcessingStartedAt() (r time.Time, exists bool) {
+	v := m.processing_started_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProcessingStartedAt returns the old "processing_started_at" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldProcessingStartedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProcessingStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProcessingStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProcessingStartedAt: %w", err)
+	}
+	return oldValue.ProcessingStartedAt, nil
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (m *SubmissionMutation) ClearProcessingStartedAt() {
+	m.processing_started_at = nil
+	m.clearedFields[submission.FieldProcessingStartedAt] = struct{}{}
+}
+
+// ProcessingStartedAtCleared returns if the "processing_started_at" field was cleared in this mutation.
+func (m *SubmissionMutation) ProcessingStartedAtCleared() bool {
+	_, ok := m.clearedFields[submission.FieldProcessingStartedAt]
+	return ok
+}
+
+// ResetProcessingStartedAt resets all changes to the "processing_started_at" field.
+func (m *SubmissionMutation) ResetProcessingStartedAt() {
+	m.processing_started_at = nil
+	delete(m.clearedFields, submission.FieldProcessingStartedAt)
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (m *SubmissionMutation) SetProcessingFinishedAt(t time.Time) {
+	m.processing_finished_at = &t
+}
+
+// ProcessingFinishedAt returns the value of the "processing_finished_at" field in the mutation.
+func (m *SubmissionMutation) ProcessingFinishedAt() (r time.Time, exists bool) {
+	v := m.processing_finished_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProcessingFinishedAt returns the old "processing_finished_at" field's value of the Submission entity.
+// If the Submission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubmissionMutation) OldProcessingFinishedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProcessingFinishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProcessingFinishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProcessingFinishedAt: %w", err)
+	}
+	return oldValue.ProcessingFinishedAt, nil
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (m *SubmissionMutation) ClearProcessingFinishedAt() {
+	m.processing_finished_at = nil
+	m.clearedFields[submission.FieldProcessingFinishedAt] = struct{}{}
+}
+
+// ProcessingFinishedAtCleared returns if the "processing_finished_at" field was cleared in this mutation.
+func (m *SubmissionMutation) ProcessingFinishedAtCleared() bool {
+	_, ok := m.clearedFields[submission.FieldProcessingFinishedAt]
+	return ok
+}
+
+// ResetProcessingFinishedAt resets all changes to the "processing_finished_at" field.
+func (m *SubmissionMutation) ResetProcessingFinishedAt() {
+	m.processing_finished_at = nil
+	delete(m.clearedFields, submission.FieldProcessingFinishedAt)
+}
+
 // SetUserID sets the "user" edge to the User entity by id.
 func (m *SubmissionMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
@@ -698,7 +798,7 @@ func (m *SubmissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubmissionMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 13)
 	if m.source_language != nil {
 		fields = append(fields, submission.FieldSourceLanguage)
 	}
@@ -732,6 +832,12 @@ func (m *SubmissionMutation) Fields() []string {
 	if m.submission_target_size_bytes != nil {
 		fields = append(fields, submission.FieldSubmissionTargetSizeBytes)
 	}
+	if m.processing_started_at != nil {
+		fields = append(fields, submission.FieldProcessingStartedAt)
+	}
+	if m.processing_finished_at != nil {
+		fields = append(fields, submission.FieldProcessingFinishedAt)
+	}
 	return fields
 }
 
@@ -762,6 +868,10 @@ func (m *SubmissionMutation) Field(name string) (ent.Value, bool) {
 		return m.SubmissionSourceSizeBytes()
 	case submission.FieldSubmissionTargetSizeBytes:
 		return m.SubmissionTargetSizeBytes()
+	case submission.FieldProcessingStartedAt:
+		return m.ProcessingStartedAt()
+	case submission.FieldProcessingFinishedAt:
+		return m.ProcessingFinishedAt()
 	}
 	return nil, false
 }
@@ -793,6 +903,10 @@ func (m *SubmissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldSubmissionSourceSizeBytes(ctx)
 	case submission.FieldSubmissionTargetSizeBytes:
 		return m.OldSubmissionTargetSizeBytes(ctx)
+	case submission.FieldProcessingStartedAt:
+		return m.OldProcessingStartedAt(ctx)
+	case submission.FieldProcessingFinishedAt:
+		return m.OldProcessingFinishedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Submission field %s", name)
 }
@@ -879,6 +993,20 @@ func (m *SubmissionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSubmissionTargetSizeBytes(v)
 		return nil
+	case submission.FieldProcessingStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProcessingStartedAt(v)
+		return nil
+	case submission.FieldProcessingFinishedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProcessingFinishedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)
 }
@@ -945,6 +1073,12 @@ func (m *SubmissionMutation) ClearedFields() []string {
 	if m.FieldCleared(submission.FieldShareID) {
 		fields = append(fields, submission.FieldShareID)
 	}
+	if m.FieldCleared(submission.FieldProcessingStartedAt) {
+		fields = append(fields, submission.FieldProcessingStartedAt)
+	}
+	if m.FieldCleared(submission.FieldProcessingFinishedAt) {
+		fields = append(fields, submission.FieldProcessingFinishedAt)
+	}
 	return fields
 }
 
@@ -967,6 +1101,12 @@ func (m *SubmissionMutation) ClearField(name string) error {
 		return nil
 	case submission.FieldShareID:
 		m.ClearShareID()
+		return nil
+	case submission.FieldProcessingStartedAt:
+		m.ClearProcessingStartedAt()
+		return nil
+	case submission.FieldProcessingFinishedAt:
+		m.ClearProcessingFinishedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Submission nullable field %s", name)
@@ -1008,6 +1148,12 @@ func (m *SubmissionMutation) ResetField(name string) error {
 		return nil
 	case submission.FieldSubmissionTargetSizeBytes:
 		m.ResetSubmissionTargetSizeBytes()
+		return nil
+	case submission.FieldProcessingStartedAt:
+		m.ResetProcessingStartedAt()
+		return nil
+	case submission.FieldProcessingFinishedAt:
+		m.ResetProcessingFinishedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Submission field %s", name)

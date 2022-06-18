@@ -200,6 +200,46 @@ func (su *SubmissionUpdate) AddSubmissionTargetSizeBytes(i int) *SubmissionUpdat
 	return su
 }
 
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (su *SubmissionUpdate) SetProcessingStartedAt(t time.Time) *SubmissionUpdate {
+	su.mutation.SetProcessingStartedAt(t)
+	return su
+}
+
+// SetNillableProcessingStartedAt sets the "processing_started_at" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableProcessingStartedAt(t *time.Time) *SubmissionUpdate {
+	if t != nil {
+		su.SetProcessingStartedAt(*t)
+	}
+	return su
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (su *SubmissionUpdate) ClearProcessingStartedAt() *SubmissionUpdate {
+	su.mutation.ClearProcessingStartedAt()
+	return su
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (su *SubmissionUpdate) SetProcessingFinishedAt(t time.Time) *SubmissionUpdate {
+	su.mutation.SetProcessingFinishedAt(t)
+	return su
+}
+
+// SetNillableProcessingFinishedAt sets the "processing_finished_at" field if the given value is not nil.
+func (su *SubmissionUpdate) SetNillableProcessingFinishedAt(t *time.Time) *SubmissionUpdate {
+	if t != nil {
+		su.SetProcessingFinishedAt(*t)
+	}
+	return su
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (su *SubmissionUpdate) ClearProcessingFinishedAt() *SubmissionUpdate {
+	su.mutation.ClearProcessingFinishedAt()
+	return su
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (su *SubmissionUpdate) SetUserID(id uuid.UUID) *SubmissionUpdate {
 	su.mutation.SetUserID(id)
@@ -420,6 +460,32 @@ func (su *SubmissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeInt,
 			Value:  value,
 			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+	}
+	if value, ok := su.mutation.ProcessingStartedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingStartedAt,
+		})
+	}
+	if su.mutation.ProcessingStartedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: submission.FieldProcessingStartedAt,
+		})
+	}
+	if value, ok := su.mutation.ProcessingFinishedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingFinishedAt,
+		})
+	}
+	if su.mutation.ProcessingFinishedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: submission.FieldProcessingFinishedAt,
 		})
 	}
 	if su.mutation.UserCleared() {
@@ -643,6 +709,46 @@ func (suo *SubmissionUpdateOne) SetNillableSubmissionTargetSizeBytes(i *int) *Su
 // AddSubmissionTargetSizeBytes adds i to the "submission_target_size_bytes" field.
 func (suo *SubmissionUpdateOne) AddSubmissionTargetSizeBytes(i int) *SubmissionUpdateOne {
 	suo.mutation.AddSubmissionTargetSizeBytes(i)
+	return suo
+}
+
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (suo *SubmissionUpdateOne) SetProcessingStartedAt(t time.Time) *SubmissionUpdateOne {
+	suo.mutation.SetProcessingStartedAt(t)
+	return suo
+}
+
+// SetNillableProcessingStartedAt sets the "processing_started_at" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableProcessingStartedAt(t *time.Time) *SubmissionUpdateOne {
+	if t != nil {
+		suo.SetProcessingStartedAt(*t)
+	}
+	return suo
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (suo *SubmissionUpdateOne) ClearProcessingStartedAt() *SubmissionUpdateOne {
+	suo.mutation.ClearProcessingStartedAt()
+	return suo
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (suo *SubmissionUpdateOne) SetProcessingFinishedAt(t time.Time) *SubmissionUpdateOne {
+	suo.mutation.SetProcessingFinishedAt(t)
+	return suo
+}
+
+// SetNillableProcessingFinishedAt sets the "processing_finished_at" field if the given value is not nil.
+func (suo *SubmissionUpdateOne) SetNillableProcessingFinishedAt(t *time.Time) *SubmissionUpdateOne {
+	if t != nil {
+		suo.SetProcessingFinishedAt(*t)
+	}
+	return suo
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (suo *SubmissionUpdateOne) ClearProcessingFinishedAt() *SubmissionUpdateOne {
+	suo.mutation.ClearProcessingFinishedAt()
 	return suo
 }
 
@@ -890,6 +996,32 @@ func (suo *SubmissionUpdateOne) sqlSave(ctx context.Context) (_node *Submission,
 			Type:   field.TypeInt,
 			Value:  value,
 			Column: submission.FieldSubmissionTargetSizeBytes,
+		})
+	}
+	if value, ok := suo.mutation.ProcessingStartedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingStartedAt,
+		})
+	}
+	if suo.mutation.ProcessingStartedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: submission.FieldProcessingStartedAt,
+		})
+	}
+	if value, ok := suo.mutation.ProcessingFinishedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingFinishedAt,
+		})
+	}
+	if suo.mutation.ProcessingFinishedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: submission.FieldProcessingFinishedAt,
 		})
 	}
 	if suo.mutation.UserCleared() {

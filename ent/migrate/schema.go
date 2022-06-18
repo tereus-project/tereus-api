@@ -22,6 +22,8 @@ var (
 		{Name: "share_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "submission_source_size_bytes", Type: field.TypeInt, Default: 0},
 		{Name: "submission_target_size_bytes", Type: field.TypeInt, Default: 0},
+		{Name: "processing_started_at", Type: field.TypeTime, Nullable: true},
+		{Name: "processing_finished_at", Type: field.TypeTime, Nullable: true},
 		{Name: "user_submissions", Type: field.TypeUUID},
 	}
 	// SubmissionsTable holds the schema information for the "submissions" table.
@@ -32,7 +34,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "submissions_users_submissions",
-				Columns:    []*schema.Column{SubmissionsColumns[12]},
+				Columns:    []*schema.Column{SubmissionsColumns[14]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

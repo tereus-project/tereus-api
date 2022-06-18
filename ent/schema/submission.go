@@ -29,6 +29,8 @@ func (Submission) Fields() []ent.Field {
 		field.String("share_id").Optional().Unique(),
 		field.Int("submission_source_size_bytes").Default(0),
 		field.Int("submission_target_size_bytes").Default(0),
+		field.Time("processing_started_at").Optional(),
+		field.Time("processing_finished_at").Optional(),
 	}
 }
 

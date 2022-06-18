@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -66,7 +67,7 @@ func (s *SubmissionService) PublishSubmissionToTranspile(sub SubmissionMessage) 
 	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
 }
 
-func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
+func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage, receivedAt time.Time) error {
 	logrus.WithField("status", msg).Info("Handling submission status")
 
 	id, err := uuid.Parse(msg.ID)
@@ -80,7 +81,7 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) 
 		submissionBytesCount = s.storageService.SizeofObjects(fmt.Sprintf("transpilations-results/%s/", id))
 	}
 
-	err = s.databaseService.Submission.
+	submissionUpdate := s.databaseService.Submission.
 		Update().
 		Where(
 			submission.ID(id),
@@ -88,8 +89,16 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) 
 		).
 		SetSubmissionTargetSizeBytes(int(submissionBytesCount)).
 		SetStatus(msg.Status).
-		SetReason(msg.Reason).
-		Exec(context.Background())
+		SetReason(msg.Reason)
+
+	switch msg.Status {
+	case submission.StatusProcessing:
+		submissionUpdate = submissionUpdate.SetProcessingStartedAt(receivedAt)
+	case submission.StatusDone:
+		submissionUpdate = submissionUpdate.SetProcessingFinishedAt(receivedAt)
+	}
+
+	err = submissionUpdate.Exec(context.Background())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to update submission status")
 		return err

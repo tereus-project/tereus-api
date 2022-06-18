@@ -2,6 +2,7 @@ package workers
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
@@ -25,7 +26,7 @@ func (h *SubsmissionStatusHandler) HandleMessage(m *nsq.Message) error {
 		return nil
 	}
 
-	return h.submissionService.HandleSubmissionStatus(msg)
+	return h.submissionService.HandleSubmissionStatus(msg, time.Unix(0, m.Timestamp))
 }
 
 func RegisterStatusConsumerWorker(submissionService *services.SubmissionService, queueService *queue.QueueService) error {

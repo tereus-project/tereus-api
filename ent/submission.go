@@ -40,6 +40,10 @@ type Submission struct {
 	SubmissionSourceSizeBytes int `json:"submission_source_size_bytes,omitempty"`
 	// SubmissionTargetSizeBytes holds the value of the "submission_target_size_bytes" field.
 	SubmissionTargetSizeBytes int `json:"submission_target_size_bytes,omitempty"`
+	// ProcessingStartedAt holds the value of the "processing_started_at" field.
+	ProcessingStartedAt time.Time `json:"processing_started_at,omitempty"`
+	// ProcessingFinishedAt holds the value of the "processing_finished_at" field.
+	ProcessingFinishedAt time.Time `json:"processing_finished_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SubmissionQuery when eager-loading is set.
 	Edges            SubmissionEdges `json:"edges"`
@@ -80,7 +84,7 @@ func (*Submission) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case submission.FieldSourceLanguage, submission.FieldTargetLanguage, submission.FieldStatus, submission.FieldReason, submission.FieldGitRepo, submission.FieldShareID:
 			values[i] = new(sql.NullString)
-		case submission.FieldCreatedAt:
+		case submission.FieldCreatedAt, submission.FieldProcessingStartedAt, submission.FieldProcessingFinishedAt:
 			values[i] = new(sql.NullTime)
 		case submission.FieldID:
 			values[i] = new(uuid.UUID)
@@ -173,6 +177,18 @@ func (s *Submission) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				s.SubmissionTargetSizeBytes = int(value.Int64)
 			}
+		case submission.FieldProcessingStartedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field processing_started_at", values[i])
+			} else if value.Valid {
+				s.ProcessingStartedAt = value.Time
+			}
+		case submission.FieldProcessingFinishedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field processing_finished_at", values[i])
+			} else if value.Valid {
+				s.ProcessingFinishedAt = value.Time
+			}
 		case submission.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_submissions", values[i])
@@ -235,6 +251,10 @@ func (s *Submission) String() string {
 	builder.WriteString(fmt.Sprintf("%v", s.SubmissionSourceSizeBytes))
 	builder.WriteString(", submission_target_size_bytes=")
 	builder.WriteString(fmt.Sprintf("%v", s.SubmissionTargetSizeBytes))
+	builder.WriteString(", processing_started_at=")
+	builder.WriteString(s.ProcessingStartedAt.Format(time.ANSIC))
+	builder.WriteString(", processing_finished_at=")
+	builder.WriteString(s.ProcessingFinishedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

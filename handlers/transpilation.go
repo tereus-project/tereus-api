@@ -270,7 +270,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		TargetLanguage: s.TargetLanguage,
 		Status:         s.Status.String(),
 		Reason:         s.Reason,
-		CreatedAt:      s.CreatedAt.Format(time.RFC3339),
+		CreatedAt:      s.CreatedAt.Format(time.RFC3339Nano),
 	})
 }
 
@@ -340,11 +340,14 @@ func (h *TranspilationHandler) DownloadTranspiledFiles(c echo.Context) error {
 }
 
 type downloadInlineResponse struct {
-	Data            string `json:"data"`
-	SourceLanguage  string `json:"source_language"`
-	TargetLanguage  string `json:"target_language"`
-	SourceSizeBytes int    `json:"source_size_bytes"`
-	TargetSizeBytes int    `json:"target_size_bytes"`
+	Data                 string `json:"data"`
+	Status               string `json:"status"`
+	SourceLanguage       string `json:"source_language"`
+	TargetLanguage       string `json:"target_language"`
+	SourceSizeBytes      int    `json:"source_size_bytes"`
+	TargetSizeBytes      int    `json:"target_size_bytes"`
+	ProcessingStartedAt  string `json:"processing_started_at"`
+	ProcessingFinishedAt string `json:"processing_finished_at"`
 }
 
 // GET /submissions/:id/inline/source
@@ -433,11 +436,14 @@ func (h *TranspilationHandler) DownloadInlineTranspilationSource(c echo.Context)
 	}
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
-		Data:            base64.StdEncoding.EncodeToString(data),
-		SourceLanguage:  sub.SourceLanguage,
-		TargetLanguage:  sub.TargetLanguage,
-		SourceSizeBytes: sub.SubmissionSourceSizeBytes,
-		TargetSizeBytes: sub.SubmissionTargetSizeBytes,
+		Data:                 base64.StdEncoding.EncodeToString(data),
+		Status:               string(sub.Status),
+		SourceLanguage:       sub.SourceLanguage,
+		TargetLanguage:       sub.TargetLanguage,
+		SourceSizeBytes:      sub.SubmissionSourceSizeBytes,
+		TargetSizeBytes:      sub.SubmissionTargetSizeBytes,
+		ProcessingStartedAt:  sub.ProcessingStartedAt.Format(time.RFC3339Nano),
+		ProcessingFinishedAt: sub.ProcessingFinishedAt.Format(time.RFC3339Nano),
 	})
 }
 
@@ -509,7 +515,16 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 	}
 
 	if sub.Status != submission.StatusDone {
-		return echo.NewHTTPError(http.StatusNotFound, "This submission is not done yet")
+		return c.JSON(http.StatusOK, downloadInlineResponse{
+			Data:                 "",
+			Status:               string(sub.Status),
+			SourceLanguage:       sub.TargetLanguage,
+			TargetLanguage:       sub.TargetLanguage,
+			SourceSizeBytes:      sub.SubmissionSourceSizeBytes,
+			TargetSizeBytes:      0,
+			ProcessingStartedAt:  sub.ProcessingStartedAt.Format(time.RFC3339Nano),
+			ProcessingFinishedAt: sub.ProcessingFinishedAt.Format(time.RFC3339Nano),
+		})
 	}
 
 	config := env.Get()
@@ -534,10 +549,13 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 	}
 
 	return c.JSON(http.StatusOK, downloadInlineResponse{
-		Data:            base64.StdEncoding.EncodeToString(data),
-		SourceLanguage:  sub.TargetLanguage,
-		TargetLanguage:  sub.TargetLanguage,
-		SourceSizeBytes: sub.SubmissionSourceSizeBytes,
-		TargetSizeBytes: sub.SubmissionTargetSizeBytes,
+		Data:                 base64.StdEncoding.EncodeToString(data),
+		Status:               string(sub.Status),
+		SourceLanguage:       sub.TargetLanguage,
+		TargetLanguage:       sub.TargetLanguage,
+		SourceSizeBytes:      sub.SubmissionSourceSizeBytes,
+		TargetSizeBytes:      sub.SubmissionTargetSizeBytes,
+		ProcessingStartedAt:  sub.ProcessingStartedAt.Format(time.RFC3339Nano),
+		ProcessingFinishedAt: sub.ProcessingFinishedAt.Format(time.RFC3339Nano),
 	})
 }

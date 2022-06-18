@@ -163,6 +163,34 @@ func (sc *SubmissionCreate) SetNillableSubmissionTargetSizeBytes(i *int) *Submis
 	return sc
 }
 
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (sc *SubmissionCreate) SetProcessingStartedAt(t time.Time) *SubmissionCreate {
+	sc.mutation.SetProcessingStartedAt(t)
+	return sc
+}
+
+// SetNillableProcessingStartedAt sets the "processing_started_at" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableProcessingStartedAt(t *time.Time) *SubmissionCreate {
+	if t != nil {
+		sc.SetProcessingStartedAt(*t)
+	}
+	return sc
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (sc *SubmissionCreate) SetProcessingFinishedAt(t time.Time) *SubmissionCreate {
+	sc.mutation.SetProcessingFinishedAt(t)
+	return sc
+}
+
+// SetNillableProcessingFinishedAt sets the "processing_finished_at" field if the given value is not nil.
+func (sc *SubmissionCreate) SetNillableProcessingFinishedAt(t *time.Time) *SubmissionCreate {
+	if t != nil {
+		sc.SetProcessingFinishedAt(*t)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *SubmissionCreate) SetID(u uuid.UUID) *SubmissionCreate {
 	sc.mutation.SetID(u)
@@ -448,6 +476,22 @@ func (sc *SubmissionCreate) createSpec() (*Submission, *sqlgraph.CreateSpec) {
 		})
 		_node.SubmissionTargetSizeBytes = value
 	}
+	if value, ok := sc.mutation.ProcessingStartedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingStartedAt,
+		})
+		_node.ProcessingStartedAt = value
+	}
+	if value, ok := sc.mutation.ProcessingFinishedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: submission.FieldProcessingFinishedAt,
+		})
+		_node.ProcessingFinishedAt = value
+	}
 	if nodes := sc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -681,6 +725,42 @@ func (u *SubmissionUpsert) UpdateSubmissionTargetSizeBytes() *SubmissionUpsert {
 // AddSubmissionTargetSizeBytes adds v to the "submission_target_size_bytes" field.
 func (u *SubmissionUpsert) AddSubmissionTargetSizeBytes(v int) *SubmissionUpsert {
 	u.Add(submission.FieldSubmissionTargetSizeBytes, v)
+	return u
+}
+
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (u *SubmissionUpsert) SetProcessingStartedAt(v time.Time) *SubmissionUpsert {
+	u.Set(submission.FieldProcessingStartedAt, v)
+	return u
+}
+
+// UpdateProcessingStartedAt sets the "processing_started_at" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateProcessingStartedAt() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldProcessingStartedAt)
+	return u
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (u *SubmissionUpsert) ClearProcessingStartedAt() *SubmissionUpsert {
+	u.SetNull(submission.FieldProcessingStartedAt)
+	return u
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (u *SubmissionUpsert) SetProcessingFinishedAt(v time.Time) *SubmissionUpsert {
+	u.Set(submission.FieldProcessingFinishedAt, v)
+	return u
+}
+
+// UpdateProcessingFinishedAt sets the "processing_finished_at" field to the value that was provided on create.
+func (u *SubmissionUpsert) UpdateProcessingFinishedAt() *SubmissionUpsert {
+	u.SetExcluded(submission.FieldProcessingFinishedAt)
+	return u
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (u *SubmissionUpsert) ClearProcessingFinishedAt() *SubmissionUpsert {
+	u.SetNull(submission.FieldProcessingFinishedAt)
 	return u
 }
 
@@ -920,6 +1000,48 @@ func (u *SubmissionUpsertOne) AddSubmissionTargetSizeBytes(v int) *SubmissionUps
 func (u *SubmissionUpsertOne) UpdateSubmissionTargetSizeBytes() *SubmissionUpsertOne {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateSubmissionTargetSizeBytes()
+	})
+}
+
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (u *SubmissionUpsertOne) SetProcessingStartedAt(v time.Time) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetProcessingStartedAt(v)
+	})
+}
+
+// UpdateProcessingStartedAt sets the "processing_started_at" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateProcessingStartedAt() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateProcessingStartedAt()
+	})
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (u *SubmissionUpsertOne) ClearProcessingStartedAt() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearProcessingStartedAt()
+	})
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (u *SubmissionUpsertOne) SetProcessingFinishedAt(v time.Time) *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetProcessingFinishedAt(v)
+	})
+}
+
+// UpdateProcessingFinishedAt sets the "processing_finished_at" field to the value that was provided on create.
+func (u *SubmissionUpsertOne) UpdateProcessingFinishedAt() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateProcessingFinishedAt()
+	})
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (u *SubmissionUpsertOne) ClearProcessingFinishedAt() *SubmissionUpsertOne {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearProcessingFinishedAt()
 	})
 }
 
@@ -1325,6 +1447,48 @@ func (u *SubmissionUpsertBulk) AddSubmissionTargetSizeBytes(v int) *SubmissionUp
 func (u *SubmissionUpsertBulk) UpdateSubmissionTargetSizeBytes() *SubmissionUpsertBulk {
 	return u.Update(func(s *SubmissionUpsert) {
 		s.UpdateSubmissionTargetSizeBytes()
+	})
+}
+
+// SetProcessingStartedAt sets the "processing_started_at" field.
+func (u *SubmissionUpsertBulk) SetProcessingStartedAt(v time.Time) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetProcessingStartedAt(v)
+	})
+}
+
+// UpdateProcessingStartedAt sets the "processing_started_at" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateProcessingStartedAt() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateProcessingStartedAt()
+	})
+}
+
+// ClearProcessingStartedAt clears the value of the "processing_started_at" field.
+func (u *SubmissionUpsertBulk) ClearProcessingStartedAt() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearProcessingStartedAt()
+	})
+}
+
+// SetProcessingFinishedAt sets the "processing_finished_at" field.
+func (u *SubmissionUpsertBulk) SetProcessingFinishedAt(v time.Time) *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.SetProcessingFinishedAt(v)
+	})
+}
+
+// UpdateProcessingFinishedAt sets the "processing_finished_at" field to the value that was provided on create.
+func (u *SubmissionUpsertBulk) UpdateProcessingFinishedAt() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.UpdateProcessingFinishedAt()
+	})
+}
+
+// ClearProcessingFinishedAt clears the value of the "processing_finished_at" field.
+func (u *SubmissionUpsertBulk) ClearProcessingFinishedAt() *SubmissionUpsertBulk {
+	return u.Update(func(s *SubmissionUpsert) {
+		s.ClearProcessingFinishedAt()
 	})
 }
 

@@ -68,7 +68,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	if subscription != nil {
 		subscriptionResult = &getCurrentUserResultSubscription{
 			Tier:      subscription.Tier.String(),
-			ExpiresAt: subscription.ExpiresAt.Format(time.RFC3339),
+			ExpiresAt: subscription.ExpiresAt.Format(time.RFC3339Nano),
 			Cancelled: subscription.Cancelled,
 		}
 	}
@@ -152,7 +152,7 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 			IsPublic:        s.IsPublic,
 			Status:          s.Status.String(),
 			Reason:          s.Reason,
-			CreatedAt:       s.CreatedAt.Format(time.RFC3339),
+			CreatedAt:       s.CreatedAt.Format(time.RFC3339Nano),
 			ShareID:         s.ShareID,
 			SourceSizeBytes: s.SubmissionSourceSizeBytes,
 			TargetSizeBytes: s.SubmissionTargetSizeBytes,
