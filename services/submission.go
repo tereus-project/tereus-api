@@ -94,7 +94,7 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage, 
 	switch msg.Status {
 	case submission.StatusProcessing:
 		submissionUpdate = submissionUpdate.SetProcessingStartedAt(receivedAt)
-	case submission.StatusDone:
+	case submission.StatusDone, submission.StatusFailed:
 		submissionUpdate = submissionUpdate.SetProcessingFinishedAt(receivedAt)
 	}
 
