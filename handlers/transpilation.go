@@ -348,6 +348,7 @@ type downloadInlineResponse struct {
 	TargetSizeBytes      int    `json:"target_size_bytes"`
 	ProcessingStartedAt  string `json:"processing_started_at"`
 	ProcessingFinishedAt string `json:"processing_finished_at"`
+	Reason               string `json:"reason"`
 }
 
 // GET /submissions/:id/inline/source
@@ -508,12 +509,6 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 		}
 	}
 
-	if sub.Status == submission.StatusFailed {
-		return echo.NewHTTPError(http.StatusOK, map[string][]string{
-			"errors": {sub.Reason},
-		})
-	}
-
 	if sub.Status != submission.StatusDone {
 		return c.JSON(http.StatusOK, downloadInlineResponse{
 			Data:                 "",
@@ -524,6 +519,7 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 			TargetSizeBytes:      0,
 			ProcessingStartedAt:  sub.ProcessingStartedAt.Format(time.RFC3339Nano),
 			ProcessingFinishedAt: sub.ProcessingFinishedAt.Format(time.RFC3339Nano),
+			Reason:               sub.Reason,
 		})
 	}
 
