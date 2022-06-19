@@ -252,7 +252,8 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		SetTargetLanguage(targetLanguage).
 		SetSubmissionSourceSizeBytes(submissionSourceSize).
 		SetIsInline(transpilationType == InlineTranspilationType).
-		SetUserID(user.ID)
+		SetUserID(user.ID).
+		SetProcessingStartedAt(time.Now())
 
 	if transpilationType == GitTranspilationType {
 		submissionCreation.SetGitRepo(body.GitRepo)
