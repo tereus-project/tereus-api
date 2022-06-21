@@ -53,9 +53,10 @@ type SubmissionMessage struct {
 }
 
 type SubmissionStatusMessage struct {
-	ID     string            `json:"id"`
-	Status submission.Status `json:"status"`
-	Reason string            `json:"reason"`
+	ID        string            `json:"id"`
+	Status    submission.Status `json:"status"`
+	Reason    string            `json:"reason"`
+	Timestamp int64             `json:"timestamp"`
 }
 
 func (s *SubmissionService) PublishSubmissionToTranspile(sub SubmissionMessage) error {
@@ -67,7 +68,7 @@ func (s *SubmissionService) PublishSubmissionToTranspile(sub SubmissionMessage) 
 	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
 }
 
-func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage, receivedAt time.Time) error {
+func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
 	logrus.WithField("status", msg).Info("Handling submission status")
 
 	id, err := uuid.Parse(msg.ID)
@@ -90,6 +91,8 @@ func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage, 
 		SetSubmissionTargetSizeBytes(int(submissionBytesCount)).
 		SetStatus(msg.Status).
 		SetReason(msg.Reason)
+
+	receivedAt := time.UnixMilli(msg.Timestamp)
 
 	switch msg.Status {
 	case submission.StatusProcessing:
