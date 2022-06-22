@@ -95,7 +95,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 	srcLanguage := strings.ToLower(c.Param("src"))
 	targetLanguage := strings.ToLower(c.Param("target"))
 
-	err = h.submissionService.CheckSupport(srcLanguage, targetLanguage)
+	languagePairDetails, err := h.submissionService.GetLanguagePairDetails(srcLanguage, targetLanguage)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -111,7 +111,12 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 
 		reader := strings.NewReader(body.SourceCode)
 		submissionSourceSize = int(reader.Size())
-		_, err := h.storageService.PutSubmissionObject(submissionId.String(), "main.c", reader, reader.Size())
+		_, err := h.storageService.PutSubmissionObject(
+			submissionId.String(),
+			fmt.Sprintf("main%s", languagePairDetails.SourceLanguageFileExtension),
+			reader,
+			reader.Size(),
+		)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
 			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
@@ -417,7 +422,11 @@ func (h *TranspilationHandler) DownloadInlineTranspilationSource(c echo.Context)
 		return echo.NewHTTPError(http.StatusNotFound, "This submission has been cleaned")
 	}
 
-	objectStoragePath := fmt.Sprintf("transpilations/%s/main.%s", sub.ID, sub.SourceLanguage)
+	languagePairDetails, err := h.submissionService.GetLanguagePairDetails(sub.SourceLanguage, sub.TargetLanguage)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get language pair details")
+	}
+	objectStoragePath := fmt.Sprintf("transpilations/%s/main%s", sub.ID, languagePairDetails.SourceLanguageFileExtension)
 
 	// Get files from S3
 	object, err := h.storageService.GetObject(objectStoragePath)
@@ -525,7 +534,11 @@ func (h *TranspilationHandler) DownloadInlineTranspiledOutput(c echo.Context) er
 	}
 
 	config := env.Get()
-	objectStoragePath := fmt.Sprintf("%s/%s/main.%s", config.SubmissionsFolder, sub.ID, sub.TargetLanguage)
+	languagePairDetails, err := h.submissionService.GetLanguagePairDetails(sub.SourceLanguage, sub.TargetLanguage)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get language pair details")
+	}
+	objectStoragePath := fmt.Sprintf("%s/%s/main%s", config.SubmissionsFolder, sub.ID, languagePairDetails.TargetLanguageFileExtension)
 
 	// Get files from S3
 	object, err := h.storageService.GetObject(objectStoragePath)

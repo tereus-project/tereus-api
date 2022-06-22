@@ -12,12 +12,22 @@ import (
 	"github.com/tereus-project/tereus-go-std/queue"
 )
 
+type TranspilerDetails struct {
+	FileExtension string
+	Targets       map[string]*TranspilerDetailsTarget
+}
+
+type TranspilerDetailsTarget struct {
+	FileExtension string
+	QueueName     string
+}
+
 type SubmissionService struct {
 	queueService    *queue.QueueService
 	databaseService *DatabaseService
 	storageService  *StorageService
 
-	submissionQueues map[string]map[string]string
+	submissionQueues map[string]*TranspilerDetails
 }
 
 func NewSubmissionService(queueService *queue.QueueService, databaseService *DatabaseService, storageService *StorageService) *SubmissionService {
@@ -25,25 +35,47 @@ func NewSubmissionService(queueService *queue.QueueService, databaseService *Dat
 		queueService:    queueService,
 		databaseService: databaseService,
 		storageService:  storageService,
-		submissionQueues: map[string]map[string]string{
+		submissionQueues: map[string]*TranspilerDetails{
 			"c": {
-				"go": "transpilation_jobs_c_to_go",
+				FileExtension: ".c",
+				Targets: map[string]*TranspilerDetailsTarget{
+					"go": {
+						FileExtension: ".go",
+					},
+				},
+			},
+			"lua": {
+				FileExtension: ".lua",
+				Targets: map[string]*TranspilerDetailsTarget{
+					"ruby": {
+						FileExtension: ".rb",
+					},
+				},
 			},
 		},
 	}
 }
 
-func (s *SubmissionService) CheckSupport(sourceLanguage string, targetLanguage string) error {
-	m, ok := s.submissionQueues[sourceLanguage]
+type LanguagePairDetails struct {
+	SourceLanguageFileExtension string
+	TargetLanguageFileExtension string
+}
+
+func (s *SubmissionService) GetLanguagePairDetails(sourceLanguage string, targetLanguage string) (*LanguagePairDetails, error) {
+	source, ok := s.submissionQueues[sourceLanguage]
 	if !ok {
-		return fmt.Errorf("source language %s is not supported", sourceLanguage)
+		return nil, fmt.Errorf("source language %s is not supported", sourceLanguage)
 	}
 
-	if _, ok := m[targetLanguage]; !ok {
-		return fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, sourceLanguage)
+	target, ok := source.Targets[targetLanguage]
+	if !ok {
+		return nil, fmt.Errorf("target language %s is not supported for source language %s", targetLanguage, sourceLanguage)
 	}
 
-	return nil
+	return &LanguagePairDetails{
+		SourceLanguageFileExtension: source.FileExtension,
+		TargetLanguageFileExtension: target.FileExtension,
+	}, nil
 }
 
 type SubmissionMessage struct {
@@ -65,7 +97,8 @@ func (s *SubmissionService) PublishSubmissionToTranspile(sub SubmissionMessage) 
 		return err
 	}
 
-	return s.queueService.Publish(s.submissionQueues[sub.SourceLanguage][sub.TargetLanguage], bytes)
+	topic := fmt.Sprintf("transpilation_jobs_%s_to_%s", sub.SourceLanguage, sub.TargetLanguage)
+	return s.queueService.Publish(topic, bytes)
 }
 
 func (s *SubmissionService) HandleSubmissionStatus(msg SubmissionStatusMessage) error {
