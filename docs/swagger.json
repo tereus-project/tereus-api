@@ -1,0 +1,15 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "The main API for the Tereus project.",
+        "title": "Tereus API",
+        "contact": {
+            "name": "Tereus Team",
+            "url": "https://github.com/tereus-project"
+        },
+        "version": "1.0"
+    },
+    "host": "api.tereus.dev",
+    "basePath": "/",
+    "paths": {}
+}

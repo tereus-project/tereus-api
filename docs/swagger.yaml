@@ -1,0 +1,11 @@
+basePath: /
+host: api.tereus.dev
+info:
+  contact:
+    name: Tereus Team
+    url: https://github.com/tereus-project
+  description: The main API for the Tereus project.
+  title: Tereus API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

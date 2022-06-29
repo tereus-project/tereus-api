@@ -7,6 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
+	echoSwagger "github.com/swaggo/echo-swagger"
+	_ "github.com/tereus-project/tereus-api/docs"
 	"github.com/tereus-project/tereus-api/env"
 	"github.com/tereus-project/tereus-api/handlers"
 	"github.com/tereus-project/tereus-api/services"
@@ -15,6 +17,15 @@ import (
 	"github.com/tereus-project/tereus-go-std/queue"
 )
 
+// @title Tereus API
+// @version 1.0
+// @description The main API for the Tereus project.
+
+// @contact.name Tereus Team
+// @contact.url https://github.com/tereus-project
+
+// @host api.tereus.dev
+// @BasePath /
 func main() {
 	err := env.LoadEnv()
 	if err != nil {
@@ -145,6 +156,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.POST("/submissions/inline/:src/to/:target", transpilationHandler.TranspileInline)
 	e.POST("/submissions/zip/:src/to/:target", transpilationHandler.TranspileZip)
