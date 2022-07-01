@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/go-playground/validator"
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
@@ -183,6 +184,9 @@ func main() {
 	e.POST("/subscription/portal", subscriptionHandler.CreatePortalSession)
 
 	e.POST("/stripe-webhooks", stripeWebhooksHandler.HandleWebhooks)
+
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
