@@ -23,6 +23,9 @@ type Env struct {
 	GithubOAuthClientId     string `env:"GITHUB_OAUTH_CLIENT_ID" env-required:"true"`
 	GithubOAuthClientSecret string `env:"GITHUB_OAUTH_CLIENT_SECRET" env-required:"true"`
 
+	GitlabOAuthClientId     string `env:"GITLAB_OAUTH_CLIENT_ID" env-required:"true"`
+	GitlabOAuthClientSecret string `env:"GITLAB_OAUTH_CLIENT_SECRET" env-required:"true"`
+
 	StripeSecretKey             string `env:"STRIPE_SECRET_KEY" env-required:"true"`
 	StripeTierProBase           string `env:"STRIPE_TIER_PRO_BASE" env-required:"true"`
 	StripeTierProMetered        string `env:"STRIPE_TIER_PRO_METERED" env-required:"true"`

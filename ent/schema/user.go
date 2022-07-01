@@ -21,7 +21,15 @@ func (User) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("email").Unique(),
 		field.String("password").Optional(),
+
+		field.Int64("github_user_id").Optional(),
 		field.String("github_access_token").Optional(),
+
+		field.Int("gitlab_user_id").Optional(),
+		field.String("gitlab_access_token").Optional(),
+		field.String("gitlab_refresh_token").Optional(),
+		field.Time("gitlab_access_token_expires_at").Optional(),
+
 		field.Time("created_at").Default(time.Now),
 	}
 }

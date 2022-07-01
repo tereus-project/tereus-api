@@ -22,8 +22,18 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"password,omitempty"`
+	// GithubUserID holds the value of the "github_user_id" field.
+	GithubUserID int64 `json:"github_user_id,omitempty"`
 	// GithubAccessToken holds the value of the "github_access_token" field.
 	GithubAccessToken string `json:"github_access_token,omitempty"`
+	// GitlabUserID holds the value of the "gitlab_user_id" field.
+	GitlabUserID int `json:"gitlab_user_id,omitempty"`
+	// GitlabAccessToken holds the value of the "gitlab_access_token" field.
+	GitlabAccessToken string `json:"gitlab_access_token,omitempty"`
+	// GitlabRefreshToken holds the value of the "gitlab_refresh_token" field.
+	GitlabRefreshToken string `json:"gitlab_refresh_token,omitempty"`
+	// GitlabAccessTokenExpiresAt holds the value of the "gitlab_access_token_expires_at" field.
+	GitlabAccessTokenExpiresAt time.Time `json:"gitlab_access_token_expires_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -81,9 +91,11 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldEmail, user.FieldPassword, user.FieldGithubAccessToken:
+		case user.FieldGithubUserID, user.FieldGitlabUserID:
+			values[i] = new(sql.NullInt64)
+		case user.FieldEmail, user.FieldPassword, user.FieldGithubAccessToken, user.FieldGitlabAccessToken, user.FieldGitlabRefreshToken:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt:
+		case user.FieldGitlabAccessTokenExpiresAt, user.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
@@ -120,11 +132,41 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				u.Password = value.String
 			}
+		case user.FieldGithubUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field github_user_id", values[i])
+			} else if value.Valid {
+				u.GithubUserID = value.Int64
+			}
 		case user.FieldGithubAccessToken:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field github_access_token", values[i])
 			} else if value.Valid {
 				u.GithubAccessToken = value.String
+			}
+		case user.FieldGitlabUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field gitlab_user_id", values[i])
+			} else if value.Valid {
+				u.GitlabUserID = int(value.Int64)
+			}
+		case user.FieldGitlabAccessToken:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field gitlab_access_token", values[i])
+			} else if value.Valid {
+				u.GitlabAccessToken = value.String
+			}
+		case user.FieldGitlabRefreshToken:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field gitlab_refresh_token", values[i])
+			} else if value.Valid {
+				u.GitlabRefreshToken = value.String
+			}
+		case user.FieldGitlabAccessTokenExpiresAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field gitlab_access_token_expires_at", values[i])
+			} else if value.Valid {
+				u.GitlabAccessTokenExpiresAt = value.Time
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -179,8 +221,18 @@ func (u *User) String() string {
 	builder.WriteString(u.Email)
 	builder.WriteString(", password=")
 	builder.WriteString(u.Password)
+	builder.WriteString(", github_user_id=")
+	builder.WriteString(fmt.Sprintf("%v", u.GithubUserID))
 	builder.WriteString(", github_access_token=")
 	builder.WriteString(u.GithubAccessToken)
+	builder.WriteString(", gitlab_user_id=")
+	builder.WriteString(fmt.Sprintf("%v", u.GitlabUserID))
+	builder.WriteString(", gitlab_access_token=")
+	builder.WriteString(u.GitlabAccessToken)
+	builder.WriteString(", gitlab_refresh_token=")
+	builder.WriteString(u.GitlabRefreshToken)
+	builder.WriteString(", gitlab_access_token_expires_at=")
+	builder.WriteString(u.GitlabAccessTokenExpiresAt.Format(time.ANSIC))
 	builder.WriteString(", created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

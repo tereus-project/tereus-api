@@ -47,6 +47,20 @@ func (uc *UserCreate) SetNillablePassword(s *string) *UserCreate {
 	return uc
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (uc *UserCreate) SetGithubUserID(i int64) *UserCreate {
+	uc.mutation.SetGithubUserID(i)
+	return uc
+}
+
+// SetNillableGithubUserID sets the "github_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGithubUserID(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetGithubUserID(*i)
+	}
+	return uc
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (uc *UserCreate) SetGithubAccessToken(s string) *UserCreate {
 	uc.mutation.SetGithubAccessToken(s)
@@ -57,6 +71,62 @@ func (uc *UserCreate) SetGithubAccessToken(s string) *UserCreate {
 func (uc *UserCreate) SetNillableGithubAccessToken(s *string) *UserCreate {
 	if s != nil {
 		uc.SetGithubAccessToken(*s)
+	}
+	return uc
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (uc *UserCreate) SetGitlabUserID(i int) *UserCreate {
+	uc.mutation.SetGitlabUserID(i)
+	return uc
+}
+
+// SetNillableGitlabUserID sets the "gitlab_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGitlabUserID(i *int) *UserCreate {
+	if i != nil {
+		uc.SetGitlabUserID(*i)
+	}
+	return uc
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (uc *UserCreate) SetGitlabAccessToken(s string) *UserCreate {
+	uc.mutation.SetGitlabAccessToken(s)
+	return uc
+}
+
+// SetNillableGitlabAccessToken sets the "gitlab_access_token" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGitlabAccessToken(s *string) *UserCreate {
+	if s != nil {
+		uc.SetGitlabAccessToken(*s)
+	}
+	return uc
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (uc *UserCreate) SetGitlabRefreshToken(s string) *UserCreate {
+	uc.mutation.SetGitlabRefreshToken(s)
+	return uc
+}
+
+// SetNillableGitlabRefreshToken sets the "gitlab_refresh_token" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGitlabRefreshToken(s *string) *UserCreate {
+	if s != nil {
+		uc.SetGitlabRefreshToken(*s)
+	}
+	return uc
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (uc *UserCreate) SetGitlabAccessTokenExpiresAt(t time.Time) *UserCreate {
+	uc.mutation.SetGitlabAccessTokenExpiresAt(t)
+	return uc
+}
+
+// SetNillableGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGitlabAccessTokenExpiresAt(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetGitlabAccessTokenExpiresAt(*t)
 	}
 	return uc
 }
@@ -280,6 +350,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		})
 		_node.Password = value
 	}
+	if value, ok := uc.mutation.GithubUserID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubUserID,
+		})
+		_node.GithubUserID = value
+	}
 	if value, ok := uc.mutation.GithubAccessToken(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -287,6 +365,38 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldGithubAccessToken,
 		})
 		_node.GithubAccessToken = value
+	}
+	if value, ok := uc.mutation.GitlabUserID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldGitlabUserID,
+		})
+		_node.GitlabUserID = value
+	}
+	if value, ok := uc.mutation.GitlabAccessToken(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabAccessToken,
+		})
+		_node.GitlabAccessToken = value
+	}
+	if value, ok := uc.mutation.GitlabRefreshToken(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabRefreshToken,
+		})
+		_node.GitlabRefreshToken = value
+	}
+	if value, ok := uc.mutation.GitlabAccessTokenExpiresAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: user.FieldGitlabAccessTokenExpiresAt,
+		})
+		_node.GitlabAccessTokenExpiresAt = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -437,6 +547,30 @@ func (u *UserUpsert) ClearPassword() *UserUpsert {
 	return u
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (u *UserUpsert) SetGithubUserID(v int64) *UserUpsert {
+	u.Set(user.FieldGithubUserID, v)
+	return u
+}
+
+// UpdateGithubUserID sets the "github_user_id" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGithubUserID() *UserUpsert {
+	u.SetExcluded(user.FieldGithubUserID)
+	return u
+}
+
+// AddGithubUserID adds v to the "github_user_id" field.
+func (u *UserUpsert) AddGithubUserID(v int64) *UserUpsert {
+	u.Add(user.FieldGithubUserID, v)
+	return u
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (u *UserUpsert) ClearGithubUserID() *UserUpsert {
+	u.SetNull(user.FieldGithubUserID)
+	return u
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (u *UserUpsert) SetGithubAccessToken(v string) *UserUpsert {
 	u.Set(user.FieldGithubAccessToken, v)
@@ -452,6 +586,84 @@ func (u *UserUpsert) UpdateGithubAccessToken() *UserUpsert {
 // ClearGithubAccessToken clears the value of the "github_access_token" field.
 func (u *UserUpsert) ClearGithubAccessToken() *UserUpsert {
 	u.SetNull(user.FieldGithubAccessToken)
+	return u
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (u *UserUpsert) SetGitlabUserID(v int) *UserUpsert {
+	u.Set(user.FieldGitlabUserID, v)
+	return u
+}
+
+// UpdateGitlabUserID sets the "gitlab_user_id" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGitlabUserID() *UserUpsert {
+	u.SetExcluded(user.FieldGitlabUserID)
+	return u
+}
+
+// AddGitlabUserID adds v to the "gitlab_user_id" field.
+func (u *UserUpsert) AddGitlabUserID(v int) *UserUpsert {
+	u.Add(user.FieldGitlabUserID, v)
+	return u
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (u *UserUpsert) ClearGitlabUserID() *UserUpsert {
+	u.SetNull(user.FieldGitlabUserID)
+	return u
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (u *UserUpsert) SetGitlabAccessToken(v string) *UserUpsert {
+	u.Set(user.FieldGitlabAccessToken, v)
+	return u
+}
+
+// UpdateGitlabAccessToken sets the "gitlab_access_token" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGitlabAccessToken() *UserUpsert {
+	u.SetExcluded(user.FieldGitlabAccessToken)
+	return u
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (u *UserUpsert) ClearGitlabAccessToken() *UserUpsert {
+	u.SetNull(user.FieldGitlabAccessToken)
+	return u
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (u *UserUpsert) SetGitlabRefreshToken(v string) *UserUpsert {
+	u.Set(user.FieldGitlabRefreshToken, v)
+	return u
+}
+
+// UpdateGitlabRefreshToken sets the "gitlab_refresh_token" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGitlabRefreshToken() *UserUpsert {
+	u.SetExcluded(user.FieldGitlabRefreshToken)
+	return u
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (u *UserUpsert) ClearGitlabRefreshToken() *UserUpsert {
+	u.SetNull(user.FieldGitlabRefreshToken)
+	return u
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (u *UserUpsert) SetGitlabAccessTokenExpiresAt(v time.Time) *UserUpsert {
+	u.Set(user.FieldGitlabAccessTokenExpiresAt, v)
+	return u
+}
+
+// UpdateGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGitlabAccessTokenExpiresAt() *UserUpsert {
+	u.SetExcluded(user.FieldGitlabAccessTokenExpiresAt)
+	return u
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (u *UserUpsert) ClearGitlabAccessTokenExpiresAt() *UserUpsert {
+	u.SetNull(user.FieldGitlabAccessTokenExpiresAt)
 	return u
 }
 
@@ -552,6 +764,34 @@ func (u *UserUpsertOne) ClearPassword() *UserUpsertOne {
 	})
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (u *UserUpsertOne) SetGithubUserID(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGithubUserID(v)
+	})
+}
+
+// AddGithubUserID adds v to the "github_user_id" field.
+func (u *UserUpsertOne) AddGithubUserID(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGithubUserID(v)
+	})
+}
+
+// UpdateGithubUserID sets the "github_user_id" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGithubUserID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGithubUserID()
+	})
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (u *UserUpsertOne) ClearGithubUserID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGithubUserID()
+	})
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (u *UserUpsertOne) SetGithubAccessToken(v string) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
@@ -570,6 +810,97 @@ func (u *UserUpsertOne) UpdateGithubAccessToken() *UserUpsertOne {
 func (u *UserUpsertOne) ClearGithubAccessToken() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearGithubAccessToken()
+	})
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (u *UserUpsertOne) SetGitlabUserID(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabUserID(v)
+	})
+}
+
+// AddGitlabUserID adds v to the "gitlab_user_id" field.
+func (u *UserUpsertOne) AddGitlabUserID(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGitlabUserID(v)
+	})
+}
+
+// UpdateGitlabUserID sets the "gitlab_user_id" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGitlabUserID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabUserID()
+	})
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (u *UserUpsertOne) ClearGitlabUserID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabUserID()
+	})
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (u *UserUpsertOne) SetGitlabAccessToken(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabAccessToken(v)
+	})
+}
+
+// UpdateGitlabAccessToken sets the "gitlab_access_token" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGitlabAccessToken() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabAccessToken()
+	})
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (u *UserUpsertOne) ClearGitlabAccessToken() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabAccessToken()
+	})
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (u *UserUpsertOne) SetGitlabRefreshToken(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabRefreshToken(v)
+	})
+}
+
+// UpdateGitlabRefreshToken sets the "gitlab_refresh_token" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGitlabRefreshToken() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabRefreshToken()
+	})
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (u *UserUpsertOne) ClearGitlabRefreshToken() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabRefreshToken()
+	})
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (u *UserUpsertOne) SetGitlabAccessTokenExpiresAt(v time.Time) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabAccessTokenExpiresAt(v)
+	})
+}
+
+// UpdateGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGitlabAccessTokenExpiresAt() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabAccessTokenExpiresAt()
+	})
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (u *UserUpsertOne) ClearGitlabAccessTokenExpiresAt() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabAccessTokenExpiresAt()
 	})
 }
 
@@ -838,6 +1169,34 @@ func (u *UserUpsertBulk) ClearPassword() *UserUpsertBulk {
 	})
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (u *UserUpsertBulk) SetGithubUserID(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGithubUserID(v)
+	})
+}
+
+// AddGithubUserID adds v to the "github_user_id" field.
+func (u *UserUpsertBulk) AddGithubUserID(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGithubUserID(v)
+	})
+}
+
+// UpdateGithubUserID sets the "github_user_id" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGithubUserID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGithubUserID()
+	})
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (u *UserUpsertBulk) ClearGithubUserID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGithubUserID()
+	})
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (u *UserUpsertBulk) SetGithubAccessToken(v string) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
@@ -856,6 +1215,97 @@ func (u *UserUpsertBulk) UpdateGithubAccessToken() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearGithubAccessToken() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearGithubAccessToken()
+	})
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (u *UserUpsertBulk) SetGitlabUserID(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabUserID(v)
+	})
+}
+
+// AddGitlabUserID adds v to the "gitlab_user_id" field.
+func (u *UserUpsertBulk) AddGitlabUserID(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGitlabUserID(v)
+	})
+}
+
+// UpdateGitlabUserID sets the "gitlab_user_id" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGitlabUserID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabUserID()
+	})
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (u *UserUpsertBulk) ClearGitlabUserID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabUserID()
+	})
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (u *UserUpsertBulk) SetGitlabAccessToken(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabAccessToken(v)
+	})
+}
+
+// UpdateGitlabAccessToken sets the "gitlab_access_token" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGitlabAccessToken() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabAccessToken()
+	})
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (u *UserUpsertBulk) ClearGitlabAccessToken() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabAccessToken()
+	})
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (u *UserUpsertBulk) SetGitlabRefreshToken(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabRefreshToken(v)
+	})
+}
+
+// UpdateGitlabRefreshToken sets the "gitlab_refresh_token" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGitlabRefreshToken() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabRefreshToken()
+	})
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (u *UserUpsertBulk) ClearGitlabRefreshToken() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabRefreshToken()
+	})
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (u *UserUpsertBulk) SetGitlabAccessTokenExpiresAt(v time.Time) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGitlabAccessTokenExpiresAt(v)
+	})
+}
+
+// UpdateGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGitlabAccessTokenExpiresAt() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGitlabAccessTokenExpiresAt()
+	})
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (u *UserUpsertBulk) ClearGitlabAccessTokenExpiresAt() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearGitlabAccessTokenExpiresAt()
 	})
 }
 

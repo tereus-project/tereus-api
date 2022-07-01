@@ -91,7 +91,12 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString, Nullable: true},
+		{Name: "github_user_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "github_access_token", Type: field.TypeString, Nullable: true},
+		{Name: "gitlab_user_id", Type: field.TypeInt, Nullable: true},
+		{Name: "gitlab_access_token", Type: field.TypeString, Nullable: true},
+		{Name: "gitlab_refresh_token", Type: field.TypeString, Nullable: true},
+		{Name: "gitlab_access_token_expires_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.

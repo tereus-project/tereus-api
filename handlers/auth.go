@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
@@ -15,13 +16,20 @@ import (
 type AuthHandler struct {
 	databaseService *services.DatabaseService
 	githubService   *services.GithubService
+	gitlabService   *services.GitlabService
 	tokenService    *services.TokenService
 }
 
-func NewAuthHandler(databaseService *services.DatabaseService, githubService *services.GithubService, tokenService *services.TokenService) (*AuthHandler, error) {
+func NewAuthHandler(
+	databaseService *services.DatabaseService,
+	githubService *services.GithubService,
+	gitlabService *services.GitlabService,
+	tokenService *services.TokenService,
+) (*AuthHandler, error) {
 	return &AuthHandler{
 		databaseService: databaseService,
 		githubService:   githubService,
+		gitlabService:   gitlabService,
 		tokenService:    tokenService,
 	}, nil
 }
@@ -108,16 +116,120 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		}
 	}
 
+	hasConflictingUser, err := h.databaseService.User.Query().
+		Where(
+			user.And(
+				user.EmailEQ(email),
+				user.Or(
+					user.GithubUserIDIsNil(),
+					user.GithubUserIDNEQ(githubUser.GetID()),
+				),
+			),
+		).
+		Exist(context.Background())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
+	}
+
+	if hasConflictingUser {
+		return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this email, you can link your GitHub account in your account settings")
+	}
+
 	userId, err := h.databaseService.User.Create().
 		SetEmail(email).
+		SetGithubUserID(githubUser.GetID()).
 		SetGithubAccessToken(githubAuth.AccessToken).
 		OnConflict(
 			sql.ConflictColumns(user.FieldEmail),
-			sql.UpdateWhere(
-				sql.NotNull(user.FieldGithubAccessToken),
+		).
+		UpdateNewValues().
+		ID(context.Background())
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+	}
+
+	token, err := h.tokenService.GenerateToken(userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
+	}
+
+	return c.JSON(200, signupResult{
+		Token: token.String(),
+	})
+}
+
+type gitlabSignupBody struct {
+	Code        string `json:"code" validate:"required"`
+	RedirectUri string `json:"redirect_uri" validate:"required"`
+}
+
+// /auth/login/gitlab
+func (h *AuthHandler) GitlabLogin(c echo.Context) error {
+	body := new(gitlabSignupBody)
+	if err := c.Bind(body); err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	if err := c.Validate(body); err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	gitlabAuth, err := h.gitlabService.GenerateAccessTokenFromCode(body.Code, body.RedirectUri)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	gitlabClient, err := h.gitlabService.NewClient(gitlabAuth.AccessToken)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	gitlabUser, err := gitlabClient.GetUser()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	email := gitlabUser.PublicEmail
+	if email == "" {
+		email = gitlabUser.Email
+	}
+
+	if email == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/settings/connections/applications/%s and retry.", h.githubService.ClientId))
+	}
+
+	hasConflictingUser, err := h.databaseService.User.Query().
+		Where(
+			user.And(
+				user.EmailEQ(email),
+				user.Or(
+					user.GitlabUserIDIsNil(),
+					user.GitlabUserIDNEQ(gitlabUser.ID),
+				),
 			),
 		).
-		UpdateGithubAccessToken().
+		Exist(context.Background())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
+	}
+
+	if hasConflictingUser {
+		return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this email, you can link your GitLab account in your account settings")
+	}
+
+	userId, err := h.databaseService.User.Create().
+		SetEmail(email).
+		SetGitlabUserID(gitlabUser.ID).
+		SetGitlabAccessToken(gitlabAuth.AccessToken).
+		SetGitlabRefreshToken(gitlabAuth.RefreshToken).
+		SetGitlabAccessTokenExpiresAt(time.UnixMilli((gitlabAuth.CreatedAt + gitlabAuth.ExpiresIn) * 1000)).
+		OnConflict(
+			sql.ConflictColumns(user.FieldEmail),
+		).
+		UpdateNewValues().
 		ID(context.Background())
 	if err != nil {
 		logrus.Error(err)

@@ -17,8 +17,18 @@ const (
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
+	// FieldGithubUserID holds the string denoting the github_user_id field in the database.
+	FieldGithubUserID = "github_user_id"
 	// FieldGithubAccessToken holds the string denoting the github_access_token field in the database.
 	FieldGithubAccessToken = "github_access_token"
+	// FieldGitlabUserID holds the string denoting the gitlab_user_id field in the database.
+	FieldGitlabUserID = "gitlab_user_id"
+	// FieldGitlabAccessToken holds the string denoting the gitlab_access_token field in the database.
+	FieldGitlabAccessToken = "gitlab_access_token"
+	// FieldGitlabRefreshToken holds the string denoting the gitlab_refresh_token field in the database.
+	FieldGitlabRefreshToken = "gitlab_refresh_token"
+	// FieldGitlabAccessTokenExpiresAt holds the string denoting the gitlab_access_token_expires_at field in the database.
+	FieldGitlabAccessTokenExpiresAt = "gitlab_access_token_expires_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeTokens holds the string denoting the tokens edge name in mutations.
@@ -57,7 +67,12 @@ var Columns = []string{
 	FieldID,
 	FieldEmail,
 	FieldPassword,
+	FieldGithubUserID,
 	FieldGithubAccessToken,
+	FieldGitlabUserID,
+	FieldGitlabAccessToken,
+	FieldGitlabRefreshToken,
+	FieldGitlabAccessTokenExpiresAt,
 	FieldCreatedAt,
 }
 

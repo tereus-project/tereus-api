@@ -2394,25 +2394,32 @@ func (m *TokenMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *uuid.UUID
-	email               *string
-	password            *string
-	github_access_token *string
-	created_at          *time.Time
-	clearedFields       map[string]struct{}
-	tokens              map[uuid.UUID]struct{}
-	removedtokens       map[uuid.UUID]struct{}
-	clearedtokens       bool
-	submissions         map[uuid.UUID]struct{}
-	removedsubmissions  map[uuid.UUID]struct{}
-	clearedsubmissions  bool
-	subscription        *uuid.UUID
-	clearedsubscription bool
-	done                bool
-	oldValue            func(context.Context) (*User, error)
-	predicates          []predicate.User
+	op                             Op
+	typ                            string
+	id                             *uuid.UUID
+	email                          *string
+	password                       *string
+	github_user_id                 *int64
+	addgithub_user_id              *int64
+	github_access_token            *string
+	gitlab_user_id                 *int
+	addgitlab_user_id              *int
+	gitlab_access_token            *string
+	gitlab_refresh_token           *string
+	gitlab_access_token_expires_at *time.Time
+	created_at                     *time.Time
+	clearedFields                  map[string]struct{}
+	tokens                         map[uuid.UUID]struct{}
+	removedtokens                  map[uuid.UUID]struct{}
+	clearedtokens                  bool
+	submissions                    map[uuid.UUID]struct{}
+	removedsubmissions             map[uuid.UUID]struct{}
+	clearedsubmissions             bool
+	subscription                   *uuid.UUID
+	clearedsubscription            bool
+	done                           bool
+	oldValue                       func(context.Context) (*User, error)
+	predicates                     []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -2604,6 +2611,76 @@ func (m *UserMutation) ResetPassword() {
 	delete(m.clearedFields, user.FieldPassword)
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (m *UserMutation) SetGithubUserID(i int64) {
+	m.github_user_id = &i
+	m.addgithub_user_id = nil
+}
+
+// GithubUserID returns the value of the "github_user_id" field in the mutation.
+func (m *UserMutation) GithubUserID() (r int64, exists bool) {
+	v := m.github_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGithubUserID returns the old "github_user_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGithubUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGithubUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGithubUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGithubUserID: %w", err)
+	}
+	return oldValue.GithubUserID, nil
+}
+
+// AddGithubUserID adds i to the "github_user_id" field.
+func (m *UserMutation) AddGithubUserID(i int64) {
+	if m.addgithub_user_id != nil {
+		*m.addgithub_user_id += i
+	} else {
+		m.addgithub_user_id = &i
+	}
+}
+
+// AddedGithubUserID returns the value that was added to the "github_user_id" field in this mutation.
+func (m *UserMutation) AddedGithubUserID() (r int64, exists bool) {
+	v := m.addgithub_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (m *UserMutation) ClearGithubUserID() {
+	m.github_user_id = nil
+	m.addgithub_user_id = nil
+	m.clearedFields[user.FieldGithubUserID] = struct{}{}
+}
+
+// GithubUserIDCleared returns if the "github_user_id" field was cleared in this mutation.
+func (m *UserMutation) GithubUserIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldGithubUserID]
+	return ok
+}
+
+// ResetGithubUserID resets all changes to the "github_user_id" field.
+func (m *UserMutation) ResetGithubUserID() {
+	m.github_user_id = nil
+	m.addgithub_user_id = nil
+	delete(m.clearedFields, user.FieldGithubUserID)
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (m *UserMutation) SetGithubAccessToken(s string) {
 	m.github_access_token = &s
@@ -2651,6 +2728,223 @@ func (m *UserMutation) GithubAccessTokenCleared() bool {
 func (m *UserMutation) ResetGithubAccessToken() {
 	m.github_access_token = nil
 	delete(m.clearedFields, user.FieldGithubAccessToken)
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (m *UserMutation) SetGitlabUserID(i int) {
+	m.gitlab_user_id = &i
+	m.addgitlab_user_id = nil
+}
+
+// GitlabUserID returns the value of the "gitlab_user_id" field in the mutation.
+func (m *UserMutation) GitlabUserID() (r int, exists bool) {
+	v := m.gitlab_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitlabUserID returns the old "gitlab_user_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGitlabUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitlabUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitlabUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitlabUserID: %w", err)
+	}
+	return oldValue.GitlabUserID, nil
+}
+
+// AddGitlabUserID adds i to the "gitlab_user_id" field.
+func (m *UserMutation) AddGitlabUserID(i int) {
+	if m.addgitlab_user_id != nil {
+		*m.addgitlab_user_id += i
+	} else {
+		m.addgitlab_user_id = &i
+	}
+}
+
+// AddedGitlabUserID returns the value that was added to the "gitlab_user_id" field in this mutation.
+func (m *UserMutation) AddedGitlabUserID() (r int, exists bool) {
+	v := m.addgitlab_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (m *UserMutation) ClearGitlabUserID() {
+	m.gitlab_user_id = nil
+	m.addgitlab_user_id = nil
+	m.clearedFields[user.FieldGitlabUserID] = struct{}{}
+}
+
+// GitlabUserIDCleared returns if the "gitlab_user_id" field was cleared in this mutation.
+func (m *UserMutation) GitlabUserIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldGitlabUserID]
+	return ok
+}
+
+// ResetGitlabUserID resets all changes to the "gitlab_user_id" field.
+func (m *UserMutation) ResetGitlabUserID() {
+	m.gitlab_user_id = nil
+	m.addgitlab_user_id = nil
+	delete(m.clearedFields, user.FieldGitlabUserID)
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (m *UserMutation) SetGitlabAccessToken(s string) {
+	m.gitlab_access_token = &s
+}
+
+// GitlabAccessToken returns the value of the "gitlab_access_token" field in the mutation.
+func (m *UserMutation) GitlabAccessToken() (r string, exists bool) {
+	v := m.gitlab_access_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitlabAccessToken returns the old "gitlab_access_token" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGitlabAccessToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitlabAccessToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitlabAccessToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitlabAccessToken: %w", err)
+	}
+	return oldValue.GitlabAccessToken, nil
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (m *UserMutation) ClearGitlabAccessToken() {
+	m.gitlab_access_token = nil
+	m.clearedFields[user.FieldGitlabAccessToken] = struct{}{}
+}
+
+// GitlabAccessTokenCleared returns if the "gitlab_access_token" field was cleared in this mutation.
+func (m *UserMutation) GitlabAccessTokenCleared() bool {
+	_, ok := m.clearedFields[user.FieldGitlabAccessToken]
+	return ok
+}
+
+// ResetGitlabAccessToken resets all changes to the "gitlab_access_token" field.
+func (m *UserMutation) ResetGitlabAccessToken() {
+	m.gitlab_access_token = nil
+	delete(m.clearedFields, user.FieldGitlabAccessToken)
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (m *UserMutation) SetGitlabRefreshToken(s string) {
+	m.gitlab_refresh_token = &s
+}
+
+// GitlabRefreshToken returns the value of the "gitlab_refresh_token" field in the mutation.
+func (m *UserMutation) GitlabRefreshToken() (r string, exists bool) {
+	v := m.gitlab_refresh_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitlabRefreshToken returns the old "gitlab_refresh_token" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGitlabRefreshToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitlabRefreshToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitlabRefreshToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitlabRefreshToken: %w", err)
+	}
+	return oldValue.GitlabRefreshToken, nil
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (m *UserMutation) ClearGitlabRefreshToken() {
+	m.gitlab_refresh_token = nil
+	m.clearedFields[user.FieldGitlabRefreshToken] = struct{}{}
+}
+
+// GitlabRefreshTokenCleared returns if the "gitlab_refresh_token" field was cleared in this mutation.
+func (m *UserMutation) GitlabRefreshTokenCleared() bool {
+	_, ok := m.clearedFields[user.FieldGitlabRefreshToken]
+	return ok
+}
+
+// ResetGitlabRefreshToken resets all changes to the "gitlab_refresh_token" field.
+func (m *UserMutation) ResetGitlabRefreshToken() {
+	m.gitlab_refresh_token = nil
+	delete(m.clearedFields, user.FieldGitlabRefreshToken)
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (m *UserMutation) SetGitlabAccessTokenExpiresAt(t time.Time) {
+	m.gitlab_access_token_expires_at = &t
+}
+
+// GitlabAccessTokenExpiresAt returns the value of the "gitlab_access_token_expires_at" field in the mutation.
+func (m *UserMutation) GitlabAccessTokenExpiresAt() (r time.Time, exists bool) {
+	v := m.gitlab_access_token_expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitlabAccessTokenExpiresAt returns the old "gitlab_access_token_expires_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGitlabAccessTokenExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitlabAccessTokenExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitlabAccessTokenExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitlabAccessTokenExpiresAt: %w", err)
+	}
+	return oldValue.GitlabAccessTokenExpiresAt, nil
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (m *UserMutation) ClearGitlabAccessTokenExpiresAt() {
+	m.gitlab_access_token_expires_at = nil
+	m.clearedFields[user.FieldGitlabAccessTokenExpiresAt] = struct{}{}
+}
+
+// GitlabAccessTokenExpiresAtCleared returns if the "gitlab_access_token_expires_at" field was cleared in this mutation.
+func (m *UserMutation) GitlabAccessTokenExpiresAtCleared() bool {
+	_, ok := m.clearedFields[user.FieldGitlabAccessTokenExpiresAt]
+	return ok
+}
+
+// ResetGitlabAccessTokenExpiresAt resets all changes to the "gitlab_access_token_expires_at" field.
+func (m *UserMutation) ResetGitlabAccessTokenExpiresAt() {
+	m.gitlab_access_token_expires_at = nil
+	delete(m.clearedFields, user.FieldGitlabAccessTokenExpiresAt)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -2855,15 +3149,30 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 9)
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
 	}
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
 	}
+	if m.github_user_id != nil {
+		fields = append(fields, user.FieldGithubUserID)
+	}
 	if m.github_access_token != nil {
 		fields = append(fields, user.FieldGithubAccessToken)
+	}
+	if m.gitlab_user_id != nil {
+		fields = append(fields, user.FieldGitlabUserID)
+	}
+	if m.gitlab_access_token != nil {
+		fields = append(fields, user.FieldGitlabAccessToken)
+	}
+	if m.gitlab_refresh_token != nil {
+		fields = append(fields, user.FieldGitlabRefreshToken)
+	}
+	if m.gitlab_access_token_expires_at != nil {
+		fields = append(fields, user.FieldGitlabAccessTokenExpiresAt)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -2880,8 +3189,18 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case user.FieldPassword:
 		return m.Password()
+	case user.FieldGithubUserID:
+		return m.GithubUserID()
 	case user.FieldGithubAccessToken:
 		return m.GithubAccessToken()
+	case user.FieldGitlabUserID:
+		return m.GitlabUserID()
+	case user.FieldGitlabAccessToken:
+		return m.GitlabAccessToken()
+	case user.FieldGitlabRefreshToken:
+		return m.GitlabRefreshToken()
+	case user.FieldGitlabAccessTokenExpiresAt:
+		return m.GitlabAccessTokenExpiresAt()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -2897,8 +3216,18 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldEmail(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
+	case user.FieldGithubUserID:
+		return m.OldGithubUserID(ctx)
 	case user.FieldGithubAccessToken:
 		return m.OldGithubAccessToken(ctx)
+	case user.FieldGitlabUserID:
+		return m.OldGitlabUserID(ctx)
+	case user.FieldGitlabAccessToken:
+		return m.OldGitlabAccessToken(ctx)
+	case user.FieldGitlabRefreshToken:
+		return m.OldGitlabRefreshToken(ctx)
+	case user.FieldGitlabAccessTokenExpiresAt:
+		return m.OldGitlabAccessTokenExpiresAt(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -2924,12 +3253,47 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPassword(v)
 		return nil
+	case user.FieldGithubUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGithubUserID(v)
+		return nil
 	case user.FieldGithubAccessToken:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGithubAccessToken(v)
+		return nil
+	case user.FieldGitlabUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitlabUserID(v)
+		return nil
+	case user.FieldGitlabAccessToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitlabAccessToken(v)
+		return nil
+	case user.FieldGitlabRefreshToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitlabRefreshToken(v)
+		return nil
+	case user.FieldGitlabAccessTokenExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitlabAccessTokenExpiresAt(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2945,13 +3309,26 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addgithub_user_id != nil {
+		fields = append(fields, user.FieldGithubUserID)
+	}
+	if m.addgitlab_user_id != nil {
+		fields = append(fields, user.FieldGitlabUserID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldGithubUserID:
+		return m.AddedGithubUserID()
+	case user.FieldGitlabUserID:
+		return m.AddedGitlabUserID()
+	}
 	return nil, false
 }
 
@@ -2960,6 +3337,20 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldGithubUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGithubUserID(v)
+		return nil
+	case user.FieldGitlabUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGitlabUserID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -2971,8 +3362,23 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldPassword) {
 		fields = append(fields, user.FieldPassword)
 	}
+	if m.FieldCleared(user.FieldGithubUserID) {
+		fields = append(fields, user.FieldGithubUserID)
+	}
 	if m.FieldCleared(user.FieldGithubAccessToken) {
 		fields = append(fields, user.FieldGithubAccessToken)
+	}
+	if m.FieldCleared(user.FieldGitlabUserID) {
+		fields = append(fields, user.FieldGitlabUserID)
+	}
+	if m.FieldCleared(user.FieldGitlabAccessToken) {
+		fields = append(fields, user.FieldGitlabAccessToken)
+	}
+	if m.FieldCleared(user.FieldGitlabRefreshToken) {
+		fields = append(fields, user.FieldGitlabRefreshToken)
+	}
+	if m.FieldCleared(user.FieldGitlabAccessTokenExpiresAt) {
+		fields = append(fields, user.FieldGitlabAccessTokenExpiresAt)
 	}
 	return fields
 }
@@ -2991,8 +3397,23 @@ func (m *UserMutation) ClearField(name string) error {
 	case user.FieldPassword:
 		m.ClearPassword()
 		return nil
+	case user.FieldGithubUserID:
+		m.ClearGithubUserID()
+		return nil
 	case user.FieldGithubAccessToken:
 		m.ClearGithubAccessToken()
+		return nil
+	case user.FieldGitlabUserID:
+		m.ClearGitlabUserID()
+		return nil
+	case user.FieldGitlabAccessToken:
+		m.ClearGitlabAccessToken()
+		return nil
+	case user.FieldGitlabRefreshToken:
+		m.ClearGitlabRefreshToken()
+		return nil
+	case user.FieldGitlabAccessTokenExpiresAt:
+		m.ClearGitlabAccessTokenExpiresAt()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -3008,8 +3429,23 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldPassword:
 		m.ResetPassword()
 		return nil
+	case user.FieldGithubUserID:
+		m.ResetGithubUserID()
+		return nil
 	case user.FieldGithubAccessToken:
 		m.ResetGithubAccessToken()
+		return nil
+	case user.FieldGitlabUserID:
+		m.ResetGitlabUserID()
+		return nil
+	case user.FieldGitlabAccessToken:
+		m.ResetGitlabAccessToken()
+		return nil
+	case user.FieldGitlabRefreshToken:
+		m.ResetGitlabRefreshToken()
+		return nil
+	case user.FieldGitlabAccessTokenExpiresAt:
+		m.ResetGitlabAccessTokenExpiresAt()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()

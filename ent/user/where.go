@@ -108,10 +108,45 @@ func Password(v string) predicate.User {
 	})
 }
 
+// GithubUserID applies equality check predicate on the "github_user_id" field. It's identical to GithubUserIDEQ.
+func GithubUserID(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGithubUserID), v))
+	})
+}
+
 // GithubAccessToken applies equality check predicate on the "github_access_token" field. It's identical to GithubAccessTokenEQ.
 func GithubAccessToken(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldGithubAccessToken), v))
+	})
+}
+
+// GitlabUserID applies equality check predicate on the "gitlab_user_id" field. It's identical to GitlabUserIDEQ.
+func GitlabUserID(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabAccessToken applies equality check predicate on the "gitlab_access_token" field. It's identical to GitlabAccessTokenEQ.
+func GitlabAccessToken(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabRefreshToken applies equality check predicate on the "gitlab_refresh_token" field. It's identical to GitlabRefreshTokenEQ.
+func GitlabRefreshToken(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAt applies equality check predicate on the "gitlab_access_token_expires_at" field. It's identical to GitlabAccessTokenExpiresAtEQ.
+func GitlabAccessTokenExpiresAt(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabAccessTokenExpiresAt), v))
 	})
 }
 
@@ -358,6 +393,96 @@ func PasswordContainsFold(v string) predicate.User {
 	})
 }
 
+// GithubUserIDEQ applies the EQ predicate on the "github_user_id" field.
+func GithubUserIDEQ(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDNEQ applies the NEQ predicate on the "github_user_id" field.
+func GithubUserIDNEQ(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDIn applies the In predicate on the "github_user_id" field.
+func GithubUserIDIn(vs ...int64) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldGithubUserID), v...))
+	})
+}
+
+// GithubUserIDNotIn applies the NotIn predicate on the "github_user_id" field.
+func GithubUserIDNotIn(vs ...int64) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldGithubUserID), v...))
+	})
+}
+
+// GithubUserIDGT applies the GT predicate on the "github_user_id" field.
+func GithubUserIDGT(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDGTE applies the GTE predicate on the "github_user_id" field.
+func GithubUserIDGTE(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDLT applies the LT predicate on the "github_user_id" field.
+func GithubUserIDLT(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDLTE applies the LTE predicate on the "github_user_id" field.
+func GithubUserIDLTE(v int64) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldGithubUserID), v))
+	})
+}
+
+// GithubUserIDIsNil applies the IsNil predicate on the "github_user_id" field.
+func GithubUserIDIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGithubUserID)))
+	})
+}
+
+// GithubUserIDNotNil applies the NotNil predicate on the "github_user_id" field.
+func GithubUserIDNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGithubUserID)))
+	})
+}
+
 // GithubAccessTokenEQ applies the EQ predicate on the "github_access_token" field.
 func GithubAccessTokenEQ(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -480,6 +605,436 @@ func GithubAccessTokenEqualFold(v string) predicate.User {
 func GithubAccessTokenContainsFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldGithubAccessToken), v))
+	})
+}
+
+// GitlabUserIDEQ applies the EQ predicate on the "gitlab_user_id" field.
+func GitlabUserIDEQ(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDNEQ applies the NEQ predicate on the "gitlab_user_id" field.
+func GitlabUserIDNEQ(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDIn applies the In predicate on the "gitlab_user_id" field.
+func GitlabUserIDIn(vs ...int) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldGitlabUserID), v...))
+	})
+}
+
+// GitlabUserIDNotIn applies the NotIn predicate on the "gitlab_user_id" field.
+func GitlabUserIDNotIn(vs ...int) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldGitlabUserID), v...))
+	})
+}
+
+// GitlabUserIDGT applies the GT predicate on the "gitlab_user_id" field.
+func GitlabUserIDGT(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDGTE applies the GTE predicate on the "gitlab_user_id" field.
+func GitlabUserIDGTE(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDLT applies the LT predicate on the "gitlab_user_id" field.
+func GitlabUserIDLT(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDLTE applies the LTE predicate on the "gitlab_user_id" field.
+func GitlabUserIDLTE(v int) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldGitlabUserID), v))
+	})
+}
+
+// GitlabUserIDIsNil applies the IsNil predicate on the "gitlab_user_id" field.
+func GitlabUserIDIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGitlabUserID)))
+	})
+}
+
+// GitlabUserIDNotNil applies the NotNil predicate on the "gitlab_user_id" field.
+func GitlabUserIDNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGitlabUserID)))
+	})
+}
+
+// GitlabAccessTokenEQ applies the EQ predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenNEQ applies the NEQ predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenIn applies the In predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldGitlabAccessToken), v...))
+	})
+}
+
+// GitlabAccessTokenNotIn applies the NotIn predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenNotIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldGitlabAccessToken), v...))
+	})
+}
+
+// GitlabAccessTokenGT applies the GT predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenGTE applies the GTE predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenLT applies the LT predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenLTE applies the LTE predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenContains applies the Contains predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenHasPrefix applies the HasPrefix predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenHasSuffix applies the HasSuffix predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenIsNil applies the IsNil predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGitlabAccessToken)))
+	})
+}
+
+// GitlabAccessTokenNotNil applies the NotNil predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGitlabAccessToken)))
+	})
+}
+
+// GitlabAccessTokenEqualFold applies the EqualFold predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabAccessTokenContainsFold applies the ContainsFold predicate on the "gitlab_access_token" field.
+func GitlabAccessTokenContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldGitlabAccessToken), v))
+	})
+}
+
+// GitlabRefreshTokenEQ applies the EQ predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenNEQ applies the NEQ predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenIn applies the In predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldGitlabRefreshToken), v...))
+	})
+}
+
+// GitlabRefreshTokenNotIn applies the NotIn predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenNotIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldGitlabRefreshToken), v...))
+	})
+}
+
+// GitlabRefreshTokenGT applies the GT predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenGTE applies the GTE predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenLT applies the LT predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenLTE applies the LTE predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenContains applies the Contains predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenHasPrefix applies the HasPrefix predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenHasSuffix applies the HasSuffix predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenIsNil applies the IsNil predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGitlabRefreshToken)))
+	})
+}
+
+// GitlabRefreshTokenNotNil applies the NotNil predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGitlabRefreshToken)))
+	})
+}
+
+// GitlabRefreshTokenEqualFold applies the EqualFold predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabRefreshTokenContainsFold applies the ContainsFold predicate on the "gitlab_refresh_token" field.
+func GitlabRefreshTokenContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldGitlabRefreshToken), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtEQ applies the EQ predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtEQ(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtNEQ applies the NEQ predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtNEQ(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtIn applies the In predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtIn(vs ...time.Time) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldGitlabAccessTokenExpiresAt), v...))
+	})
+}
+
+// GitlabAccessTokenExpiresAtNotIn applies the NotIn predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtNotIn(vs ...time.Time) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldGitlabAccessTokenExpiresAt), v...))
+	})
+}
+
+// GitlabAccessTokenExpiresAtGT applies the GT predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtGT(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtGTE applies the GTE predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtGTE(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtLT applies the LT predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtLT(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtLTE applies the LTE predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtLTE(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldGitlabAccessTokenExpiresAt), v))
+	})
+}
+
+// GitlabAccessTokenExpiresAtIsNil applies the IsNil predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGitlabAccessTokenExpiresAt)))
+	})
+}
+
+// GitlabAccessTokenExpiresAtNotNil applies the NotNil predicate on the "gitlab_access_token_expires_at" field.
+func GitlabAccessTokenExpiresAtNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGitlabAccessTokenExpiresAt)))
 	})
 }
 

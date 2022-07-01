@@ -82,7 +82,14 @@ func main() {
 	logrus.Debugln("Initializing GitHub service")
 	githubService, err := services.NewGithubService(config.GithubOAuthClientId, config.GithubOAuthClientSecret)
 	if err != nil {
-		logrus.WithError(err).Fatalln("Failed to initialize RabbitMQ service")
+		logrus.WithError(err).Fatalln("Failed to initialize GitHub service")
+	}
+
+	// Initialize GitLab service
+	logrus.Debugln("Initializing GitLab service")
+	gitlabService, err := services.NewGitlabService(config.GitlabOAuthClientId, config.GitlabOAuthClientSecret)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Failed to initialize GitLab service")
 	}
 
 	// Initialize token service
@@ -133,7 +140,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	authHandler, err := handlers.NewAuthHandler(databaseService, githubService, tokenService)
+	authHandler, err := handlers.NewAuthHandler(databaseService, githubService, gitlabService, tokenService)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -173,6 +180,7 @@ func main() {
 
 	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)
+	e.POST("/auth/login/gitlab", authHandler.GitlabLogin)
 	e.POST("/auth/check", authHandler.Check)
 
 	e.GET("/users/me", userHandler.GetCurrentUser)

@@ -58,6 +58,33 @@ func (uu *UserUpdate) ClearPassword() *UserUpdate {
 	return uu
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (uu *UserUpdate) SetGithubUserID(i int64) *UserUpdate {
+	uu.mutation.ResetGithubUserID()
+	uu.mutation.SetGithubUserID(i)
+	return uu
+}
+
+// SetNillableGithubUserID sets the "github_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGithubUserID(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetGithubUserID(*i)
+	}
+	return uu
+}
+
+// AddGithubUserID adds i to the "github_user_id" field.
+func (uu *UserUpdate) AddGithubUserID(i int64) *UserUpdate {
+	uu.mutation.AddGithubUserID(i)
+	return uu
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (uu *UserUpdate) ClearGithubUserID() *UserUpdate {
+	uu.mutation.ClearGithubUserID()
+	return uu
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (uu *UserUpdate) SetGithubAccessToken(s string) *UserUpdate {
 	uu.mutation.SetGithubAccessToken(s)
@@ -75,6 +102,93 @@ func (uu *UserUpdate) SetNillableGithubAccessToken(s *string) *UserUpdate {
 // ClearGithubAccessToken clears the value of the "github_access_token" field.
 func (uu *UserUpdate) ClearGithubAccessToken() *UserUpdate {
 	uu.mutation.ClearGithubAccessToken()
+	return uu
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (uu *UserUpdate) SetGitlabUserID(i int) *UserUpdate {
+	uu.mutation.ResetGitlabUserID()
+	uu.mutation.SetGitlabUserID(i)
+	return uu
+}
+
+// SetNillableGitlabUserID sets the "gitlab_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGitlabUserID(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetGitlabUserID(*i)
+	}
+	return uu
+}
+
+// AddGitlabUserID adds i to the "gitlab_user_id" field.
+func (uu *UserUpdate) AddGitlabUserID(i int) *UserUpdate {
+	uu.mutation.AddGitlabUserID(i)
+	return uu
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (uu *UserUpdate) ClearGitlabUserID() *UserUpdate {
+	uu.mutation.ClearGitlabUserID()
+	return uu
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (uu *UserUpdate) SetGitlabAccessToken(s string) *UserUpdate {
+	uu.mutation.SetGitlabAccessToken(s)
+	return uu
+}
+
+// SetNillableGitlabAccessToken sets the "gitlab_access_token" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGitlabAccessToken(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetGitlabAccessToken(*s)
+	}
+	return uu
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (uu *UserUpdate) ClearGitlabAccessToken() *UserUpdate {
+	uu.mutation.ClearGitlabAccessToken()
+	return uu
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (uu *UserUpdate) SetGitlabRefreshToken(s string) *UserUpdate {
+	uu.mutation.SetGitlabRefreshToken(s)
+	return uu
+}
+
+// SetNillableGitlabRefreshToken sets the "gitlab_refresh_token" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGitlabRefreshToken(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetGitlabRefreshToken(*s)
+	}
+	return uu
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (uu *UserUpdate) ClearGitlabRefreshToken() *UserUpdate {
+	uu.mutation.ClearGitlabRefreshToken()
+	return uu
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (uu *UserUpdate) SetGitlabAccessTokenExpiresAt(t time.Time) *UserUpdate {
+	uu.mutation.SetGitlabAccessTokenExpiresAt(t)
+	return uu
+}
+
+// SetNillableGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGitlabAccessTokenExpiresAt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetGitlabAccessTokenExpiresAt(*t)
+	}
+	return uu
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (uu *UserUpdate) ClearGitlabAccessTokenExpiresAt() *UserUpdate {
+	uu.mutation.ClearGitlabAccessTokenExpiresAt()
 	return uu
 }
 
@@ -286,6 +400,26 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldPassword,
 		})
 	}
+	if value, ok := uu.mutation.GithubUserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubUserID,
+		})
+	}
+	if value, ok := uu.mutation.AddedGithubUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubUserID,
+		})
+	}
+	if uu.mutation.GithubUserIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: user.FieldGithubUserID,
+		})
+	}
 	if value, ok := uu.mutation.GithubAccessToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -297,6 +431,65 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldGithubAccessToken,
+		})
+	}
+	if value, ok := uu.mutation.GitlabUserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if value, ok := uu.mutation.AddedGitlabUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if uu.mutation.GitlabUserIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if value, ok := uu.mutation.GitlabAccessToken(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabAccessToken,
+		})
+	}
+	if uu.mutation.GitlabAccessTokenCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldGitlabAccessToken,
+		})
+	}
+	if value, ok := uu.mutation.GitlabRefreshToken(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabRefreshToken,
+		})
+	}
+	if uu.mutation.GitlabRefreshTokenCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldGitlabRefreshToken,
+		})
+	}
+	if value, ok := uu.mutation.GitlabAccessTokenExpiresAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: user.FieldGitlabAccessTokenExpiresAt,
+		})
+	}
+	if uu.mutation.GitlabAccessTokenExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: user.FieldGitlabAccessTokenExpiresAt,
 		})
 	}
 	if value, ok := uu.mutation.CreatedAt(); ok {
@@ -494,6 +687,33 @@ func (uuo *UserUpdateOne) ClearPassword() *UserUpdateOne {
 	return uuo
 }
 
+// SetGithubUserID sets the "github_user_id" field.
+func (uuo *UserUpdateOne) SetGithubUserID(i int64) *UserUpdateOne {
+	uuo.mutation.ResetGithubUserID()
+	uuo.mutation.SetGithubUserID(i)
+	return uuo
+}
+
+// SetNillableGithubUserID sets the "github_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGithubUserID(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetGithubUserID(*i)
+	}
+	return uuo
+}
+
+// AddGithubUserID adds i to the "github_user_id" field.
+func (uuo *UserUpdateOne) AddGithubUserID(i int64) *UserUpdateOne {
+	uuo.mutation.AddGithubUserID(i)
+	return uuo
+}
+
+// ClearGithubUserID clears the value of the "github_user_id" field.
+func (uuo *UserUpdateOne) ClearGithubUserID() *UserUpdateOne {
+	uuo.mutation.ClearGithubUserID()
+	return uuo
+}
+
 // SetGithubAccessToken sets the "github_access_token" field.
 func (uuo *UserUpdateOne) SetGithubAccessToken(s string) *UserUpdateOne {
 	uuo.mutation.SetGithubAccessToken(s)
@@ -511,6 +731,93 @@ func (uuo *UserUpdateOne) SetNillableGithubAccessToken(s *string) *UserUpdateOne
 // ClearGithubAccessToken clears the value of the "github_access_token" field.
 func (uuo *UserUpdateOne) ClearGithubAccessToken() *UserUpdateOne {
 	uuo.mutation.ClearGithubAccessToken()
+	return uuo
+}
+
+// SetGitlabUserID sets the "gitlab_user_id" field.
+func (uuo *UserUpdateOne) SetGitlabUserID(i int) *UserUpdateOne {
+	uuo.mutation.ResetGitlabUserID()
+	uuo.mutation.SetGitlabUserID(i)
+	return uuo
+}
+
+// SetNillableGitlabUserID sets the "gitlab_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGitlabUserID(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetGitlabUserID(*i)
+	}
+	return uuo
+}
+
+// AddGitlabUserID adds i to the "gitlab_user_id" field.
+func (uuo *UserUpdateOne) AddGitlabUserID(i int) *UserUpdateOne {
+	uuo.mutation.AddGitlabUserID(i)
+	return uuo
+}
+
+// ClearGitlabUserID clears the value of the "gitlab_user_id" field.
+func (uuo *UserUpdateOne) ClearGitlabUserID() *UserUpdateOne {
+	uuo.mutation.ClearGitlabUserID()
+	return uuo
+}
+
+// SetGitlabAccessToken sets the "gitlab_access_token" field.
+func (uuo *UserUpdateOne) SetGitlabAccessToken(s string) *UserUpdateOne {
+	uuo.mutation.SetGitlabAccessToken(s)
+	return uuo
+}
+
+// SetNillableGitlabAccessToken sets the "gitlab_access_token" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGitlabAccessToken(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetGitlabAccessToken(*s)
+	}
+	return uuo
+}
+
+// ClearGitlabAccessToken clears the value of the "gitlab_access_token" field.
+func (uuo *UserUpdateOne) ClearGitlabAccessToken() *UserUpdateOne {
+	uuo.mutation.ClearGitlabAccessToken()
+	return uuo
+}
+
+// SetGitlabRefreshToken sets the "gitlab_refresh_token" field.
+func (uuo *UserUpdateOne) SetGitlabRefreshToken(s string) *UserUpdateOne {
+	uuo.mutation.SetGitlabRefreshToken(s)
+	return uuo
+}
+
+// SetNillableGitlabRefreshToken sets the "gitlab_refresh_token" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGitlabRefreshToken(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetGitlabRefreshToken(*s)
+	}
+	return uuo
+}
+
+// ClearGitlabRefreshToken clears the value of the "gitlab_refresh_token" field.
+func (uuo *UserUpdateOne) ClearGitlabRefreshToken() *UserUpdateOne {
+	uuo.mutation.ClearGitlabRefreshToken()
+	return uuo
+}
+
+// SetGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field.
+func (uuo *UserUpdateOne) SetGitlabAccessTokenExpiresAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetGitlabAccessTokenExpiresAt(t)
+	return uuo
+}
+
+// SetNillableGitlabAccessTokenExpiresAt sets the "gitlab_access_token_expires_at" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGitlabAccessTokenExpiresAt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetGitlabAccessTokenExpiresAt(*t)
+	}
+	return uuo
+}
+
+// ClearGitlabAccessTokenExpiresAt clears the value of the "gitlab_access_token_expires_at" field.
+func (uuo *UserUpdateOne) ClearGitlabAccessTokenExpiresAt() *UserUpdateOne {
+	uuo.mutation.ClearGitlabAccessTokenExpiresAt()
 	return uuo
 }
 
@@ -746,6 +1053,26 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Column: user.FieldPassword,
 		})
 	}
+	if value, ok := uuo.mutation.GithubUserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubUserID,
+		})
+	}
+	if value, ok := uuo.mutation.AddedGithubUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubUserID,
+		})
+	}
+	if uuo.mutation.GithubUserIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: user.FieldGithubUserID,
+		})
+	}
 	if value, ok := uuo.mutation.GithubAccessToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -757,6 +1084,65 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldGithubAccessToken,
+		})
+	}
+	if value, ok := uuo.mutation.GitlabUserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if value, ok := uuo.mutation.AddedGitlabUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if uuo.mutation.GitlabUserIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: user.FieldGitlabUserID,
+		})
+	}
+	if value, ok := uuo.mutation.GitlabAccessToken(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabAccessToken,
+		})
+	}
+	if uuo.mutation.GitlabAccessTokenCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldGitlabAccessToken,
+		})
+	}
+	if value, ok := uuo.mutation.GitlabRefreshToken(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldGitlabRefreshToken,
+		})
+	}
+	if uuo.mutation.GitlabRefreshTokenCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldGitlabRefreshToken,
+		})
+	}
+	if value, ok := uuo.mutation.GitlabAccessTokenExpiresAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: user.FieldGitlabAccessTokenExpiresAt,
+		})
+	}
+	if uuo.mutation.GitlabAccessTokenExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: user.FieldGitlabAccessTokenExpiresAt,
 		})
 	}
 	if value, ok := uuo.mutation.CreatedAt(); ok {
