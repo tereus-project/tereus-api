@@ -34,42 +34,8 @@ func NewAuthHandler(
 	}, nil
 }
 
-type classicSignupBody struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
 type signupResult struct {
 	Token string `json:"token"`
-}
-
-// /auth/signup/classic
-func (h *AuthHandler) ClassicSignup(c echo.Context) error {
-	body := new(classicSignupBody)
-	if err := c.Bind(body); err != nil {
-		return err
-	}
-
-	if err := c.Validate(body); err != nil {
-		return err
-	}
-
-	user, err := h.databaseService.User.Create().
-		SetEmail(body.Email).
-		SetPassword(body.Password).
-		Save(context.Background())
-	if err != nil {
-		return err
-	}
-
-	token, err := h.tokenService.GenerateToken(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
-	}
-
-	return c.JSON(200, signupResult{
-		Token: token.String(),
-	})
 }
 
 type githubSignupBody struct {

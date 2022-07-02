@@ -178,7 +178,6 @@ func main() {
 	e.GET("/submissions/:id/inline/source", transpilationHandler.DownloadInlineTranspilationSource)
 	e.GET("/submissions/:id/inline/output", transpilationHandler.DownloadInlineTranspiledOutput)
 
-	e.POST("/auth/signup/classic", authHandler.ClassicSignup)
 	e.POST("/auth/login/github", authHandler.GithubLogin)
 	e.POST("/auth/login/gitlab", authHandler.GitlabLogin)
 	e.POST("/auth/check", authHandler.Check)
