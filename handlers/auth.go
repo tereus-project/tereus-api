@@ -42,8 +42,8 @@ type githubSignupBody struct {
 	Code string `json:"code" validate:"required"`
 }
 
-// /auth/login/github
-func (h *AuthHandler) GithubLogin(c echo.Context) error {
+// POST /auth/login/github
+func (h *AuthHandler) LoginGithub(c echo.Context) error {
 	tereusUser, _ := h.tokenService.GetUserFromContext(c)
 
 	body := new(githubSignupBody)
@@ -159,13 +159,46 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 	})
 }
 
+type revokeResult struct {
+	Success bool `json:"success"`
+}
+
+// POST /auth/revoke/github
+func (h *AuthHandler) RevokeGithub(c echo.Context) error {
+	tereusUser, err := h.tokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	if tereusUser.GithubAccessToken == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "You don't have a GitHub account linked to your account")
+	}
+
+	if tereusUser.GitlabAccessToken == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "You don't have another provider linked to your account")
+	}
+
+	_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
+		ClearGithubUserID().
+		ClearGithubAccessToken().
+		Save(context.Background())
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+	}
+
+	return c.JSON(http.StatusOK, revokeResult{
+		Success: true,
+	})
+}
+
 type gitlabSignupBody struct {
 	Code        string `json:"code" validate:"required"`
 	RedirectUri string `json:"redirect_uri" validate:"required"`
 }
 
-// /auth/login/gitlab
-func (h *AuthHandler) GitlabLogin(c echo.Context) error {
+// POST /auth/login/gitlab
+func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 	tereusUser, _ := h.tokenService.GetUserFromContext(c)
 
 	body := new(gitlabSignupBody)
@@ -279,6 +312,37 @@ func (h *AuthHandler) GitlabLogin(c echo.Context) error {
 
 	return c.JSON(200, signupResult{
 		Token: token.String(),
+	})
+}
+
+// POST /auth/revoke/gitlab
+func (h *AuthHandler) RevokeGitlab(c echo.Context) error {
+	tereusUser, err := h.tokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	if tereusUser.GitlabAccessToken == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "You don't have a GitLab account linked to your account")
+	}
+
+	if tereusUser.GithubAccessToken == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "You don't have another provider linked to your account")
+	}
+
+	_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
+		ClearGitlabUserID().
+		ClearGitlabAccessToken().
+		ClearGitlabRefreshToken().
+		ClearGitlabAccessTokenExpiresAt().
+		Save(context.Background())
+	if err != nil {
+		logrus.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+	}
+
+	return c.JSON(http.StatusOK, revokeResult{
+		Success: true,
 	})
 }
 
