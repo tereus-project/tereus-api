@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/tereus-project/tereus-api/ent/user"
@@ -59,7 +58,7 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 
 	githubAuth, err := h.githubService.GenerateAccessTokenFromCode(body.Code)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	githubClient := h.githubService.NewClient(githubAuth.AccessToken)
@@ -68,7 +67,9 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	// Update user if logged in
 	if tereusUser != nil {
+		// Check if another user if using the same GitHub account
 		hasConflictingUser, err := h.databaseService.User.Query().
 			Where(
 				user.And(
@@ -85,8 +86,28 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this GitHub account")
 		}
 
+		// Update the user
 		_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
 			SetGithubUserID(githubUser.GetID()).
+			SetGithubAccessToken(githubAuth.AccessToken).
+			Save(context.Background())
+		if err != nil {
+			logrus.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+		}
+
+		token, _ := h.tokenService.GetTokenFromContext(c)
+		return c.JSON(http.StatusOK, signupResult{
+			Token: token.String(),
+		})
+	}
+
+	// Update the user if they are already registered with this GitHub account
+	existingUser, err := h.databaseService.User.Query().
+		Where(user.GithubUserIDEQ(githubUser.GetID())).
+		First(context.Background())
+	if err == nil {
+		_, err = h.databaseService.User.UpdateOneID(existingUser.ID).
 			SetGithubAccessToken(githubAuth.AccessToken).
 			Save(context.Background())
 		if err != nil {
@@ -116,40 +137,30 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 		}
 	}
 
-	hasConflictingUser, err := h.databaseService.User.Query().
-		Where(
-			user.And(
-				user.EmailEQ(email),
-				user.Or(
-					user.GithubUserIDIsNil(),
-					user.GithubUserIDNEQ(githubUser.GetID()),
-				),
-			),
-		).
+	// Check if there is a user with this email
+	hasEmailConflictingUser, err := h.databaseService.User.Query().
+		Where(user.EmailEQ(email)).
 		Exist(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
 	}
 
-	if hasConflictingUser {
+	if hasEmailConflictingUser {
 		return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this email, you can link your GitHub account in your account settings")
 	}
 
-	userId, err := h.databaseService.User.Create().
+	// Save the new user
+	newUser, err := h.databaseService.User.Create().
 		SetEmail(email).
 		SetGithubUserID(githubUser.GetID()).
 		SetGithubAccessToken(githubAuth.AccessToken).
-		OnConflict(
-			sql.ConflictColumns(user.FieldEmail),
-		).
-		UpdateNewValues().
-		ID(context.Background())
+		Save(context.Background())
 	if err != nil {
 		logrus.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
 	}
 
-	token, err := h.tokenService.GenerateToken(userId)
+	token, err := h.tokenService.GenerateToken(newUser.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
@@ -227,7 +238,9 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	// Update user if logged in
 	if tereusUser != nil {
+		// Check if another user if using the same GitLab account
 		hasConflictingUser, err := h.databaseService.User.Query().
 			Where(
 				user.And(
@@ -244,11 +257,31 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this GitLab account")
 		}
 
+		// Update the user
 		_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
 			SetGitlabUserID(gitlabUser.ID).
 			SetGitlabAccessToken(gitlabAuth.AccessToken).
 			SetGitlabRefreshToken(gitlabAuth.RefreshToken).
 			SetGitlabAccessTokenExpiresAt(time.UnixMilli((gitlabAuth.CreatedAt + gitlabAuth.ExpiresIn) * 1000)).
+			Save(context.Background())
+		if err != nil {
+			logrus.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+		}
+
+		token, _ := h.tokenService.GetTokenFromContext(c)
+		return c.JSON(http.StatusOK, signupResult{
+			Token: token.String(),
+		})
+	}
+
+	// Update the user if they are already registered with this GitLab account
+	existingUser, err := h.databaseService.User.Query().
+		Where(user.GitlabUserIDEQ(gitlabUser.ID)).
+		First(context.Background())
+	if err == nil {
+		_, err = h.databaseService.User.UpdateOneID(existingUser.ID).
+			SetGitlabAccessToken(gitlabAuth.AccessToken).
 			Save(context.Background())
 		if err != nil {
 			logrus.Error(err)
@@ -270,42 +303,32 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/-/profile/applications and retry")
 	}
 
-	hasConflictingUser, err := h.databaseService.User.Query().
-		Where(
-			user.And(
-				user.EmailEQ(email),
-				user.Or(
-					user.GitlabUserIDIsNil(),
-					user.GitlabUserIDNEQ(gitlabUser.ID),
-				),
-			),
-		).
+	// Check if there is a user with this email
+	hasEmailConflictingUser, err := h.databaseService.User.Query().
+		Where(user.EmailEQ(email)).
 		Exist(context.Background())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
 	}
 
-	if hasConflictingUser {
+	if hasEmailConflictingUser {
 		return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this email, you can link your GitLab account in your account settings")
 	}
 
-	userId, err := h.databaseService.User.Create().
+	// Save the new user
+	newUser, err := h.databaseService.User.Create().
 		SetEmail(email).
 		SetGitlabUserID(gitlabUser.ID).
 		SetGitlabAccessToken(gitlabAuth.AccessToken).
 		SetGitlabRefreshToken(gitlabAuth.RefreshToken).
 		SetGitlabAccessTokenExpiresAt(time.UnixMilli((gitlabAuth.CreatedAt + gitlabAuth.ExpiresIn) * 1000)).
-		OnConflict(
-			sql.ConflictColumns(user.FieldEmail),
-		).
-		UpdateNewValues().
-		ID(context.Background())
+		Save(context.Background())
 	if err != nil {
 		logrus.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
 	}
 
-	token, err := h.tokenService.GenerateToken(userId)
+	token, err := h.tokenService.GenerateToken(newUser.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
