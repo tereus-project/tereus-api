@@ -51,8 +51,6 @@ func (s *GithubService) GenerateAccessTokenFromCode(code string) (*GithubAccessT
 		return nil, err
 	}
 
-	logrus.Debug(string(rawBody))
-
 	var body GithubAccessTokenResponseBody
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {

@@ -115,8 +115,12 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
 		}
 
-		token, _ := h.tokenService.GetTokenFromContext(c)
-		return c.JSON(http.StatusOK, signupResult{
+		token, err := h.tokenService.GenerateToken(existingUser.ID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
+		}
+
+		return c.JSON(200, signupResult{
 			Token: token.String(),
 		})
 	}
@@ -282,14 +286,20 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 	if err == nil {
 		_, err = h.databaseService.User.UpdateOneID(existingUser.ID).
 			SetGitlabAccessToken(gitlabAuth.AccessToken).
+			SetGitlabRefreshToken(gitlabAuth.RefreshToken).
+			SetGitlabAccessTokenExpiresAt(time.UnixMilli((gitlabAuth.CreatedAt + gitlabAuth.ExpiresIn) * 1000)).
 			Save(context.Background())
 		if err != nil {
 			logrus.Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
 		}
 
-		token, _ := h.tokenService.GetTokenFromContext(c)
-		return c.JSON(http.StatusOK, signupResult{
+		token, err := h.tokenService.GenerateToken(existingUser.ID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
+		}
+
+		return c.JSON(200, signupResult{
 			Token: token.String(),
 		})
 	}

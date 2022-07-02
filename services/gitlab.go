@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -35,8 +34,6 @@ type GitlabAccessTokenResponseBody struct {
 func (s *GitlabService) GenerateAccessTokenFromCode(code string, redirectUri string) (*GitlabAccessTokenResponseBody, error) {
 	url := fmt.Sprintf("https://gitlab.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=%s", s.ClientId, s.clientSecret, code, redirectUri)
 
-	logrus.Debugln("Generating access token from code:", url)
-
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return nil, err
@@ -54,8 +51,6 @@ func (s *GitlabService) GenerateAccessTokenFromCode(code string, redirectUri str
 	if err != nil {
 		return nil, err
 	}
-
-	logrus.Debug(string(rawBody))
 
 	var body GitlabAccessTokenResponseBody
 	err = json.Unmarshal(rawBody, &body)
