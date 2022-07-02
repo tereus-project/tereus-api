@@ -44,6 +44,8 @@ type githubSignupBody struct {
 
 // /auth/login/github
 func (h *AuthHandler) GithubLogin(c echo.Context) error {
+	tereusUser, _ := h.tokenService.GetUserFromContext(c)
+
 	body := new(githubSignupBody)
 	if err := c.Bind(body); err != nil {
 		logrus.Error(err)
@@ -66,12 +68,44 @@ func (h *AuthHandler) GithubLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	if tereusUser != nil {
+		hasConflictingUser, err := h.databaseService.User.Query().
+			Where(
+				user.And(
+					user.GithubUserIDEQ(githubUser.GetID()),
+					user.IDNEQ(tereusUser.ID),
+				),
+			).
+			Exist(context.Background())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
+		}
+
+		if hasConflictingUser {
+			return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this GitHub account")
+		}
+
+		_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
+			SetGithubUserID(githubUser.GetID()).
+			SetGithubAccessToken(githubAuth.AccessToken).
+			Save(context.Background())
+		if err != nil {
+			logrus.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+		}
+
+		token, _ := h.tokenService.GetTokenFromContext(c)
+		return c.JSON(http.StatusOK, signupResult{
+			Token: token.String(),
+		})
+	}
+
 	email := githubUser.GetEmail()
 	if email == "" {
 		emails := githubClient.GetEmails()
 
 		if len(emails) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry.", h.githubService.ClientId))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitHub user email. Make sure to enable user:email scope when authenticating with GitHub. You can revoke the access token at https://github.com/settings/connections/applications/%s and retry", h.githubService.ClientId))
 		}
 
 		for _, e := range emails {
@@ -132,6 +166,8 @@ type gitlabSignupBody struct {
 
 // /auth/login/gitlab
 func (h *AuthHandler) GitlabLogin(c echo.Context) error {
+	tereusUser, _ := h.tokenService.GetUserFromContext(c)
+
 	body := new(gitlabSignupBody)
 	if err := c.Bind(body); err != nil {
 		logrus.Error(err)
@@ -158,13 +194,47 @@ func (h *AuthHandler) GitlabLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	if tereusUser != nil {
+		hasConflictingUser, err := h.databaseService.User.Query().
+			Where(
+				user.And(
+					user.GitlabUserIDEQ(gitlabUser.ID),
+					user.IDNEQ(tereusUser.ID),
+				),
+			).
+			Exist(context.Background())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check if there is a conflicting user")
+		}
+
+		if hasConflictingUser {
+			return echo.NewHTTPError(http.StatusBadRequest, "There is already a user with this GitLab account")
+		}
+
+		_, err = h.databaseService.User.UpdateOneID(tereusUser.ID).
+			SetGitlabUserID(gitlabUser.ID).
+			SetGitlabAccessToken(gitlabAuth.AccessToken).
+			SetGitlabRefreshToken(gitlabAuth.RefreshToken).
+			SetGitlabAccessTokenExpiresAt(time.UnixMilli((gitlabAuth.CreatedAt + gitlabAuth.ExpiresIn) * 1000)).
+			Save(context.Background())
+		if err != nil {
+			logrus.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user")
+		}
+
+		token, _ := h.tokenService.GetTokenFromContext(c)
+		return c.JSON(http.StatusOK, signupResult{
+			Token: token.String(),
+		})
+	}
+
 	email := gitlabUser.PublicEmail
 	if email == "" {
 		email = gitlabUser.Email
 	}
 
 	if email == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/-/profile/applications and retry.")
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/-/profile/applications and retry")
 	}
 
 	hasConflictingUser, err := h.databaseService.User.Query().
