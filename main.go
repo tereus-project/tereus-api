@@ -184,6 +184,7 @@ func main() {
 
 	e.GET("/users/me", userHandler.GetCurrentUser)
 	e.DELETE("/users/me", userHandler.DeleteCurrentUser)
+	e.GET("/users/me/linked-accounts", userHandler.GetCurrentUserLinkedAccounts)
 	e.GET("/users/me/submissions", userHandler.GetSubmissionsHistory)
 	e.GET("/users/me/export", userHandler.GetExport)
 

@@ -94,6 +94,36 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	})
 }
 
+type getCurrentUserLinkedAccounts struct {
+	Github bool `json:"github"`
+	Gitlab bool `json:"gitlab"`
+}
+
+// GET /users/me/linked-accounts
+func (h *UserHandler) GetCurrentUserLinkedAccounts(c echo.Context) error {
+	loggedUser, err := h.tokenService.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	linkedAccounts, err := h.databaseService.User.Query().
+		Select(
+			user.FieldGithubAccessToken,
+			user.FieldGitlabAccessToken,
+		).
+		Where(user.ID(loggedUser.ID)).
+		Only(context.Background())
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get current user linked accounts")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, getCurrentUserLinkedAccounts{
+		Github: linkedAccounts.GithubAccessToken != "",
+		Gitlab: linkedAccounts.GitlabAccessToken != "",
+	})
+}
+
 type submissionsHistoryItem struct {
 	ID              string `json:"id"`
 	SourceLanguage  string `json:"source_language"`
