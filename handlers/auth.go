@@ -164,7 +164,7 @@ func (h *AuthHandler) GitlabLogin(c echo.Context) error {
 	}
 
 	if email == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/settings/connections/applications/%s and retry.", h.githubService.ClientId))
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to retrieve GitLab user email. You can try to revoke the access token at https://gitlab.com/-/profile/applications and retry.")
 	}
 
 	hasConflictingUser, err := h.databaseService.User.Query().
