@@ -125,17 +125,18 @@ func (h *UserHandler) GetCurrentUserLinkedAccounts(c echo.Context) error {
 }
 
 type submissionsHistoryItem struct {
-	ID              string `json:"id"`
-	SourceLanguage  string `json:"source_language"`
-	TargetLanguage  string `json:"target_language"`
-	IsInline        bool   `json:"is_inline"`
-	IsPublic        bool   `json:"is_public"`
-	Status          string `json:"status"`
-	Reason          string `json:"reason"`
-	CreatedAt       string `json:"created_at"`
-	ShareID         string `json:"share_id"`
-	SourceSizeBytes int    `json:"source_size_bytes"`
-	TargetSizeBytes int    `json:"target_size_bytes"`
+	ID              string        `json:"id"`
+	SourceLanguage  string        `json:"source_language"`
+	TargetLanguage  string        `json:"target_language"`
+	IsInline        bool          `json:"is_inline"`
+	IsPublic        bool          `json:"is_public"`
+	Status          string        `json:"status"`
+	Reason          string        `json:"reason"`
+	CreatedAt       string        `json:"created_at"`
+	ShareID         string        `json:"share_id"`
+	SourceSizeBytes int           `json:"source_size_bytes"`
+	TargetSizeBytes int           `json:"target_size_bytes"`
+	Duration        time.Duration `json:"duration"`
 }
 
 type submissionsHistory struct {
@@ -186,6 +187,7 @@ func (h *UserHandler) GetSubmissionsHistory(c echo.Context) error {
 			ShareID:         s.ShareID,
 			SourceSizeBytes: s.SubmissionSourceSizeBytes,
 			TargetSizeBytes: s.SubmissionTargetSizeBytes,
+			Duration:        s.ProcessingFinishedAt.Sub(s.ProcessingStartedAt),
 		}
 	}
 
