@@ -41,6 +41,7 @@ func main() {
 		ShowFilename: true,
 		ReportCaller: true,
 		SentryDSN:    config.SentryDSN,
+		Env:          config.Env,
 	})
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to set log configuration")
