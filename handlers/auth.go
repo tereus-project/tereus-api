@@ -120,7 +120,7 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 		}
 
-		return c.JSON(200, signupResult{
+		return c.JSON(http.StatusOK, signupResult{
 			Token: token.String(),
 		})
 	}
@@ -169,7 +169,7 @@ func (h *AuthHandler) LoginGithub(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
 
-	return c.JSON(200, signupResult{
+	return c.JSON(http.StatusOK, signupResult{
 		Token: token.String(),
 	})
 }
@@ -299,7 +299,7 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 		}
 
-		return c.JSON(200, signupResult{
+		return c.JSON(http.StatusOK, signupResult{
 			Token: token.String(),
 		})
 	}
@@ -343,7 +343,7 @@ func (h *AuthHandler) LoginGitlab(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create token")
 	}
 
-	return c.JSON(200, signupResult{
+	return c.JSON(http.StatusOK, signupResult{
 		Token: token.String(),
 	})
 }

@@ -106,7 +106,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 	switch transpilationType {
 	case InlineTranspilationType:
 		if body.SourceCode == "" {
-			return c.JSON(http.StatusBadRequest, "Missing source code")
+			return echo.NewHTTPError(http.StatusBadRequest, "Missing source code")
 		}
 
 		reader := strings.NewReader(body.SourceCode)
@@ -119,26 +119,26 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to upload file to S3")
-			return c.JSON(http.StatusInternalServerError, "Failed to upload file to object storage")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to upload file to object storage")
 		}
 	case ZipTranspilationType:
 		// Open file and unzip it
 		file, err := c.FormFile("file")
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, "Missing file")
+			return echo.NewHTTPError(http.StatusBadRequest, "Missing file")
 		}
 
 		source, err := file.Open()
 		if err != nil {
 			logrus.WithError(err).Error("Failed to open file")
-			return c.JSON(http.StatusInternalServerError, "Failed to open file")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to open file")
 		}
 		defer source.Close()
 
 		zipReader, err := zip.NewReader(source, int64(file.Size))
 		if err != nil {
 			logrus.WithError(err).Error("Failed to unzip file")
-			return c.JSON(http.StatusInternalServerError, "Failed to unzip file")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to unzip file")
 		}
 
 		// Upload files to minio
@@ -150,7 +150,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 			f, err := file.Open()
 			if err != nil {
 				logrus.WithError(err).Error("Failed to open file")
-				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name))
 			}
 			defer f.Close()
 
@@ -159,24 +159,24 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 			_, err = h.storageService.PutSubmissionObject(submissionId.String(), file.Name, f, file.FileInfo().Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
-				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name))
 			}
 		}
 
 	case GitTranspilationType:
 		if body.GitRepo == "" {
-			return c.JSON(http.StatusBadRequest, "Missing git repository")
+			return echo.NewHTTPError(http.StatusBadRequest, "Missing git repository")
 		}
 
 		url, err := url.Parse(body.GitRepo)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, "Invalid git repository")
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid git repository")
 		}
 
 		destination, err := os.MkdirTemp("", "tereus")
 		if err != nil {
 			logrus.WithError(err).Error("Failed to create temporary directory")
-			return c.JSON(http.StatusInternalServerError, "Failed to clone git repository")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone git repository")
 		}
 
 		var auth transport.AuthMethod
@@ -195,14 +195,14 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Failed to clone git repository")
-			return c.JSON(http.StatusInternalServerError, "Failed to clone git repository")
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to clone git repository: %s", err.Error()))
 		}
 
 		// List files in git repository
 		files, err := os.ReadDir(destination)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to list files in git repository")
-			return c.JSON(http.StatusInternalServerError, "Failed to list files in git repository")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list files in git repository")
 		}
 
 		for _, file := range files {
@@ -213,14 +213,14 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 			f, err := os.Open(destination + "/" + file.Name())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to open file")
-				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name()))
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to open file "%s"`, file.Name()))
 			}
 			defer f.Close()
 
 			info, err := f.Stat()
 			if err != nil {
 				logrus.WithError(err).Error("Failed to stat file")
-				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to stat file "%s"`, file.Name()))
 			}
 
 			submissionSourceSize += int(info.Size())
@@ -228,7 +228,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 			_, err = h.storageService.PutSubmissionObject(submissionId.String(), file.Name(), f, info.Size())
 			if err != nil {
 				logrus.WithError(err).Error("Failed to upload file to S3")
-				return c.JSON(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf(`Failed to upload file "%s" to object storage`, file.Name()))
 			}
 		}
 
@@ -237,7 +237,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 			logrus.WithError(err).Error("Failed to remove temporary directory")
 		}
 	default:
-		return c.JSON(http.StatusBadRequest, "Invalid transpilation type")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid transpilation type")
 	}
 
 	newSubmission := services.SubmissionMessage{
@@ -248,7 +248,7 @@ func (h *TranspilationHandler) Transpile(c echo.Context, transpilationType Trans
 	err = h.submissionService.PublishSubmissionToTranspile(newSubmission)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to publish submission")
-		return c.JSON(http.StatusInternalServerError, "Failed to process submission")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to process submission")
 	}
 
 	submissionCreation := h.databaseService.Submission.Create().
