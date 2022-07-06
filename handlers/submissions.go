@@ -143,16 +143,26 @@ func (h *SubmissionsHandler) UpdateSubmissionVisibility(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate share ID")
 		}
-	}
 
-	err = h.databaseService.Submission.
-		UpdateOneID(sub.ID).
-		SetIsPublic(body.IsPublic).
-		SetShareID(share_id).
-		Exec(context.Background())
-	if err != nil {
-		logrus.WithError(err).Error("Failed to update submission visibility")
-		return err
+		err := h.databaseService.Submission.
+			UpdateOneID(sub.ID).
+			SetIsPublic(true).
+			SetShareID(share_id).
+			Exec(context.Background())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to update submission visibility")
+			return err
+		}
+	} else {
+		err := h.databaseService.Submission.
+			UpdateOneID(sub.ID).
+			SetIsPublic(false).
+			ClearShareID().
+			Exec(context.Background())
+		if err != nil {
+			logrus.WithError(err).Error("Failed to update submission visibility")
+			return err
+		}
 	}
 
 	return c.JSON(http.StatusOK, &updateSubmissionVisibilityResponse{
