@@ -379,6 +379,10 @@ func (h *AuthHandler) RevokeGitlab(c echo.Context) error {
 	})
 }
 
+type checkResult struct {
+	Valid bool `json:"valid"`
+}
+
 // /auth/check
 func (h *AuthHandler) Check(c echo.Context) error {
 	valid, err := h.tokenService.VaidateTokenFromContext(c)
@@ -390,5 +394,7 @@ func (h *AuthHandler) Check(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, checkResult{
+		Valid: true,
+	})
 }
